@@ -13,8 +13,10 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@primevue/themes": "^4.0.0",
     "axios": "^1.7.2",
     "oidc-client": "^1.11.5",
+    "primevue": "^4.0.0",
     "vue": "^3.2.37",
     "vue-axios": "^3.5.2",
     "vue-google-charts": "^1.1.0",

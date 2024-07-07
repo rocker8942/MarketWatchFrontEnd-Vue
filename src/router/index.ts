@@ -29,6 +29,14 @@ const router = createRouter({
       },
       component: () => import("../views/StrategyView.vue"),
     },
+    {
+      path: "/stockPrice",
+      name: "stockPrice",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/StockPrice.vue"),
+    },
   ],
 });
 
