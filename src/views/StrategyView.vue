@@ -1,11 +1,25 @@
 <template>
-  <div>Strategy</div>
+  <div class="page-header">Strategy</div>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Country to Invest</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="strategy in pagedResultDtoOfStrategyDto.items" :key="strategy.id">
+        <td>{{ strategy.id }}</td>
+        <td>{{ strategy.countryToInvest }}</td>
+      </tr>
+    </tbody>
+  </table>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import ApiService from "@/core/services/apiService";
-import { StrategyClient, StrategyDto } from "@/core/services/marketWatchClient";
+import { PagedResultDtoOfStrategyDto, StrategyClient } from "@/core/services/marketWatchClient";
 
 const strategyClient = new StrategyClient(ApiService.baseUrl, ApiService.vueInstance.axios);
 
@@ -17,21 +31,27 @@ const strategyClient = new StrategyClient(ApiService.baseUrl, ApiService.vueInst
 //     }
 
 export default defineComponent({
-  // pagerequest:PageUserRequest = new PageUserRequest();
+  
+  data() {
+    return {
+      pagedResultDtoOfStrategyDto: new PagedResultDtoOfStrategyDto(),
+    };
+  },
 
   methods: {
     async getList() {
       try {
         
-        const response = await strategyClient.strategyGet(1);
-        const strategy = response as StrategyDto;
-        console.log(strategy);
+        // get strategy list
+        const response2 = await strategyClient.strategyGetList();
+        this.pagedResultDtoOfStrategyDto = response2 as PagedResultDtoOfStrategyDto;
 
       } catch (error) {
         console.error(error);
       }
     },
   },
+  
   mounted() {
     this.getList();
   },
