@@ -1,36 +1,37 @@
-import { defineComponent, h } from "vue";
-
+import { defineComponent, h, type PropType } from "vue";
 import { GChart } from "vue-google-charts";
 
 export const type = "LineChart";
-
-export const data = [
-  ["Year", "Sales", "Expenses"],
-  ["2004", 1000, 400],
-  ["2005", 1170, 460],
-  ["2006", 660, 1120],
-  ["2007", 1030, 540],
-];
-
-export const options = {
-  title: "Company Performance",
-  curveType: "function",
-  legend: { position: "bottom" },
-  width: 1200,
-  height: 600,
-};
 
 export default defineComponent({
   name: "GoogleChart",
   components: {
     GChart,
   },
-  setup() {
+  props: {
+    data: {
+      type: Array as PropType<Array<Array<string | number>>>,
+      required: true,
+    },
+    width: Number,
+    height: Number,
+    title: String,
+  },
+  setup(props) { 
+
+    const options = {
+      title: props.title,
+      curveType: "function",
+      legend: { position: "bottom" },
+      width: props.width,
+      height: props.height,
+    };
+
     return () =>
       h(GChart, {
-        data,
-        options,
-        type,
+      data: props.data,
+      options,
+      type,
       });
   },
 });

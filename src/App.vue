@@ -16,6 +16,7 @@ import Header from "./components/HeaderComponent.vue";
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
         <RouterLink to="/strategy">Strategy</RouterLink>
+        <RouterLink to="/StockInfo">StockInfo</RouterLink>
         <RouterLink to="/stockPrice">StockPrice</RouterLink>
       </nav>
     </div>
