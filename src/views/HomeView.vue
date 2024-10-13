@@ -1,97 +1,76 @@
 <template>
-  <GoogleChart />
+
+  <el-row>
+      <el-col :span="8"><GoogleChart :data="data" :width="400" :height="300" :title="'S&P 500'" /></el-col>
+      <el-col :span="8"><GoogleChart :data="ftse" :width="400" :height="300" :title="'FTSE 100'" /></el-col>
+      <el-col :span="8"><GoogleChart :data="china" :width="400" :height="300" :title="'China'" /></el-col>
+  </el-row>
+
+  <el-row>
+      <el-col :span="8"><GoogleChart :data="korea" :width="400" :height="300" :title="'Korea'" /></el-col>
+      <el-col :span="8"><GoogleChart :data="australia" :width="400" :height="300" :title="'Australia'" /></el-col>
+      <el-col :span="8"><GoogleChart :data="dollar" :width="400" :height="300" :title="'US Dollar'" /></el-col>
+  </el-row>
+
+  <el-row>
+      <el-col :span="8"><GoogleChart :data="gold" :width="400" :height="300" :title="'Gold'" /></el-col>
+      <el-col :span="8"><GoogleChart :data="tbond" :width="400" :height="300" :title="'T-bond 30years'" /></el-col>
+      <el-col :span="8"></el-col>
+  </el-row>
+
 </template>
 
 <script lang="ts">
 import GoogleChart from "../components/GoogleChart";
+import ApiService from "@/core/services/apiService";
+import { StockPriceClient, PagedResultDtoOfStockPriceDto, StockChartDto } from "@/core/services/marketWatchClient";
 
 export default {
   name: "App",
   components: {
     GoogleChart,
   },
+  data() {
+    return {
+      data: null,
+      ftse: null,
+      china: null,
+      korea: null,
+      australia: null,
+      dollar: null,
+      gold: null,
+      tbond: null,
+    };
+  },
+
+  async mounted() {
+    this.data = await this.getData("^GSPC");
+    this.ftse = await this.getData("^FTSE");
+    this.china = await this.getData("FXI");
+    this.korea = await this.getData("EWY");
+    this.australia = await this.getData("EWA");
+    this.dollar = await this.getData("UUP");
+    this.gold = await this.getData("GLD");
+    this.tbond = await this.getData("^TYX");
+  },
+
+  methods: {
+    async getData(code: string) {
+      // get stockPrice list
+      const stockClient = new StockPriceClient(ApiService.baseUrl, ApiService.vueInstance.axios);
+      const response = await stockClient.stockPriceGetStockPriceByCode(`date desc`, 1, 1000, code);
+      const prices = response as StockChartDto[];
+
+      if (!prices || prices.length === 0) {
+        return;
+      }
+
+      return [
+        ...[["Date", "Price"]],
+        ...prices.map((item) => [item.date, item.adjClosePrice])
+      ];
+    }
+  },
 };
 
-//     function getData(stockPrices) {
-//         var data = new google.visualization.DataTable();
-//         data.addColumn('date', 'Year');
-//         data.addColumn('number', 'Price');
-
-//         for (var i = 0; i < stockPrices.length; i++) {
-//             var row = new Array();
-//             var date = stockPrices[i].lastTradeDate;
-//             row[0] = new Date(parseInt(date.substr(6)));
-//             row[1] = stockPrices[i].adjClosePrice;
-//             data.addRow(row);
-//         }
-
-//         return data;
-//     }
-
-//     var _chart = {
-//         drawChart: function(element, data) {
-//             var options = { title: '' };
-//             var chart = new google.visualization.LineChart(document.getElementById(element));
-//             chart.draw(data, options);
-//         }
-//     };
-
-//     function drawChart3() {
-//         var data = getData(@Html.Raw(ViewBag.StockPrices3));
-//         var options = { title: '' };
-//         var chart = new google.visualization.LineChart(document.getElementById('chart_div_china'));
-//         chart.draw(data, options);
-//     }
-
-//     function drawChart4() {
-//         var data = getData(@Html.Raw(ViewBag.StockPrices4));
-//         var options = { title: '' };
-//         var chart = new google.visualization.LineChart(document.getElementById('chart_div_korea'));
-//         chart.draw(data, options);
-//     }
-
-//     function drawChart5() {
-//         var data = getData(@Html.Raw(ViewBag.StockPrices5));
-//         var options = { title: '' };
-//         var chart = new google.visualization.LineChart(document.getElementById('chart_div_aus'));
-//         chart.draw(data, options);
-//     }
-
-//     function drawChart6() {
-//         var data = getData(@Html.Raw(ViewBag.StockPrices6));
-//         var options = { title: '' };
-//         var chart = new google.visualization.LineChart(document.getElementById('chart_div_dollar'));
-//         chart.draw(data, options);
-//     }
-
-//     function drawChart7() {
-//         var data = getData(@Html.Raw(ViewBag.StockPrices7));
-//         var options = { title: '' };
-//         var chart = new google.visualization.LineChart(document.getElementById('chart_div_gold'));
-//         chart.draw(data, options);
-//     }
-
-//     function drawChart8() {
-//         var data = getData(@Html.Raw(ViewBag.StockPrices8));
-//         var options = { title: '' };
-//         var chart = new google.visualization.LineChart(document.getElementById('chart_div_tbond'));
-//         chart.draw(data, options);
-//     }
-
-//     google.load("visualization", "1", { packages: ["corechart"] });
-//     google.setOnLoadCallback(function() {
-//         _chart.drawChart('chart_div_snp500', getData(@Html.Raw(ViewBag.StockPrices1)));
-//     });
-//     google.setOnLoadCallback(function() {
-//         _chart.drawChart('chart_div_ftse100', getData(@Html.Raw(ViewBag.StockPrices2)));
-//     });
-//     google.setOnLoadCallback(function() {
-//         _chart.drawChart('chart_div_china', getData(@Html.Raw(ViewBag.StockPrices3)));
-//     });
-//     google.setOnLoadCallback(drawChart4);
-//     google.setOnLoadCallback(drawChart5);
-//     google.setOnLoadCallback(drawChart6);
-//     google.setOnLoadCallback(drawChart7);
-//     google.setOnLoadCallback(drawChart8);
-//
 </script>
