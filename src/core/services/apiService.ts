@@ -15,6 +15,16 @@ class ApiService {
 
     this.baseUrl = GlobalConfig.APIServer;
 
+    // add access token header to all requests
+    ApiService.vueInstance.axios.interceptors.request.use((config) => {
+      const token = app.config.globalProperties.$oidc.accessToken;
+      if (token) {
+        config.headers
+        .Authorization = `Bearer ${token}`;
+      }
+      return config;
+    });
+
   }
 
   // get function
