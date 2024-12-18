@@ -6,9 +6,7 @@ import Header from "./components/HeaderComponent.vue";
 <template>
   <header>
     <!-- <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" /> -->
-    <a href="#" @click.prevent="$oidc.signOut" v-if="$oidc.isAuthenticated"
-      >Signout</a
-    >
+    <a href="#" @click.prevent="$oidc.signOut" v-if="$oidc.isAuthenticated">Signout</a>
     <div class="wrapper">
       <Header msg="MarketWatch" />
 
@@ -16,7 +14,7 @@ import Header from "./components/HeaderComponent.vue";
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
         <RouterLink to="/strategy">Strategy</RouterLink>
-        <RouterLink to="/StockInfo">StockInfo</RouterLink>
+        <RouterLink to="/StockList">StockList</RouterLink>
         <RouterLink to="/stockPrice">StockPrice</RouterLink>
       </nav>
     </div>

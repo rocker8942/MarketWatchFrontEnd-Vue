@@ -1,43 +1,48 @@
 <template>
     <div class="page-header">
-        StockPrice</div>
+    
+        StockList</div>
     
     <div>
+    
         <el-table :data="formattedProducts" style="width: 100%" @sort-change="handleSortChange">
-            <el-table-column prop="code" label="Code" width="100"></el-table-column>
+    
+            <el-table-column prop="id" label="Id" width="100"></el-table-column>
+    
             <el-table-column prop="name" label="Name" width="300" sortable="custom"></el-table-column>
-            <el-table-column prop="currentPrice" label="Price" width="100"></el-table-column>
-            <el-table-column prop="date" label="Date" width="180" sortable="custom"></el-table-column>
-            <el-table-column prop="volume" label="Volume" width="100"></el-table-column>
+    
+            <el-table-column prop="country" label="Country" width="300" sortable="custom"></el-table-column>
     
         </el-table>
     
         <!-- Pagination -->
+    
         <div style="display: flex; justify-content: center; margin-top: 20px;">
             <el-pagination background layout="prev, pager, next" :total="totalCount" :page-size="pageSize" v-model:current-page="currentPage" @current-change="handlePageChange" />
         </div>
+    
     </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-// import DataTable from 'datatables.net-vue3';
-// import DataTablesLib from 'datatables.net';
+import DataTable from 'datatables.net-vue3';
+import DataTablesLib from 'datatables.net';
 import ApiService from "@/core/services/apiService";
-import { StockPriceClient, PagedResultDtoOfStockPriceDto } from "@/core/services/marketWatchClient";
+import { StockInfoClient, PagedResultDtoOfStockInfoDto } from "@/core/services/marketWatchClient";
 import moment from 'moment';
 
-const stockClient = new StockPriceClient(ApiService.baseUrl, ApiService.vueInstance.axios);
+const stockClient = new StockInfoClient(ApiService.baseUrl, ApiService.vueInstance.axios);
 
-//DataTable.use(DataTablesLib);
+DataTable.use(DataTablesLib);
 
 export default defineComponent({
 
     data() {
         return {
-            pagedResultDtoOfstockPriceDto: new PagedResultDtoOfStockPriceDto(),
-            products: null,
-            pageSize: 10, // Items per page
+            pagedResultDtoOfstockPriceDto: new PagedResultDtoOfStockInfoDto(),
+            products: undefined,
+            pageSize: 20, // Items per page
             currentPage: 1,
             totalCount: 0,
             sortField: '',
@@ -50,10 +55,10 @@ export default defineComponent({
             try {
 
                 // get stockPrice list
-                const response = await stockClient.stockPriceGetStockPriceWithDetails(`${this.sortField} ${this.sortOrder}`, (this.currentPage - 1) * this.pageSize, this.pageSize);
-                this.pagedResultDtoOfstockPriceDto = response as PagedResultDtoOfStockPriceDto;
-                this.products = this.pagedResultDtoOfstockPriceDto.items;
-                this.totalCount = this.pagedResultDtoOfstockPriceDto.totalCount;
+                const response = await stockClient.stockInfoGetList(`${this.sortField} ${this.sortOrder}`, (this.currentPage - 1) * this.pageSize, this.pageSize);
+                // this.pagedResultDtoOfstockPriceDto = response as PagedResultDtoOfStockInfoDto;
+                this.products = response.items;
+                this.totalCount = response.totalCount;
 
             } catch (error) {
                 console.error(error);
@@ -71,7 +76,6 @@ export default defineComponent({
             this.currentPage = page;
             this.getList();
         },
-
         handleSortChange({ prop, order }) {
             this.sortField = prop;
             this.sortOrder = order === 'ascending' ? 'asc' : 'desc';
@@ -85,7 +89,6 @@ export default defineComponent({
             return this.products ? this.products.map(product => ({
                 ...product,
                 date: moment(product.date).format('YYYY-MM-DD'),
-                currentPrice: this.formatCurrency(product.currentPrice),
             })) : [];
         }
     },
