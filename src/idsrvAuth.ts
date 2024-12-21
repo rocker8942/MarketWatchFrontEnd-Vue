@@ -1,5 +1,6 @@
 import type { User } from "oidc-client";
 import { createOidcAuth, SignInType, LogLevel } from "./vue-oidc-client";
+import Globalconfig from "./core/config/globalConfig"; 
 
 const loco = window.location;
 // const appRootUrl = `${loco.protocol}//${loco.host}${process.env.BASE_URL}`
@@ -10,7 +11,7 @@ const idsrvAuth = createOidcAuth(
   SignInType.Window,
   appRootUrl,
   {
-    authority: "https://localhost:44324/",
+    authority: Globalconfig.APIServer,
     client_id: "MarketWatchWeb_App",
     response_type: "code",
     scope: "offline_access MarketWatchWeb",

@@ -1,5 +1,5 @@
 import { createApp, type App } from "vue";
-import App from "./App.vue";
+import MainApp from "./App.vue";
 import router from "./router";
 
 import ElementPlus from 'element-plus'
@@ -21,7 +21,7 @@ async function initApp(appInstance: App<Element>) {
 idsrvAuth.startup().then((ok) => {
   if (ok) {
 
-    const app = createApp(App).use(router);
+    const app = createApp(MainApp).use(router);
     // a little something extra
     app.config.globalProperties.$oidc = idsrvAuth;
 
