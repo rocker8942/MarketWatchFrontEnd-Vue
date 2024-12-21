@@ -51,7 +51,7 @@ const router = createRouter({
       meta: {
         authName: idsrvAuth.authName,
       },
-      component: () => import("../views/stockRelations.vue"),
+      component: () => import("../views/StockRelations.vue"),
     }
   ],
 });

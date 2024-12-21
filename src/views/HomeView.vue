@@ -32,7 +32,7 @@ export default {
   },
   data() {
     return {
-      data: null,
+      data: '',
       ftse: null,
       china: null,
       korea: null,
