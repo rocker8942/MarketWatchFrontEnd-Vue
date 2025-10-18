@@ -13,7 +13,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "@primevue/themes": "^4.0.0",
+    "@primevue/themes": "^4.3.9",
     "axios": "^1.7.2",
     "element-plus": "^2.8.5",
     "moment": "^2.30.1",
