@@ -23,7 +23,7 @@
     "vue-axios": "^3.5.2",
     "vue-google-charts": "^1.1.0",
     "vue-oidc-client": "^1.0.0-alpha.5",
-    "vue-router": "^4.1.2",
+    "vue-router": "^4.5.1",
     "vuex": "^4.1.0"
   },
   "devDependencies": {
