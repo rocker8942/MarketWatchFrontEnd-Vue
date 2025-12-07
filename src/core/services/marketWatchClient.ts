@@ -3114,6 +3114,117 @@ export class StockInfoClient {
     }
 
     /**
+     * @param sorting (optional) 
+     * @param skipCount (optional) 
+     * @param maxResultCount (optional) 
+     * @return Success
+     */
+    stockInfoGetStockInfoList(sorting: string | undefined, skipCount: number | undefined, maxResultCount: number | undefined, stockId: string, cancelToken?: CancelToken): Promise<PagedResultDtoOfStockInfoDto> {
+        let url_ = this.baseUrl + "/api/app/stock-info/stock-info-list/{stockId}?";
+        if (stockId === undefined || stockId === null)
+            throw new Error("The parameter 'stockId' must be defined.");
+        url_ = url_.replace("{stockId}", encodeURIComponent("" + stockId));
+        if (sorting === null)
+            throw new Error("The parameter 'sorting' cannot be null.");
+        else if (sorting !== undefined)
+            url_ += "Sorting=" + encodeURIComponent("" + sorting) + "&";
+        if (skipCount === null)
+            throw new Error("The parameter 'skipCount' cannot be null.");
+        else if (skipCount !== undefined)
+            url_ += "SkipCount=" + encodeURIComponent("" + skipCount) + "&";
+        if (maxResultCount === null)
+            throw new Error("The parameter 'maxResultCount' cannot be null.");
+        else if (maxResultCount !== undefined)
+            url_ += "MaxResultCount=" + encodeURIComponent("" + maxResultCount) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processStockInfoGetStockInfoList(_response);
+        });
+    }
+
+    protected processStockInfoGetStockInfoList(response: AxiosResponse): Promise<PagedResultDtoOfStockInfoDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = PagedResultDtoOfStockInfoDto.fromJS(resultData200);
+            return Promise.resolve<PagedResultDtoOfStockInfoDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<PagedResultDtoOfStockInfoDto>(null as any);
+    }
+
+    /**
      * @param body (optional) 
      * @return Success
      */
@@ -11896,6 +12007,7 @@ export interface ISendTestEmailInput {
 
 export class StockChartDto implements IStockChartDto {
     id?: number;
+    name?: string | undefined;
     date?: Date;
     adjClosePrice?: number;
 
@@ -11911,6 +12023,7 @@ export class StockChartDto implements IStockChartDto {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
+            this.name = _data["name"];
             this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
             this.adjClosePrice = _data["adjClosePrice"];
         }
@@ -11926,6 +12039,7 @@ export class StockChartDto implements IStockChartDto {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
+        data["name"] = this.name;
         data["date"] = this.date ? this.date.toISOString() : <any>undefined;
         data["adjClosePrice"] = this.adjClosePrice;
         return data;
@@ -11934,6 +12048,7 @@ export class StockChartDto implements IStockChartDto {
 
 export interface IStockChartDto {
     id?: number;
+    name?: string | undefined;
     date?: Date;
     adjClosePrice?: number;
 }

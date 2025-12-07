@@ -4,7 +4,11 @@
         StockList</div>
     
     <div>
-    
+        <el-input v-model="stockCode" style="width: 240px" placeholder="Please input">
+            <template #append>
+                <el-button  @click="handleSearch" />
+            </template>
+        </el-input>
         <el-table :data="formattedProducts" style="width: 100%" @sort-change="handleSortChange">
     
             <el-table-column prop="id" label="Id" width="100"></el-table-column>
@@ -31,6 +35,7 @@ import DataTablesLib from 'datatables.net';
 import ApiService from "@/core/services/apiService";
 import { StockInfoClient, PagedResultDtoOfStockInfoDto } from "@/core/services/marketWatchClient";
 import moment from 'moment';
+import { Search } from '@element-plus/icons-vue'
 
 const stockClient = new StockInfoClient(ApiService.baseUrl, ApiService.vueInstance.axios);
 
@@ -47,6 +52,7 @@ export default defineComponent({
             totalCount: 0,
             sortField: '',
             sortOrder: '',
+            stockCode: '',
         };
     },
 
@@ -55,7 +61,11 @@ export default defineComponent({
             try {
 
                 // get stockPrice list
-                const response = await stockClient.stockInfoGetList(`${this.sortField} ${this.sortOrder}`, (this.currentPage - 1) * this.pageSize, this.pageSize);
+                const response = await stockClient.stockInfoGetStockInfoList(`${this.sortField} ${this.sortOrder}`,
+                 (this.currentPage - 1) * this.pageSize, 
+                 this.pageSize,
+                 this.stockCode
+                );
                 // this.pagedResultDtoOfstockPriceDto = response as PagedResultDtoOfStockInfoDto;
                 this.products = response.items;
                 this.totalCount = response.totalCount;
@@ -63,6 +73,9 @@ export default defineComponent({
             } catch (error) {
                 console.error(error);
             }
+        },
+        handleSearch() {
+            this.getList();
         },
         onPageChange(event) {
             this.currentPage = event.page;

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(dir:*)",
+      "Read(//g/SourceCode/MarketWatchWeb_AbpBackEnd/src/**)",
+      "Read(//g/SourceCode/MarketWatchWeb_AbpBackEnd/**)",
+      "Bash(dotnet run)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
