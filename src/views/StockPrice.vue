@@ -1,36 +1,53 @@
 <template>
-    <div class="page-header">
-        StockPrice</div>
-
-    <div>
-        <!-- Search Input -->
-        <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-            <el-input
-                v-model="searchQuery"
-                placeholder="Search by stock code or name"
-                clearable
-                @keyup.enter="handleSearch"
-                @clear="handleSearch"
-                style="max-width: 400px;">
-                <template #prefix>
-                    <el-icon><Search /></el-icon>
-                </template>
-            </el-input>
-            <el-button type="primary" @click="handleSearch">Search</el-button>
+    <div class="stock-price-page">
+        <div class="page-header">
+            <h1>Stock Prices</h1>
+            <p class="subtitle">Browse and search stock prices with real-time data</p>
         </div>
 
-        <el-table :data="formattedProducts" style="width: 100%" @sort-change="handleSortChange">
-            <el-table-column prop="code" label="Code" width="100"></el-table-column>
-            <el-table-column prop="name" label="Name" width="300" sortable="custom"></el-table-column>
-            <el-table-column prop="currentPrice" label="Price" width="100"></el-table-column>
-            <el-table-column prop="date" label="Date" width="180" sortable="custom"></el-table-column>
-            <el-table-column prop="volume" label="Volume" width="100"></el-table-column>
-    
-        </el-table>
-    
-        <!-- Pagination -->
-        <div style="display: flex; justify-content: center; margin-top: 20px;">
-            <el-pagination background layout="prev, pager, next" :total="totalCount" :page-size="pageSize" v-model:current-page="currentPage" @current-change="handlePageChange" />
+        <div class="content-wrapper">
+            <!-- Search Bar -->
+            <div class="search-section">
+                <el-input
+                    v-model="searchQuery"
+                    placeholder="Search by stock code or name"
+                    clearable
+                    @keyup.enter="handleSearch"
+                    @clear="handleSearch"
+                    class="search-input"
+                    size="large">
+                    <template #prefix>
+                        <el-icon><Search /></el-icon>
+                    </template>
+                </el-input>
+                <el-button type="primary" @click="handleSearch" size="large" class="search-btn">Search</el-button>
+            </div>
+
+            <!-- Data Table -->
+            <div class="table-container">
+                <el-table
+                    :data="formattedProducts"
+                    style="width: 100%"
+                    @sort-change="handleSortChange"
+                    stripe>
+                    <el-table-column prop="code" label="Code" width="120" fixed></el-table-column>
+                    <el-table-column prop="name" label="Name" min-width="300" sortable="custom"></el-table-column>
+                    <el-table-column prop="currentPrice" label="Price" width="140" align="right"></el-table-column>
+                    <el-table-column prop="date" label="Date" width="140" sortable="custom"></el-table-column>
+                    <el-table-column prop="volume" label="Volume" width="140" align="right"></el-table-column>
+                </el-table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination-wrapper">
+                <el-pagination
+                    background
+                    layout="total, prev, pager, next, jumper"
+                    :total="totalCount"
+                    :page-size="pageSize"
+                    v-model:current-page="currentPage"
+                    @current-change="handlePageChange" />
+            </div>
         </div>
     </div>
 </template>
@@ -128,8 +145,128 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.stock-price-page {
+    padding: 2rem 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
 .page-header {
-    font-size: 24px;
-    font-weight: bold;
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--color-heading);
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.content-wrapper {
+    background: var(--color-background-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Search Section */
+.search-section {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-input {
+    max-width: 500px;
+    flex: 1;
+}
+
+.search-btn {
+    min-width: 120px;
+}
+
+/* Table Container */
+.table-container {
+    background: var(--color-background);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+/* Pagination */
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    padding-top: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stock-price-page {
+        padding: 1.5rem 1rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .content-wrapper {
+        padding: 1rem;
+    }
+
+    .search-section {
+        flex-direction: column;
+    }
+
+    .search-input {
+        max-width: 100%;
+    }
+
+    .search-btn {
+        width: 100%;
+    }
+}
+
+@media (min-width: 1024px) {
+    .stock-price-page {
+        padding: 3rem 2rem;
+    }
+}
+
+/* Element Plus table customization */
+:deep(.el-table) {
+    --el-table-border-color: var(--color-border);
+    --el-table-bg-color: var(--color-background);
+    --el-table-tr-bg-color: var(--color-background);
+    --el-table-header-bg-color: var(--color-surface-variant);
+    --el-table-header-text-color: var(--color-heading);
+    --el-table-text-color: var(--color-text);
+    --el-table-row-hover-bg-color: var(--color-surface-variant);
+}
+
+:deep(.el-table th.el-table__cell) {
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+:deep(.el-table td.el-table__cell) {
+    font-size: 0.9375rem;
+}
+
+/* Element Plus pagination customization */
+:deep(.el-pagination) {
+    --el-pagination-bg-color: var(--color-background);
+    --el-pagination-text-color: var(--color-text);
+    --el-pagination-button-bg-color: var(--color-background);
+    --el-pagination-hover-color: var(--color-primary);
 }
 </style>

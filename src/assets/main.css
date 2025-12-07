@@ -5,35 +5,95 @@
 @import "./base.css";
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
   font-weight: normal;
+  min-height: 100vh;
+  background: var(--color-background);
 }
 
-a,
-.green {
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+
+h2 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+/* Links */
+a {
   text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
+  color: var(--color-primary);
+  transition: all 0.2s ease;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+/* Market Colors */
+.price-up,
+.positive {
+  color: var(--finance-green-light);
+}
+
+.price-down,
+.negative {
+  color: var(--finance-red-light);
+}
+
+/* Card Styles */
+.card {
+  background: var(--color-background-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-border-strong);
+}
+
+/* Containers */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.page-wrapper {
+  padding: 2rem 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  .page-wrapper {
+    padding: 3rem 2rem;
   }
 }
 
-/* @media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
+@media (min-width: 1024px) {
+  .page-wrapper {
+    padding: 3rem 3rem;
   }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
-} */
+}
