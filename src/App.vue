@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from "vue-router";
 import Header from "./components/HeaderComponent.vue";
+import { ArrowDown } from '@element-plus/icons-vue';
 </script>
 
 <template>
@@ -16,9 +17,22 @@ import Header from "./components/HeaderComponent.vue";
           <RouterLink to="/" class="nav-link">
             <span>Dashboard</span>
           </RouterLink>
-          <RouterLink to="/stockPrice" class="nav-link">
-            <span>Stock Prices</span>
-          </RouterLink>
+          <el-dropdown trigger="hover" class="nav-dropdown">
+            <span class="nav-link dropdown-trigger">
+              <span>Stock Prices</span>
+              <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item>
+                  <RouterLink to="/stockPrice" class="dropdown-link">Price List</RouterLink>
+                </el-dropdown-item>
+                <el-dropdown-item>
+                  <RouterLink to="/stockChart" class="dropdown-link">Stock Chart</RouterLink>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <RouterLink to="/StockList" class="nav-link">
             <span>Stock List</span>
           </RouterLink>
@@ -116,6 +130,45 @@ import Header from "./components/HeaderComponent.vue";
   right: 0;
   height: 2px;
   background: var(--color-primary);
+}
+
+/* Dropdown Menu */
+.nav-dropdown {
+  display: inline-block;
+}
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.dropdown-icon {
+  font-size: 0.75rem;
+  transition: transform 0.2s ease;
+}
+
+.nav-dropdown:hover .dropdown-icon {
+  transform: rotate(180deg);
+}
+
+.dropdown-link {
+  display: block;
+  width: 100%;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.dropdown-link:hover {
+  color: var(--color-primary);
+}
+
+.dropdown-link.router-link-active {
+  color: var(--color-primary);
+  font-weight: 600;
 }
 
 /* Navigation Actions */

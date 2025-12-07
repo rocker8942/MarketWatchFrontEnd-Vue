@@ -12,7 +12,8 @@
       "Bash(dotnet run:*)",
       "Bash(CreateClient.bat)",
       "Bash(cmd.exe:*)",
-      "Bash(\"C:\\Users\\rocke\\.nuget\\packages\\nswag.msbuild\\14.0.6\\tools\\Net80\\dotnet-nswag.exe\" run nswag.json)"
+      "Bash(\"C:\\Users\\rocke\\.nuget\\packages\\nswag.msbuild\\14.0.6\\tools\\Net80\\dotnet-nswag.exe\" run nswag.json)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []
