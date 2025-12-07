@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a Vue 3 + TypeScript frontend application for MarketWatch, integrating with an ABP Framework backend via OAuth authentication. The app displays stock market data, charts, and trading strategies.
 
 The backend code is at ../MarketWatchWeb_AbpBackEnd
+The backend code uses Abp Framework
 
 ## Agent instruction
 - Always create a todo list and process it one by one
@@ -59,6 +60,7 @@ npm run test:e2e:ci            # E2E tests (headless)
 - Automatically injects Bearer token from OIDC auth into all axios requests
 - Base URL configured via `GlobalConfig.APIServer`
 - Methods: `get()`, `post()`, `update()`, `delete()`
+- marketWatchClient.ts is auto-generated from backend. Run "G:\SourceCode\MarketWatchWeb_AbpBackEnd\src\MarketWatchWeb.HttpApi.Host\CreateClient.bat"
 
 ### Directory Structure
 ```

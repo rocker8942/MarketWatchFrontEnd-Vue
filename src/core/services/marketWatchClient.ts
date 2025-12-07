@@ -3737,9 +3737,10 @@ export class StockPriceClient {
      * @param sorting (optional) 
      * @param skipCount (optional) 
      * @param maxResultCount (optional) 
+     * @param filter (optional) 
      * @return Success
      */
-    stockPriceGetStockPriceWithDetails(sorting: string | undefined, skipCount: number | undefined, maxResultCount: number | undefined, cancelToken?: CancelToken): Promise<PagedResultDtoOfStockPriceDto> {
+    stockPriceGetStockPriceWithDetails(sorting: string | undefined, skipCount: number | undefined, maxResultCount: number | undefined, filter: string | undefined, cancelToken?: CancelToken): Promise<PagedResultDtoOfStockPriceDto> {
         let url_ = this.baseUrl + "/api/app/stock-price/stock-price-with-details?";
         if (sorting === null)
             throw new Error("The parameter 'sorting' cannot be null.");
@@ -3753,6 +3754,10 @@ export class StockPriceClient {
             throw new Error("The parameter 'maxResultCount' cannot be null.");
         else if (maxResultCount !== undefined)
             url_ += "MaxResultCount=" + encodeURIComponent("" + maxResultCount) + "&";
+        if (filter === null)
+            throw new Error("The parameter 'filter' cannot be null.");
+        else if (filter !== undefined)
+            url_ += "filter=" + encodeURIComponent("" + filter) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {

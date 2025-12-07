@@ -6,7 +6,13 @@
       "Bash(dir:*)",
       "Read(//g/SourceCode/MarketWatchWeb_AbpBackEnd/src/**)",
       "Read(//g/SourceCode/MarketWatchWeb_AbpBackEnd/**)",
-      "Bash(dotnet run)"
+      "Bash(dotnet run)",
+      "Bash(timeout:*)",
+      "Bash(npm run generate-client:*)",
+      "Bash(dotnet run:*)",
+      "Bash(CreateClient.bat)",
+      "Bash(cmd.exe:*)",
+      "Bash(\"C:\\Users\\rocke\\.nuget\\packages\\nswag.msbuild\\14.0.6\\tools\\Net80\\dotnet-nswag.exe\" run nswag.json)"
     ],
     "deny": [],
     "ask": []

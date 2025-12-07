@@ -1,8 +1,24 @@
 <template>
     <div class="page-header">
         StockPrice</div>
-    
+
     <div>
+        <!-- Search Input -->
+        <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+            <el-input
+                v-model="searchQuery"
+                placeholder="Search by stock code or name"
+                clearable
+                @keyup.enter="handleSearch"
+                @clear="handleSearch"
+                style="max-width: 400px;">
+                <template #prefix>
+                    <el-icon><Search /></el-icon>
+                </template>
+            </el-input>
+            <el-button type="primary" @click="handleSearch">Search</el-button>
+        </div>
+
         <el-table :data="formattedProducts" style="width: 100%" @sort-change="handleSortChange">
             <el-table-column prop="code" label="Code" width="100"></el-table-column>
             <el-table-column prop="name" label="Name" width="300" sortable="custom"></el-table-column>
@@ -21,6 +37,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { Search } from '@element-plus/icons-vue';
 // import DataTable from 'datatables.net-vue3';
 // import DataTablesLib from 'datatables.net';
 import ApiService from "@/core/services/apiService";
@@ -32,6 +49,9 @@ const stockClient = new StockPriceClient(ApiService.baseUrl, ApiService.vueInsta
 //DataTable.use(DataTablesLib);
 
 export default defineComponent({
+    components: {
+        Search
+    },
 
     data() {
         return {
@@ -42,6 +62,7 @@ export default defineComponent({
             totalCount: 0,
             sortField: '',
             sortOrder: '',
+            searchQuery: '',
         };
     },
 
@@ -50,7 +71,12 @@ export default defineComponent({
             try {
 
                 // get stockPrice list
-                const response = await stockClient.stockPriceGetStockPriceWithDetails(`${this.sortField} ${this.sortOrder}`, (this.currentPage - 1) * this.pageSize, this.pageSize);
+                const response = await stockClient.stockPriceGetStockPriceWithDetails(
+                    `${this.sortField} ${this.sortOrder}`,
+                    (this.currentPage - 1) * this.pageSize,
+                    this.pageSize,
+                    this.searchQuery || undefined
+                );
                 this.pagedResultDtoOfstockPriceDto = response as PagedResultDtoOfStockPriceDto;
                 this.products = this.pagedResultDtoOfstockPriceDto.items;
                 this.totalCount = this.pagedResultDtoOfstockPriceDto.totalCount;
@@ -75,6 +101,11 @@ export default defineComponent({
         handleSortChange({ prop, order }) {
             this.sortField = prop;
             this.sortOrder = order === 'ascending' ? 'asc' : 'desc';
+            this.getList();
+        },
+
+        handleSearch() {
+            this.currentPage = 1; // Reset to first page when searching
             this.getList();
         },
 
