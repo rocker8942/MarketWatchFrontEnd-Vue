@@ -146,7 +146,7 @@ export default defineComponent({
 
 <style scoped>
 .stock-price-page {
-    padding: 2rem 1.5rem;
+    padding: var(--space-4xl) var(--space-xl);
     max-width: 1400px;
     margin: 0 auto;
 }
@@ -170,17 +170,17 @@ export default defineComponent({
 
 .content-wrapper {
     background: var(--color-background-card);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 16px;
+    padding: var(--space-2xl);
+    box-shadow: var(--shadow-subtle);
 }
 
 /* Search Section */
 .search-section {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: var(--space-md);
+    margin-bottom: var(--space-2xl);
 }
 
 .search-input {

@@ -13,11 +13,15 @@
   background: var(--color-background);
 }
 
-/* Typography */
+/* Typography - Minimalist */
 h1, h2, h3, h4, h5, h6 {
   color: var(--color-heading);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+
+h1 {
   font-weight: 600;
-  letter-spacing: -0.01em;
 }
 
 h1 {
@@ -57,19 +61,19 @@ a:hover {
   color: var(--finance-red-light);
 }
 
-/* Card Styles */
+/* Card Styles - Minimalist */
 .card {
   background: var(--color-background-card);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 16px;
+  padding: var(--space-2xl);
+  box-shadow: var(--shadow-subtle);
   transition: all 0.2s ease;
 }
 
 .card:hover {
   box-shadow: var(--shadow-md);
-  border-color: var(--color-border-strong);
+  border-color: var(--color-border);
 }
 
 /* Containers */
@@ -83,6 +87,121 @@ a:hover {
   padding: 2rem 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
+}
+
+/* Professional Buttons */
+button, .btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:hover, .btn:hover {
+  transform: translateY(-1px);
+}
+
+button:active, .btn:active {
+  transform: translateY(0);
+}
+
+/* Smooth Scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus Styles for Accessibility */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Professional Data Tables - Minimalist */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th {
+  font-weight: 500;
+  text-align: left;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+tr:hover {
+  background: var(--color-surface-variant);
+}
+
+/* Loading Animations */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    90deg,
+    var(--color-background-mute) 0%,
+    var(--color-surface-variant) 50%,
+    var(--color-background-mute) 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* Professional Number Formatting */
+.number-display {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.status-badge.success {
+  background: rgba(76, 175, 80, 0.1);
+  color: var(--finance-green-light);
+}
+
+.status-badge.error {
+  background: rgba(239, 83, 80, 0.1);
+  color: var(--finance-red-light);
+}
+
+.status-badge.info {
+  background: rgba(25, 118, 210, 0.1);
+  color: var(--finance-blue-light);
 }
 
 /* Responsive */

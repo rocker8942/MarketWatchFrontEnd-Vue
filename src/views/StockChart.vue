@@ -6,7 +6,7 @@
         </div>
 
         <div class="content-wrapper">
-            <!-- Stock Selection and Period Controls -->
+            <!-- Stock Selection -->
             <div class="control-section">
                 <div class="stock-selector">
                     <label class="control-label">Select Stock</label>
@@ -16,6 +16,7 @@
                             :fetch-suggestions="querySearch"
                             placeholder="Select or enter stock code"
                             @select="handleStockSelect"
+                            @keyup.enter="handleStockChange"
                             size="large"
                             class="stock-input"
                             clearable
@@ -38,33 +39,41 @@
                         </el-button>
                     </div>
                 </div>
+            </div>
 
-                <div class="period-selector">
-                    <label class="control-label">Time Period</label>
-                    <el-radio-group v-model="selectedPeriod" @change="handlePeriodChange" size="large">
-                        <el-radio-button label="1M">1 Month</el-radio-button>
-                        <el-radio-button label="3M">3 Months</el-radio-button>
-                        <el-radio-button label="6M">6 Months</el-radio-button>
-                        <el-radio-button label="1Y">1 Year</el-radio-button>
-                        <el-radio-button label="5Y">5 Years</el-radio-button>
-                    </el-radio-group>
+            <!-- Stock Name and Info -->
+            <div v-if="loadedStockCode && latestPrice" class="stock-display-section">
+                <div class="stock-header">
+                    <h2 class="stock-name">{{ loadedStockName }}</h2>
+                    <span class="stock-code-badge">{{ loadedStockCode }}</span>
+                </div>
+
+                <div class="stock-info-card">
+                    <div class="info-item">
+                        <span class="info-label">Current Price</span>
+                        <span class="info-value price">{{ formatCurrency(latestPrice.currentPrice) }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Volume</span>
+                        <span class="info-value">{{ formatNumber(latestPrice.volume) }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Date</span>
+                        <span class="info-value">{{ formatDate(latestPrice.date) }}</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Stock Info Summary -->
-            <div v-if="selectedStockCode && latestPrice" class="stock-info-card">
-                <div class="info-item">
-                    <span class="info-label">Current Price</span>
-                    <span class="info-value price">{{ formatCurrency(latestPrice.currentPrice) }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Volume</span>
-                    <span class="info-value">{{ formatNumber(latestPrice.volume) }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Date</span>
-                    <span class="info-value">{{ formatDate(latestPrice.date) }}</span>
-                </div>
+            <!-- Period Controls -->
+            <div v-if="loadedStockCode" class="period-selector">
+                <el-radio-group v-model="selectedPeriod" @change="handlePeriodChange" size="large" class="period-buttons">
+                    <el-radio-button label="1M">1M</el-radio-button>
+                    <el-radio-button label="6M">6M</el-radio-button>
+                    <el-radio-button label="YTD">YTD</el-radio-button>
+                    <el-radio-button label="1Y">1Y</el-radio-button>
+                    <el-radio-button label="5Y">5Y</el-radio-button>
+                    <el-radio-button label="MAX">MAX</el-radio-button>
+                </el-radio-group>
             </div>
 
             <!-- Chart Container -->
@@ -73,7 +82,7 @@
                     <el-icon class="is-loading"><Loading /></el-icon>
                     <span>Loading chart data...</span>
                 </div>
-                <div v-else-if="!selectedStockCode" class="empty-state">
+                <div v-else-if="!loadedStockCode" class="empty-state">
                     <el-icon><TrendCharts /></el-icon>
                     <p>Select a stock to view the chart</p>
                 </div>
@@ -81,12 +90,13 @@
                     <el-icon><Warning /></el-icon>
                     <p>No data available for this stock</p>
                 </div>
-                <GChart
+                <AreaChart
                     v-else
-                    type="LineChart"
                     :data="chartData"
-                    :options="chartOptions"
-                    class="google-chart"
+                    :height="450"
+                    :show-data-zoom="true"
+                    color="#22c55e"
+                    class="area-chart"
                 />
             </div>
         </div>
@@ -95,17 +105,18 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { GChart } from "vue-google-charts";
+import AreaChart from "../components/charts/AreaChart.vue";
 import { Loading, TrendCharts, Warning } from '@element-plus/icons-vue';
 import ApiService from "@/core/services/apiService";
-import { StockPriceClient, StockPriceDto } from "@/core/services/marketWatchClient";
+import { StockPriceClient, StockPriceDto, StockInfoClient } from "@/core/services/marketWatchClient";
 import moment from 'moment';
 
-const stockClient = new StockPriceClient(ApiService.baseUrl, ApiService.vueInstance.axios);
+const stockPriceClient = new StockPriceClient(ApiService.baseUrl, ApiService.vueInstance.axios);
+const stockInfoClient = new StockInfoClient(ApiService.baseUrl, ApiService.vueInstance.axios);
 
 export default defineComponent({
     components: {
-        GChart,
+        AreaChart,
         Loading,
         TrendCharts,
         Warning
@@ -114,6 +125,7 @@ export default defineComponent({
     data() {
         return {
             selectedStockCode: '',
+            loadedStockCode: '', // Track the stock code that's currently loaded in the chart
             selectedPeriod: '6M',
             loading: false,
             recentStocks: [] as Array<{ code: string, name: string }>,
@@ -123,98 +135,50 @@ export default defineComponent({
     },
 
     computed: {
+        loadedStockName(): string {
+            if (!this.loadedStockCode) return '';
+            const stock = this.recentStocks.find(s => s.code === this.loadedStockCode);
+            return stock ? stock.name : this.loadedStockCode;
+        },
+
         chartData(): any[] {
             if (this.stockPrices.length === 0) return [];
 
-            const data = [['Date', 'Price', 'Volume']];
+            const data = [['Date', 'Price']];
 
-            // Sort by date ascending
-            const sortedPrices = [...this.stockPrices].sort((a, b) =>
-                new Date(a.date!).getTime() - new Date(b.date!).getTime()
-            );
-
-            sortedPrices.forEach(price => {
+            // Data is sorted in ascending order before being passed to the chart
+            for (const price of this.stockPrices) {
+                const date = new Date(price.date!);
                 data.push([
-                    moment(price.date).format('MMM DD, YYYY'),
-                    price.currentPrice,
-                    price.volume
+                    date,
+                    price.currentPrice
                 ]);
-            });
+            }
 
             return data;
-        },
-
-        chartOptions(): any {
-            return {
-                title: `${this.selectedStockCode} Stock Price`,
-                titleTextStyle: {
-                    fontSize: 18,
-                    bold: true,
-                    color: '#333'
-                },
-                hAxis: {
-                    title: 'Date',
-                    titleTextStyle: { italic: false, bold: true },
-                    slantedText: true,
-                    slantedTextAngle: 45
-                },
-                vAxes: {
-                    0: {
-                        title: 'Price ($)',
-                        titleTextStyle: { italic: false, bold: true },
-                        format: 'currency'
-                    },
-                    1: {
-                        title: 'Volume',
-                        titleTextStyle: { italic: false, bold: true }
-                    }
-                },
-                series: {
-                    0: { targetAxisIndex: 0, color: '#1976d2', lineWidth: 2 },
-                    1: { targetAxisIndex: 1, color: '#90caf9', lineWidth: 1, lineDashStyle: [4, 4] }
-                },
-                legend: { position: 'top' },
-                chartArea: { width: '80%', height: '70%' },
-                height: 500,
-                animation: {
-                    startup: true,
-                    duration: 1000,
-                    easing: 'out'
-                },
-                backgroundColor: '#fafafa',
-                pointSize: 3
-            };
         }
     },
 
     methods: {
         async loadRecentStocks() {
             try {
-                console.log('Loading recent stocks...');
-                // Get a sample of recent stocks for the dropdown
-                const response = await stockClient.stockPriceGetStockPriceWithDetails(
-                    'date desc',
+                console.log('Loading all stocks...');
+                // Get all available stock codes from StockInfo
+                const response = await stockInfoClient.stockInfoGetList(
+                    'name asc',
                     0,
-                    50,
-                    undefined
+                    1000 // Get all stocks
                 );
 
                 console.log('Stock response:', response);
 
-                // Extract unique stock codes and names
-                const uniqueStocks = new Map<string, string>();
-                response.items?.forEach(item => {
-                    if (item.stockCode && item.stockName && !uniqueStocks.has(item.stockCode)) {
-                        uniqueStocks.set(item.stockCode, item.stockName);
-                    }
-                });
+                // Map to autocomplete format with id as code and name
+                this.recentStocks = response.items?.map(item => ({
+                    code: item.id || '',
+                    name: item.name || ''
+                })) || [];
 
-                this.recentStocks = Array.from(uniqueStocks.entries()).map(([code, name]) => ({
-                    code,
-                    name
-                }));
-
-                console.log('Recent stocks loaded:', this.recentStocks.length, this.recentStocks);
+                console.log('All stocks loaded:', this.recentStocks.length, this.recentStocks);
             } catch (error) {
                 console.error('Error loading stocks:', error);
             }
@@ -222,36 +186,41 @@ export default defineComponent({
 
         async loadStockData() {
             if (!this.selectedStockCode) {
-                console.log('No stock code selected');
                 return;
             }
 
-            console.log('Loading data for stock:', this.selectedStockCode);
             this.loading = true;
             try {
                 const days = this.getPeriodDays();
-                console.log('Period days:', days);
+                const cutoffDate = moment().subtract(days, 'days').format('YYYY-MM-DD');
 
-                // Fetch all data for the stock, then filter by date on frontend
-                const response = await stockClient.stockPriceGetStockPriceWithDetails(
+                // Fetch the latest records for the stock (max 1000 due to ABP validation)
+                const response = await stockPriceClient.stockPriceGetStockPriceWithDetails(
                     'date desc',
                     0,
-                    1000, // Get more records to cover the period
+                    1000, // ABP default max limit
                     this.selectedStockCode
                 );
 
-                console.log('Stock data response:', response);
-
                 if (response.items && response.items.length > 0) {
-                    const cutoffDate = moment().subtract(days, 'days');
-                    this.stockPrices = response.items.filter(item =>
-                        moment(item.date).isAfter(cutoffDate)
+                    // Filter by cutoff date
+                    const filteredPrices = response.items.filter(item =>
+                        item.date && new Date(item.date) >= new Date(cutoffDate)
                     ) as StockPriceDto[];
 
-                    this.latestPrice = response.items[0] as StockPriceDto;
-                    console.log('Loaded prices:', this.stockPrices.length, 'Latest:', this.latestPrice);
+                    // If not enough data for the requested period, use all available data
+                    const rawPrices = filteredPrices.length > 0
+                        ? filteredPrices
+                        : response.items as StockPriceDto[];
+                    
+                    // Data from the backend is in descending order (newest first).
+                    // We need to reverse it for the chart to show oldest to newest.
+                    this.stockPrices = rawPrices.slice().reverse();
+
+                    // Get the last item (which is now the latest price) for the display card.
+                    this.latestPrice = this.stockPrices[this.stockPrices.length - 1] as StockPriceDto;
+                    this.loadedStockCode = this.selectedStockCode;
                 } else {
-                    console.log('No items in response');
                     this.stockPrices = [];
                     this.latestPrice = null;
                 }
@@ -266,13 +235,23 @@ export default defineComponent({
 
         getPeriodDays(): number {
             const periodMap: Record<string, number> = {
+                '1D': 1,
+                '5D': 5,
                 '1M': 30,
-                '3M': 90,
                 '6M': 180,
+                'YTD': this.getYearToDateDays(),
                 '1Y': 365,
-                '5Y': 1825
+                '5Y': 1825,
+                'MAX': 36500 // 100 years - effectively all data
             };
             return periodMap[this.selectedPeriod] || 180;
+        },
+
+        getYearToDateDays(): number {
+            const today = new Date();
+            const startOfYear = new Date(today.getFullYear(), 0, 1);
+            const diff = today.getTime() - startOfYear.getTime();
+            return Math.ceil(diff / (1000 * 60 * 60 * 24));
         },
 
         querySearch(queryString: string, cb: any) {
@@ -288,7 +267,6 @@ export default defineComponent({
         handleStockSelect(item: any) {
             console.log('Stock selected:', item);
             this.selectedStockCode = item.code;
-            this.loadStockData();
         },
 
         handleStockChange() {
@@ -325,7 +303,7 @@ export default defineComponent({
 
 <style scoped>
 .stock-chart-page {
-    padding: 2rem 1.5rem;
+    padding: var(--space-4xl) var(--space-xl);
     max-width: 1400px;
     margin: 0 auto;
 }
@@ -349,30 +327,28 @@ export default defineComponent({
 
 .content-wrapper {
     background: var(--color-background-card);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 16px;
+    padding: var(--space-3xl);
+    box-shadow: var(--shadow-subtle);
 }
 
 /* Control Section */
 .control-section {
-    display: flex;
-    gap: 2rem;
     margin-bottom: 2rem;
-    flex-wrap: wrap;
-}
-
-.stock-selector,
-.period-selector {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
 }
 
 .stock-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
     flex: 1;
     min-width: 300px;
+}
+
+.period-selector {
+    margin-bottom: 1rem;
+    padding: 0.5rem 0;
 }
 
 .input-row {
@@ -414,14 +390,41 @@ export default defineComponent({
     font-size: 0.875rem;
 }
 
-/* Stock Info Card */
+/* Stock Display Section */
+.stock-display-section {
+    margin-bottom: 2rem;
+}
+
+.stock-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.stock-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-heading);
+    margin: 0;
+}
+
+.stock-code-badge {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #3b82f6;
+    background: #eff6ff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+}
+
+/* Stock Info Card - Minimalist */
 .stock-info-card {
     display: flex;
-    gap: 2rem;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
-    border-radius: 8px;
-    margin-bottom: 2rem;
+    gap: var(--space-xl);
+    padding: var(--space-2xl);
+    background: var(--color-primary);
+    border-radius: 12px;
     color: white;
 }
 
@@ -558,5 +561,47 @@ export default defineComponent({
 
 :deep(.el-select) {
     width: 100%;
+}
+
+/* Period buttons styling - minimal design matching reference */
+.period-buttons {
+    background: transparent;
+    border: none;
+}
+
+:deep(.period-buttons .el-radio-button) {
+    border: none;
+    margin: 0 0.25rem;
+}
+
+:deep(.period-buttons .el-radio-button__inner) {
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: none;
+    transition: all 0.2s;
+}
+
+:deep(.period-buttons .el-radio-button__inner:hover) {
+    color: #1f2937;
+    background: transparent;
+}
+
+:deep(.period-buttons .el-radio-button.is-active .el-radio-button__inner) {
+    color: #3b82f6;
+    background: transparent;
+    border-bottom: 2px solid #3b82f6;
+    border-radius: 0;
+}
+
+:deep(.period-buttons .el-radio-button:first-child .el-radio-button__inner) {
+    border-radius: 0;
+}
+
+:deep(.period-buttons .el-radio-button:last-child .el-radio-button__inner) {
+    border-radius: 0;
 }
 </style>
