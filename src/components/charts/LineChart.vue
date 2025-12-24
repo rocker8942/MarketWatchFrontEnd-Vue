@@ -62,6 +62,15 @@ const chartOption = computed(() => {
     },
     yAxis: {
       ...baseOptions.value.yAxis,
+      scale: true,
+      min: (value: any) => {
+        const range = value.max - value.min;
+        return value.min - range * 0.05;
+      },
+      max: (value: any) => {
+        const range = value.max - value.min;
+        return value.max + range * 0.05;
+      },
     },
     series: [
       {
