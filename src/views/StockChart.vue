@@ -192,38 +192,50 @@ export default defineComponent({
             this.loading = true;
             try {
                 const days = this.getPeriodDays();
-                const cutoffDate = moment().subtract(days, 'days').format('YYYY-MM-DD');
 
-                // Fetch the latest records for the stock (max 1000 due to ABP validation)
-                const response = await stockPriceClient.stockPriceGetStockPriceWithDetails(
+                const endDate = moment().endOf('day').toDate();
+                const startDate = this.selectedPeriod === 'MAX'
+                    ? undefined
+                    : (this.selectedPeriod === 'YTD'
+                        ? moment().startOf('year').startOf('day').toDate()
+                        : moment().subtract(days, 'days').startOf('day').toDate());
+
+                const maxResultCount = this.selectedPeriod === 'MAX'
+                    ? 1000
+                    : Math.min(1000, days);
+
+                let response = await stockPriceClient.stockPriceGetStockPriceWithDetails(
                     'date desc',
                     0,
-                    1000, // ABP default max limit
-                    this.selectedStockCode
+                    maxResultCount,
+                    this.selectedStockCode,
+                    startDate,
+                    endDate
                 );
 
-                if (response.items && response.items.length > 0) {
-                    // Filter by cutoff date
-                    const filteredPrices = response.items.filter(item =>
-                        item.date && new Date(item.date) >= new Date(cutoffDate)
-                    ) as StockPriceDto[];
-
-                    // If not enough data for the requested period, use all available data
-                    const rawPrices = filteredPrices.length > 0
-                        ? filteredPrices
-                        : response.items as StockPriceDto[];
-                    
-                    // Data from the backend is in descending order (newest first).
-                    // We need to reverse it for the chart to show oldest to newest.
-                    this.stockPrices = rawPrices.slice().reverse();
-
-                    // Get the last item (which is now the latest price) for the display card.
-                    this.latestPrice = this.stockPrices[this.stockPrices.length - 1] as StockPriceDto;
-                    this.loadedStockCode = this.selectedStockCode;
-                } else {
-                    this.stockPrices = [];
-                    this.latestPrice = null;
+                // If there's no data in the requested window, fall back to latest N points (still keeps chart length correct).
+                if ((response.items?.length ?? 0) === 0 && this.selectedPeriod !== 'MAX') {
+                    response = await stockPriceClient.stockPriceGetStockPriceWithDetails(
+                        'date desc',
+                        0,
+                        maxResultCount,
+                        this.selectedStockCode,
+                        undefined,
+                        undefined
+                    );
                 }
+
+                const rawPrices = (response.items ?? []) as StockPriceDto[];
+
+                // Data from the backend is in descending order (newest first).
+                // We need to reverse it for the chart to show oldest to newest.
+                this.stockPrices = rawPrices.slice().reverse();
+
+                this.latestPrice = this.stockPrices.length > 0
+                    ? (this.stockPrices[this.stockPrices.length - 1] as StockPriceDto)
+                    : null;
+
+                this.loadedStockCode = this.selectedStockCode;
             } catch (error) {
                 console.error('Error loading stock data:', error);
                 this.stockPrices = [];
