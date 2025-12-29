@@ -12,8 +12,6 @@ const updateTime = () => {
   currentTime.value = new Date();
   const hours = currentTime.value.getHours();
   const day = currentTime.value.getDay();
-  // Market open Mon-Fri, 9:30 AM - 4:00 PM EST (simplified)
-  isMarketOpen.value = day >= 1 && day <= 5 && hours >= 9 && hours <= 16;
 };
 
 let timeInterval: number;
@@ -32,10 +30,6 @@ onUnmounted(() => {
     <!-- Market Status Banner -->
     <div class="market-status-banner">
       <div class="banner-container">
-        <div class="market-status">
-          <span class="status-dot" :class="{ 'open': isMarketOpen, 'closed': !isMarketOpen }"></span>
-          <span class="status-text">Market {{ isMarketOpen ? 'Open' : 'Closed' }}</span>
-        </div>
         <div class="market-time">
           {{ currentTime.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}
         </div>
@@ -73,9 +67,22 @@ onUnmounted(() => {
           <RouterLink to="/StockList" class="nav-link">
             <span>Securities</span>
           </RouterLink>
-          <RouterLink to="/strategy" class="nav-link">
-            <span>Analysis</span>
-          </RouterLink>
+          <el-dropdown trigger="hover" class="nav-dropdown">
+            <span class="nav-link dropdown-trigger">
+              <span>Strategy</span>
+              <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item>
+                  <RouterLink to="/strategy" class="dropdown-link">Analysis</RouterLink>
+                </el-dropdown-item>
+                <el-dropdown-item>
+                  <RouterLink to="/strategyHistory" class="dropdown-link">Strategy History</RouterLink>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <RouterLink to="/about" class="nav-link">
             <span>About</span>
           </RouterLink>

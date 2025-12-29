@@ -1,103 +1,146 @@
 <template>
     <div class="stock-chart-page">
-        <div class="page-header">
-            <h1>Stock Chart</h1>
-            <p class="subtitle">Analyze stock price movements with interactive charts</p>
+        <!-- Stock Selection -->
+        <div class="stock-selector-bar">
+            <el-autocomplete
+                v-model="selectedStockCode"
+                :fetch-suggestions="querySearch"
+                placeholder="Search stocks..."
+                @select="handleStockSelect"
+                @keyup.enter="handleStockChange"
+                size="large"
+                class="stock-search-input"
+                clearable
+                :trigger-on-focus="true"
+                value-key="code">
+                <template #default="{ item }">
+                    <div class="stock-option">
+                        <span class="stock-code">{{ item.code }}</span>
+                        <span class="stock-name">{{ item.name }}</span>
+                    </div>
+                </template>
+            </el-autocomplete>
+            <el-button
+                type="primary"
+                @click="handleStockChange"
+                size="large"
+                :disabled="!selectedStockCode">
+                Load
+            </el-button>
         </div>
 
-        <div class="content-wrapper">
-            <!-- Stock Selection -->
-            <div class="control-section">
-                <div class="stock-selector">
-                    <label class="control-label">Select Stock</label>
-                    <div class="input-row">
-                        <el-autocomplete
-                            v-model="selectedStockCode"
-                            :fetch-suggestions="querySearch"
-                            placeholder="Select or enter stock code"
-                            @select="handleStockSelect"
-                            @keyup.enter="handleStockChange"
-                            size="large"
-                            class="stock-input"
-                            clearable
-                            :trigger-on-focus="true"
-                            value-key="code">
-                            <template #default="{ item }">
-                                <div class="stock-option">
-                                    <span class="stock-code">{{ item.code }}</span>
-                                    <span class="stock-name">{{ item.name }}</span>
-                                </div>
-                            </template>
-                        </el-autocomplete>
-                        <el-button
-                            type="primary"
-                            @click="handleStockChange"
-                            size="large"
-                            class="load-btn"
-                            :disabled="!selectedStockCode">
-                            Load Chart
-                        </el-button>
+        <div v-if="!loadedStockCode" class="empty-state-main">
+            <el-icon><TrendCharts /></el-icon>
+            <p>Search and select a stock to view details</p>
+        </div>
+
+        <!-- Main Content Layout -->
+        <div v-else class="main-layout">
+            <!-- Left: Chart Section -->
+            <div class="chart-section">
+                <!-- Stock Header -->
+                <div class="stock-title-section">
+                    <h1 class="company-name">{{ loadedStockName }}</h1>
+
+                    <div v-if="latestPrice" class="price-section">
+                        <div class="current-price">{{ formatCurrency(latestPrice.currentPrice) }}</div>
+                        <div class="price-meta">
+                            <span class="date-info">{{ formatDate(latestPrice.date) }}</span>
+                        </div>
                     </div>
+                </div>
+
+                <!-- Period Tabs -->
+                <div class="period-tabs">
+                    <button
+                        v-for="period in ['1M', '6M', 'YTD', '1Y', '5Y', 'MAX']"
+                        :key="period"
+                        :class="['period-tab', { active: selectedPeriod === period }]"
+                        @click="selectedPeriod = period; handlePeriodChange()">
+                        {{ period }}
+                    </button>
+                </div>
+
+                <!-- Chart -->
+                <div class="chart-wrapper">
+                    <div v-if="loading" class="loading-state">
+                        <el-icon class="is-loading"><Loading /></el-icon>
+                        <span>Loading...</span>
+                    </div>
+                    <div v-else-if="chartData.length === 0" class="empty-chart-state">
+                        <el-icon><Warning /></el-icon>
+                        <p>No data available</p>
+                    </div>
+                    <AreaChart
+                        v-else
+                        :data="chartData"
+                        :height="400"
+                        :show-data-zoom="true"
+                        color="#d93025"
+                        class="area-chart"
+                    />
                 </div>
             </div>
 
-            <!-- Stock Name and Info -->
-            <div v-if="loadedStockCode && latestPrice" class="stock-display-section">
-                <div class="stock-header">
-                    <h2 class="stock-name">{{ loadedStockName }}</h2>
-                    <span class="stock-code-badge">{{ loadedStockCode }}</span>
-                </div>
-
-                <div class="stock-info-card">
-                    <div class="info-item">
-                        <span class="info-label">Current Price</span>
-                        <span class="info-value price">{{ formatCurrency(latestPrice.currentPrice) }}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Volume</span>
+            <!-- Right: Info Panel -->
+            <div class="info-panel">
+                <div v-if="latestPrice" class="info-section">
+                    <div class="info-row">
+                        <span class="info-label">VOLUME</span>
                         <span class="info-value">{{ formatNumber(latestPrice.volume) }}</span>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">Date</span>
-                        <span class="info-value">{{ formatDate(latestPrice.date) }}</span>
+                </div>
+
+                <div v-if="companyData" class="info-section">
+                    <div class="info-row">
+                        <span class="info-label">MARKET CAP</span>
+                        <span class="info-value">{{ formatLargeNumber(companyData.marketCapitalization) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">P/E RATIO</span>
+                        <span class="info-value">{{ formatRatio(companyData.peRatio) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">DIVIDEND YIELD</span>
+                        <span class="info-value">{{ formatPercent(companyData.dividendYield) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">52W HIGH</span>
+                        <span class="info-value">{{ formatCurrency(companyData.weekHigh) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">52W LOW</span>
+                        <span class="info-value">{{ formatCurrency(companyData.weekLow) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">EPS</span>
+                        <span class="info-value">{{ formatCurrency(companyData.eps) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">BETA</span>
+                        <span class="info-value">{{ formatRatio(companyData.beta) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">PROFIT MARGIN</span>
+                        <span class="info-value">{{ formatPercent(companyData.profitMargin) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">REVENUE TTM</span>
+                        <span class="info-value">{{ formatLargeNumber(companyData.revenueTTM) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">ROE</span>
+                        <span class="info-value">{{ formatPercent(companyData.returnOnEquityTTM) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">SECTOR</span>
+                        <span class="info-value">{{ companyData.sector || 'N/A' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">INDUSTRY</span>
+                        <span class="info-value">{{ companyData.industry || 'N/A' }}</span>
                     </div>
                 </div>
-            </div>
-
-            <!-- Period Controls -->
-            <div v-if="loadedStockCode" class="period-selector">
-                <el-radio-group v-model="selectedPeriod" @change="handlePeriodChange" size="large" class="period-buttons">
-                    <el-radio-button label="1M">1M</el-radio-button>
-                    <el-radio-button label="6M">6M</el-radio-button>
-                    <el-radio-button label="YTD">YTD</el-radio-button>
-                    <el-radio-button label="1Y">1Y</el-radio-button>
-                    <el-radio-button label="5Y">5Y</el-radio-button>
-                    <el-radio-button label="MAX">MAX</el-radio-button>
-                </el-radio-group>
-            </div>
-
-            <!-- Chart Container -->
-            <div class="chart-container">
-                <div v-if="loading" class="loading-state">
-                    <el-icon class="is-loading"><Loading /></el-icon>
-                    <span>Loading chart data...</span>
-                </div>
-                <div v-else-if="!loadedStockCode" class="empty-state">
-                    <el-icon><TrendCharts /></el-icon>
-                    <p>Select a stock to view the chart</p>
-                </div>
-                <div v-else-if="chartData.length === 0" class="empty-state">
-                    <el-icon><Warning /></el-icon>
-                    <p>No data available for this stock</p>
-                </div>
-                <AreaChart
-                    v-else
-                    :data="chartData"
-                    :height="450"
-                    :show-data-zoom="true"
-                    color="#22c55e"
-                    class="area-chart"
-                />
             </div>
         </div>
     </div>
@@ -108,11 +151,12 @@ import { defineComponent } from "vue";
 import AreaChart from "../components/charts/AreaChart.vue";
 import { Loading, TrendCharts, Warning } from '@element-plus/icons-vue';
 import ApiService from "@/core/services/apiService";
-import { StockPriceClient, StockPriceDto, StockInfoClient } from "@/core/services/marketWatchClient";
+import { StockPriceClient, StockPriceDto, StockInfoClient, CompanyClient, CompanyDto } from "@/core/services/marketWatchClient";
 import moment from 'moment';
 
 const stockPriceClient = new StockPriceClient(ApiService.baseUrl, ApiService.vueInstance.axios);
 const stockInfoClient = new StockInfoClient(ApiService.baseUrl, ApiService.vueInstance.axios);
+const companyClient = new CompanyClient(ApiService.baseUrl, ApiService.vueInstance.axios);
 
 export default defineComponent({
     components: {
@@ -131,6 +175,7 @@ export default defineComponent({
             recentStocks: [] as Array<{ code: string, name: string }>,
             stockPrices: [] as StockPriceDto[],
             latestPrice: null as StockPriceDto | null,
+            companyData: null as CompanyDto | null,
         };
     },
 
@@ -236,10 +281,22 @@ export default defineComponent({
                     : null;
 
                 this.loadedStockCode = this.selectedStockCode;
+
+                // Fetch company financial data
+                try {
+                    console.log('Fetching company data for symbol:', this.selectedStockCode);
+                    this.companyData = await companyClient.companyGetBySymbol(this.selectedStockCode);
+                    console.log('Company data received:', this.companyData);
+                } catch (error) {
+                    console.error('Error loading company data:', error);
+                    console.error('Error details:', JSON.stringify(error));
+                    this.companyData = null;
+                }
             } catch (error) {
                 console.error('Error loading stock data:', error);
                 this.stockPrices = [];
                 this.latestPrice = null;
+                this.companyData = null;
             } finally {
                 this.loading = false;
             }
@@ -304,6 +361,24 @@ export default defineComponent({
         formatDate(date: Date | undefined): string {
             if (!date) return '';
             return moment(date).format('MMM DD, YYYY');
+        },
+
+        formatLargeNumber(value: number | undefined): string {
+            if (!value) return 'N/A';
+            if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+            if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+            if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+            return `$${value.toLocaleString('en-US')}`;
+        },
+
+        formatPercent(value: number | undefined): string {
+            if (!value) return 'N/A';
+            return `${(value * 100).toFixed(2)}%`;
+        },
+
+        formatRatio(value: number | undefined): string {
+            if (!value) return 'N/A';
+            return value.toFixed(2);
         }
     },
 
@@ -315,185 +390,175 @@ export default defineComponent({
 
 <style scoped>
 .stock-chart-page {
-    padding: var(--space-4xl) var(--space-xl);
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
+    padding: 1.5rem 2rem;
+    background: #fff;
 }
 
-.page-header {
-    margin-bottom: 2rem;
-}
-
-.page-header h1 {
-    font-size: 2.25rem;
-    font-weight: 700;
-    color: var(--color-heading);
-    margin-bottom: 0.5rem;
-}
-
-.subtitle {
-    font-size: 1rem;
-    color: var(--color-text-secondary);
-    margin: 0;
-}
-
-.content-wrapper {
-    background: var(--color-background-card);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: 16px;
-    padding: var(--space-3xl);
-    box-shadow: var(--shadow-subtle);
-}
-
-/* Control Section */
-.control-section {
-    margin-bottom: 2rem;
-}
-
-.stock-selector {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    flex: 1;
-    min-width: 300px;
-}
-
-.period-selector {
-    margin-bottom: 1rem;
-    padding: 0.5rem 0;
-}
-
-.input-row {
+/* Stock Selector Bar */
+.stock-selector-bar {
     display: flex;
     gap: 0.75rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e8eaed;
 }
 
-.control-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--color-heading);
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-}
-
-.stock-input {
+.stock-search-input {
     flex: 1;
-    max-width: 400px;
-}
-
-.load-btn {
-    min-width: 120px;
+    max-width: 500px;
 }
 
 .stock-option {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
     align-items: center;
 }
 
 .stock-code {
-    font-weight: 600;
-    color: var(--color-primary);
-    min-width: 80px;
+    font-weight: 500;
+    color: #202124;
+    min-width: 60px;
 }
 
 .stock-name {
-    color: var(--color-text-secondary);
+    color: #5f6368;
     font-size: 0.875rem;
 }
 
-/* Stock Display Section */
-.stock-display-section {
-    margin-bottom: 2rem;
-}
-
-.stock-header {
+/* Empty State */
+.empty-state-main {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    justify-content: center;
+    padding: 4rem 2rem;
+    color: #5f6368;
 }
 
-.stock-name {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--color-heading);
+.empty-state-main .el-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: #dadce0;
+}
+
+.empty-state-main p {
+    font-size: 1rem;
     margin: 0;
 }
 
-.stock-code-badge {
+/* Main Layout */
+.main-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 2rem;
+}
+
+/* Chart Section (Left) */
+.chart-section {
+    min-width: 0;
+}
+
+.stock-title-section {
+    margin-bottom: 1.5rem;
+}
+
+.company-name {
+    font-size: 1.75rem;
+    font-weight: 400;
+    color: #202124;
+    margin: 0 0 1rem 0;
+    line-height: 1.3;
+}
+
+.price-section {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.current-price {
+    font-size: 2.5rem;
+    font-weight: 400;
+    color: #202124;
+    line-height: 1;
+}
+
+.price-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #5f6368;
     font-size: 0.875rem;
-    font-weight: 600;
-    color: #3b82f6;
-    background: #eff6ff;
-    padding: 0.25rem 0.75rem;
-    border-radius: 4px;
 }
 
-/* Stock Info Card - Minimalist */
-.stock-info-card {
+.date-info {
+    color: #5f6368;
+}
+
+/* Period Tabs */
+.period-tabs {
     display: flex;
-    gap: var(--space-xl);
-    padding: var(--space-2xl);
-    background: var(--color-primary);
-    border-radius: 12px;
-    color: white;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e8eaed;
+    padding-bottom: 0;
 }
 
-.info-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+.period-tab {
+    padding: 0.5rem 0.75rem;
+    background: none;
+    border: none;
+    color: #5f6368;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    margin-bottom: -1px;
 }
 
-.info-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    opacity: 0.9;
+.period-tab:hover {
+    color: #202124;
 }
 
-.info-value {
-    font-size: 1.5rem;
-    font-weight: 700;
+.period-tab.active {
+    color: #1a73e8;
+    border-bottom-color: #1a73e8;
 }
 
-.info-value.price {
-    font-size: 2rem;
-}
-
-/* Chart Container */
-.chart-container {
-    background: white;
+/* Chart Wrapper */
+.chart-wrapper {
+    background: #fff;
+    border: 1px solid #e8eaed;
     border-radius: 8px;
-    padding: 1.5rem;
-    min-height: 500px;
+    padding: 1rem;
+    min-height: 450px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.google-chart {
-    width: 100%;
-}
-
 .loading-state,
-.empty-state {
+.empty-chart-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-    color: var(--color-text-secondary);
+    color: #5f6368;
 }
 
 .loading-state .el-icon,
-.empty-state .el-icon {
-    font-size: 3rem;
+.empty-chart-state .el-icon {
+    font-size: 2.5rem;
+    color: #dadce0;
 }
 
 .loading-state span,
-.empty-state p {
-    font-size: 1rem;
+.empty-chart-state p {
+    font-size: 0.875rem;
     margin: 0;
 }
 
@@ -510,110 +575,87 @@ export default defineComponent({
     }
 }
 
+/* Info Panel (Right) */
+.info-panel {
+    background: #fff;
+    border: 1px solid #e8eaed;
+    border-radius: 8px;
+    padding: 1.5rem;
+    height: fit-content;
+}
+
+.info-section {
+    padding: 0;
+}
+
+.info-section + .info-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e8eaed;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+}
+
+.info-row + .info-row {
+    border-top: 1px solid #f1f3f4;
+}
+
+.info-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #5f6368;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.info-value {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #202124;
+    text-align: right;
+}
+
 /* Responsive */
+@media (max-width: 1024px) {
+    .main-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .info-panel {
+        order: -1;
+    }
+}
+
 @media (max-width: 768px) {
     .stock-chart-page {
-        padding: 1.5rem 1rem;
-    }
-
-    .page-header h1 {
-        font-size: 1.75rem;
-    }
-
-    .content-wrapper {
-        padding: 1.5rem;
-    }
-
-    .control-section {
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .stock-selector {
-        min-width: 100%;
-    }
-
-    .input-row {
-        flex-direction: column;
-    }
-
-    .stock-input {
-        max-width: 100%;
-    }
-
-    .load-btn {
-        width: 100%;
-    }
-
-    .stock-info-card {
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .chart-container {
         padding: 1rem;
     }
 
-    :deep(.google-chart svg) {
-        width: 100% !important;
-        height: auto !important;
+    .company-name {
+        font-size: 1.5rem;
     }
-}
 
-@media (min-width: 1024px) {
-    .stock-chart-page {
-        padding: 3rem 2rem;
+    .current-price {
+        font-size: 2rem;
     }
-}
 
-/* Element Plus customization */
-:deep(.el-radio-button__inner) {
-    padding: 0.5rem 1rem;
-}
+    .chart-wrapper {
+        padding: 0.75rem;
+        min-height: 350px;
+    }
 
-:deep(.el-select) {
-    width: 100%;
-}
+    .period-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
 
-/* Period buttons styling - minimal design matching reference */
-.period-buttons {
-    background: transparent;
-    border: none;
-}
-
-:deep(.period-buttons .el-radio-button) {
-    border: none;
-    margin: 0 0.25rem;
-}
-
-:deep(.period-buttons .el-radio-button__inner) {
-    border: none;
-    background: transparent;
-    color: #6b7280;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    box-shadow: none;
-    transition: all 0.2s;
-}
-
-:deep(.period-buttons .el-radio-button__inner:hover) {
-    color: #1f2937;
-    background: transparent;
-}
-
-:deep(.period-buttons .el-radio-button.is-active .el-radio-button__inner) {
-    color: #3b82f6;
-    background: transparent;
-    border-bottom: 2px solid #3b82f6;
-    border-radius: 0;
-}
-
-:deep(.period-buttons .el-radio-button:first-child .el-radio-button__inner) {
-    border-radius: 0;
-}
-
-:deep(.period-buttons .el-radio-button:last-child .el-radio-button__inner) {
-    border-radius: 0;
+    .period-tab {
+        flex-shrink: 0;
+    }
 }
 </style>

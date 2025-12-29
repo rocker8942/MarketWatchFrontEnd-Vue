@@ -956,6 +956,613 @@ export class AccountClient {
     }
 }
 
+export class CompanyClient {
+    protected instance: AxiosInstance;
+    protected baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        this.instance = instance || axios.create();
+
+        this.baseUrl = baseUrl ?? "";
+
+    }
+
+    /**
+     * @param symbol (optional) 
+     * @return Success
+     */
+    companyGetBySymbol(symbol: string | undefined, cancelToken?: CancelToken): Promise<CompanyDto> {
+        let url_ = this.baseUrl + "/api/app/company/by-symbol?";
+        if (symbol === null)
+            throw new Error("The parameter 'symbol' cannot be null.");
+        else if (symbol !== undefined)
+            url_ += "symbol=" + encodeURIComponent("" + symbol) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processCompanyGetBySymbol(_response);
+        });
+    }
+
+    protected processCompanyGetBySymbol(response: AxiosResponse): Promise<CompanyDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = CompanyDto.fromJS(resultData200);
+            return Promise.resolve<CompanyDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<CompanyDto>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    companyCreate(body: CompanyDto | undefined, cancelToken?: CancelToken): Promise<CompanyDto> {
+        let url_ = this.baseUrl + "/api/app/company";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "POST",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processCompanyCreate(_response);
+        });
+    }
+
+    protected processCompanyCreate(response: AxiosResponse): Promise<CompanyDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = CompanyDto.fromJS(resultData200);
+            return Promise.resolve<CompanyDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<CompanyDto>(null as any);
+    }
+
+    /**
+     * @param sorting (optional) 
+     * @param skipCount (optional) 
+     * @param maxResultCount (optional) 
+     * @return Success
+     */
+    companyGetList(sorting: string | undefined, skipCount: number | undefined, maxResultCount: number | undefined, cancelToken?: CancelToken): Promise<PagedResultDtoOfCompanyDto> {
+        let url_ = this.baseUrl + "/api/app/company?";
+        if (sorting === null)
+            throw new Error("The parameter 'sorting' cannot be null.");
+        else if (sorting !== undefined)
+            url_ += "Sorting=" + encodeURIComponent("" + sorting) + "&";
+        if (skipCount === null)
+            throw new Error("The parameter 'skipCount' cannot be null.");
+        else if (skipCount !== undefined)
+            url_ += "SkipCount=" + encodeURIComponent("" + skipCount) + "&";
+        if (maxResultCount === null)
+            throw new Error("The parameter 'maxResultCount' cannot be null.");
+        else if (maxResultCount !== undefined)
+            url_ += "MaxResultCount=" + encodeURIComponent("" + maxResultCount) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processCompanyGetList(_response);
+        });
+    }
+
+    protected processCompanyGetList(response: AxiosResponse): Promise<PagedResultDtoOfCompanyDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = PagedResultDtoOfCompanyDto.fromJS(resultData200);
+            return Promise.resolve<PagedResultDtoOfCompanyDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<PagedResultDtoOfCompanyDto>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    companyUpdate(id: number, body: CompanyDto | undefined, cancelToken?: CancelToken): Promise<CompanyDto> {
+        let url_ = this.baseUrl + "/api/app/company/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "PUT",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processCompanyUpdate(_response);
+        });
+    }
+
+    protected processCompanyUpdate(response: AxiosResponse): Promise<CompanyDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = CompanyDto.fromJS(resultData200);
+            return Promise.resolve<CompanyDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<CompanyDto>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    companyDelete(id: number, cancelToken?: CancelToken): Promise<void> {
+        let url_ = this.baseUrl + "/api/app/company/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "DELETE",
+            url: url_,
+            headers: {
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processCompanyDelete(_response);
+        });
+    }
+
+    protected processCompanyDelete(response: AxiosResponse): Promise<void> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    companyGet(id: number, cancelToken?: CancelToken): Promise<CompanyDto> {
+        let url_ = this.baseUrl + "/api/app/company/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processCompanyGet(_response);
+        });
+    }
+
+    protected processCompanyGet(response: AxiosResponse): Promise<CompanyDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = CompanyDto.fromJS(resultData200);
+            return Promise.resolve<CompanyDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<CompanyDto>(null as any);
+    }
+}
+
 export class DynamicClaimsClient {
     protected instance: AxiosInstance;
     protected baseUrl: string;
@@ -1671,6 +2278,642 @@ export class FeaturesClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
         return Promise.resolve<void>(null as any);
+    }
+}
+
+export class FundStrategyClient {
+    protected instance: AxiosInstance;
+    protected baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        this.instance = instance || axios.create();
+
+        this.baseUrl = baseUrl ?? "";
+
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    fundStrategyCreate(body: FundStrategyDto | undefined, cancelToken?: CancelToken): Promise<FundStrategyDto> {
+        let url_ = this.baseUrl + "/api/app/fund-strategy";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "POST",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processFundStrategyCreate(_response);
+        });
+    }
+
+    protected processFundStrategyCreate(response: AxiosResponse): Promise<FundStrategyDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = FundStrategyDto.fromJS(resultData200);
+            return Promise.resolve<FundStrategyDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<FundStrategyDto>(null as any);
+    }
+
+    /**
+     * @param sorting (optional) 
+     * @param skipCount (optional) 
+     * @param maxResultCount (optional) 
+     * @return Success
+     */
+    fundStrategyGetList(sorting: string | undefined, skipCount: number | undefined, maxResultCount: number | undefined, cancelToken?: CancelToken): Promise<PagedResultDtoOfFundStrategyDto> {
+        let url_ = this.baseUrl + "/api/app/fund-strategy?";
+        if (sorting === null)
+            throw new Error("The parameter 'sorting' cannot be null.");
+        else if (sorting !== undefined)
+            url_ += "Sorting=" + encodeURIComponent("" + sorting) + "&";
+        if (skipCount === null)
+            throw new Error("The parameter 'skipCount' cannot be null.");
+        else if (skipCount !== undefined)
+            url_ += "SkipCount=" + encodeURIComponent("" + skipCount) + "&";
+        if (maxResultCount === null)
+            throw new Error("The parameter 'maxResultCount' cannot be null.");
+        else if (maxResultCount !== undefined)
+            url_ += "MaxResultCount=" + encodeURIComponent("" + maxResultCount) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processFundStrategyGetList(_response);
+        });
+    }
+
+    protected processFundStrategyGetList(response: AxiosResponse): Promise<PagedResultDtoOfFundStrategyDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = PagedResultDtoOfFundStrategyDto.fromJS(resultData200);
+            return Promise.resolve<PagedResultDtoOfFundStrategyDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<PagedResultDtoOfFundStrategyDto>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    fundStrategyUpdate(id: number, body: FundStrategyDto | undefined, cancelToken?: CancelToken): Promise<FundStrategyDto> {
+        let url_ = this.baseUrl + "/api/app/fund-strategy/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "PUT",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processFundStrategyUpdate(_response);
+        });
+    }
+
+    protected processFundStrategyUpdate(response: AxiosResponse): Promise<FundStrategyDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = FundStrategyDto.fromJS(resultData200);
+            return Promise.resolve<FundStrategyDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<FundStrategyDto>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    fundStrategyDelete(id: number, cancelToken?: CancelToken): Promise<void> {
+        let url_ = this.baseUrl + "/api/app/fund-strategy/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "DELETE",
+            url: url_,
+            headers: {
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processFundStrategyDelete(_response);
+        });
+    }
+
+    protected processFundStrategyDelete(response: AxiosResponse): Promise<void> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    fundStrategyGet(id: number, cancelToken?: CancelToken): Promise<FundStrategyDto> {
+        let url_ = this.baseUrl + "/api/app/fund-strategy/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processFundStrategyGet(_response);
+        });
+    }
+
+    protected processFundStrategyGet(response: AxiosResponse): Promise<FundStrategyDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = FundStrategyDto.fromJS(resultData200);
+            return Promise.resolve<FundStrategyDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<FundStrategyDto>(null as any);
+    }
+}
+
+export class FundTradeHistoryClient {
+    protected instance: AxiosInstance;
+    protected baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        this.instance = instance || axios.create();
+
+        this.baseUrl = baseUrl ?? "";
+
+    }
+
+    /**
+     * @param strategyId (optional) 
+     * @param sorting (optional) 
+     * @param skipCount (optional) 
+     * @param maxResultCount (optional) 
+     * @return Success
+     */
+    fundTradeHistoryGetList(strategyId: string | undefined, sorting: string | undefined, skipCount: number | undefined, maxResultCount: number | undefined, cancelToken?: CancelToken): Promise<PagedResultDtoOfDictionaryOfStringAndObject> {
+        let url_ = this.baseUrl + "/api/app/fund-trade-history?";
+        if (strategyId === null)
+            throw new Error("The parameter 'strategyId' cannot be null.");
+        else if (strategyId !== undefined)
+            url_ += "StrategyId=" + encodeURIComponent("" + strategyId) + "&";
+        if (sorting === null)
+            throw new Error("The parameter 'sorting' cannot be null.");
+        else if (sorting !== undefined)
+            url_ += "Sorting=" + encodeURIComponent("" + sorting) + "&";
+        if (skipCount === null)
+            throw new Error("The parameter 'skipCount' cannot be null.");
+        else if (skipCount !== undefined)
+            url_ += "SkipCount=" + encodeURIComponent("" + skipCount) + "&";
+        if (maxResultCount === null)
+            throw new Error("The parameter 'maxResultCount' cannot be null.");
+        else if (maxResultCount !== undefined)
+            url_ += "MaxResultCount=" + encodeURIComponent("" + maxResultCount) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processFundTradeHistoryGetList(_response);
+        });
+    }
+
+    protected processFundTradeHistoryGetList(response: AxiosResponse): Promise<PagedResultDtoOfDictionaryOfStringAndObject> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = PagedResultDtoOfDictionaryOfStringAndObject.fromJS(resultData200);
+            return Promise.resolve<PagedResultDtoOfDictionaryOfStringAndObject>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<PagedResultDtoOfDictionaryOfStringAndObject>(null as any);
     }
 }
 
@@ -3738,9 +4981,11 @@ export class StockPriceClient {
      * @param skipCount (optional) 
      * @param maxResultCount (optional) 
      * @param filter (optional) 
+     * @param startDate (optional) 
+     * @param endDate (optional) 
      * @return Success
      */
-    stockPriceGetStockPriceWithDetails(sorting: string | undefined, skipCount: number | undefined, maxResultCount: number | undefined, filter: string | undefined, cancelToken?: CancelToken): Promise<PagedResultDtoOfStockPriceDto> {
+    stockPriceGetStockPriceWithDetails(sorting: string | undefined, skipCount: number | undefined, maxResultCount: number | undefined, filter: string | undefined, startDate: Date | undefined, endDate: Date | undefined, cancelToken?: CancelToken): Promise<PagedResultDtoOfStockPriceDto> {
         let url_ = this.baseUrl + "/api/app/stock-price/stock-price-with-details?";
         if (sorting === null)
             throw new Error("The parameter 'sorting' cannot be null.");
@@ -3758,6 +5003,14 @@ export class StockPriceClient {
             throw new Error("The parameter 'filter' cannot be null.");
         else if (filter !== undefined)
             url_ += "filter=" + encodeURIComponent("" + filter) + "&";
+        if (startDate === null)
+            throw new Error("The parameter 'startDate' cannot be null.");
+        else if (startDate !== undefined)
+            url_ += "startDate=" + encodeURIComponent(startDate ? "" + startDate.toISOString() : "") + "&";
+        if (endDate === null)
+            throw new Error("The parameter 'endDate' cannot be null.");
+        else if (endDate !== undefined)
+            url_ += "endDate=" + encodeURIComponent(endDate ? "" + endDate.toISOString() : "") + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {
@@ -8263,6 +9516,222 @@ export interface IClockDto {
     kind?: string | undefined;
 }
 
+export class CompanyDto implements ICompanyDto {
+    id?: number;
+    symbol?: string | undefined;
+    assetType?: string | undefined;
+    name?: string | undefined;
+    cik?: string | undefined;
+    exchange?: string | undefined;
+    currency?: string | undefined;
+    country?: string | undefined;
+    sector?: string | undefined;
+    industry?: string | undefined;
+    address?: string | undefined;
+    fiscalYearEnd?: string | undefined;
+    latestQuarter?: string | undefined;
+    marketCapitalization?: number | undefined;
+    ebitda?: number | undefined;
+    peRatio?: number | undefined;
+    pegRatio?: number | undefined;
+    bookValue?: number | undefined;
+    dividendPerShare?: number | undefined;
+    dividendYield?: number | undefined;
+    eps?: number | undefined;
+    revenuePerShareTTM?: number | undefined;
+    profitMargin?: number | undefined;
+    operatingMarginTTM?: number | undefined;
+    returnOnAssetsTTM?: number | undefined;
+    returnOnEquityTTM?: number | undefined;
+    revenueTTM?: number | undefined;
+    grossProfitTTM?: number | undefined;
+    dilutedEPSTTM?: number | undefined;
+    quarterlyEarningsGrowthYOY?: number | undefined;
+    quarterlyRevenueGrowthYOY?: number | undefined;
+    analystTargetPrice?: number | undefined;
+    trailingPE?: number | undefined;
+    forwardPE?: number | undefined;
+    priceToSalesRatioTTM?: number | undefined;
+    priceToBookRatio?: number | undefined;
+    evToRevenue?: number | undefined;
+    evToEBITDA?: number | undefined;
+    beta?: number | undefined;
+    weekHigh?: number | undefined;
+    weekLow?: number | undefined;
+    dayMovingAverage?: number | undefined;
+    sharesOutstanding?: number | undefined;
+    dividendDate?: Date | undefined;
+    exDividendDate?: Date | undefined;
+    modifiedAt?: Date | undefined;
+
+    constructor(data?: ICompanyDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.symbol = _data["symbol"];
+            this.assetType = _data["assetType"];
+            this.name = _data["name"];
+            this.cik = _data["cik"];
+            this.exchange = _data["exchange"];
+            this.currency = _data["currency"];
+            this.country = _data["country"];
+            this.sector = _data["sector"];
+            this.industry = _data["industry"];
+            this.address = _data["address"];
+            this.fiscalYearEnd = _data["fiscalYearEnd"];
+            this.latestQuarter = _data["latestQuarter"];
+            this.marketCapitalization = _data["marketCapitalization"];
+            this.ebitda = _data["ebitda"];
+            this.peRatio = _data["peRatio"];
+            this.pegRatio = _data["pegRatio"];
+            this.bookValue = _data["bookValue"];
+            this.dividendPerShare = _data["dividendPerShare"];
+            this.dividendYield = _data["dividendYield"];
+            this.eps = _data["eps"];
+            this.revenuePerShareTTM = _data["revenuePerShareTTM"];
+            this.profitMargin = _data["profitMargin"];
+            this.operatingMarginTTM = _data["operatingMarginTTM"];
+            this.returnOnAssetsTTM = _data["returnOnAssetsTTM"];
+            this.returnOnEquityTTM = _data["returnOnEquityTTM"];
+            this.revenueTTM = _data["revenueTTM"];
+            this.grossProfitTTM = _data["grossProfitTTM"];
+            this.dilutedEPSTTM = _data["dilutedEPSTTM"];
+            this.quarterlyEarningsGrowthYOY = _data["quarterlyEarningsGrowthYOY"];
+            this.quarterlyRevenueGrowthYOY = _data["quarterlyRevenueGrowthYOY"];
+            this.analystTargetPrice = _data["analystTargetPrice"];
+            this.trailingPE = _data["trailingPE"];
+            this.forwardPE = _data["forwardPE"];
+            this.priceToSalesRatioTTM = _data["priceToSalesRatioTTM"];
+            this.priceToBookRatio = _data["priceToBookRatio"];
+            this.evToRevenue = _data["evToRevenue"];
+            this.evToEBITDA = _data["evToEBITDA"];
+            this.beta = _data["beta"];
+            this.weekHigh = _data["weekHigh"];
+            this.weekLow = _data["weekLow"];
+            this.dayMovingAverage = _data["dayMovingAverage"];
+            this.sharesOutstanding = _data["sharesOutstanding"];
+            this.dividendDate = _data["dividendDate"] ? new Date(_data["dividendDate"].toString()) : <any>undefined;
+            this.exDividendDate = _data["exDividendDate"] ? new Date(_data["exDividendDate"].toString()) : <any>undefined;
+            this.modifiedAt = _data["modifiedAt"] ? new Date(_data["modifiedAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): CompanyDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CompanyDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["symbol"] = this.symbol;
+        data["assetType"] = this.assetType;
+        data["name"] = this.name;
+        data["cik"] = this.cik;
+        data["exchange"] = this.exchange;
+        data["currency"] = this.currency;
+        data["country"] = this.country;
+        data["sector"] = this.sector;
+        data["industry"] = this.industry;
+        data["address"] = this.address;
+        data["fiscalYearEnd"] = this.fiscalYearEnd;
+        data["latestQuarter"] = this.latestQuarter;
+        data["marketCapitalization"] = this.marketCapitalization;
+        data["ebitda"] = this.ebitda;
+        data["peRatio"] = this.peRatio;
+        data["pegRatio"] = this.pegRatio;
+        data["bookValue"] = this.bookValue;
+        data["dividendPerShare"] = this.dividendPerShare;
+        data["dividendYield"] = this.dividendYield;
+        data["eps"] = this.eps;
+        data["revenuePerShareTTM"] = this.revenuePerShareTTM;
+        data["profitMargin"] = this.profitMargin;
+        data["operatingMarginTTM"] = this.operatingMarginTTM;
+        data["returnOnAssetsTTM"] = this.returnOnAssetsTTM;
+        data["returnOnEquityTTM"] = this.returnOnEquityTTM;
+        data["revenueTTM"] = this.revenueTTM;
+        data["grossProfitTTM"] = this.grossProfitTTM;
+        data["dilutedEPSTTM"] = this.dilutedEPSTTM;
+        data["quarterlyEarningsGrowthYOY"] = this.quarterlyEarningsGrowthYOY;
+        data["quarterlyRevenueGrowthYOY"] = this.quarterlyRevenueGrowthYOY;
+        data["analystTargetPrice"] = this.analystTargetPrice;
+        data["trailingPE"] = this.trailingPE;
+        data["forwardPE"] = this.forwardPE;
+        data["priceToSalesRatioTTM"] = this.priceToSalesRatioTTM;
+        data["priceToBookRatio"] = this.priceToBookRatio;
+        data["evToRevenue"] = this.evToRevenue;
+        data["evToEBITDA"] = this.evToEBITDA;
+        data["beta"] = this.beta;
+        data["weekHigh"] = this.weekHigh;
+        data["weekLow"] = this.weekLow;
+        data["dayMovingAverage"] = this.dayMovingAverage;
+        data["sharesOutstanding"] = this.sharesOutstanding;
+        data["dividendDate"] = this.dividendDate ? this.dividendDate.toISOString() : <any>undefined;
+        data["exDividendDate"] = this.exDividendDate ? this.exDividendDate.toISOString() : <any>undefined;
+        data["modifiedAt"] = this.modifiedAt ? this.modifiedAt.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ICompanyDto {
+    id?: number;
+    symbol?: string | undefined;
+    assetType?: string | undefined;
+    name?: string | undefined;
+    cik?: string | undefined;
+    exchange?: string | undefined;
+    currency?: string | undefined;
+    country?: string | undefined;
+    sector?: string | undefined;
+    industry?: string | undefined;
+    address?: string | undefined;
+    fiscalYearEnd?: string | undefined;
+    latestQuarter?: string | undefined;
+    marketCapitalization?: number | undefined;
+    ebitda?: number | undefined;
+    peRatio?: number | undefined;
+    pegRatio?: number | undefined;
+    bookValue?: number | undefined;
+    dividendPerShare?: number | undefined;
+    dividendYield?: number | undefined;
+    eps?: number | undefined;
+    revenuePerShareTTM?: number | undefined;
+    profitMargin?: number | undefined;
+    operatingMarginTTM?: number | undefined;
+    returnOnAssetsTTM?: number | undefined;
+    returnOnEquityTTM?: number | undefined;
+    revenueTTM?: number | undefined;
+    grossProfitTTM?: number | undefined;
+    dilutedEPSTTM?: number | undefined;
+    quarterlyEarningsGrowthYOY?: number | undefined;
+    quarterlyRevenueGrowthYOY?: number | undefined;
+    analystTargetPrice?: number | undefined;
+    trailingPE?: number | undefined;
+    forwardPE?: number | undefined;
+    priceToSalesRatioTTM?: number | undefined;
+    priceToBookRatio?: number | undefined;
+    evToRevenue?: number | undefined;
+    evToEBITDA?: number | undefined;
+    beta?: number | undefined;
+    weekHigh?: number | undefined;
+    weekLow?: number | undefined;
+    dayMovingAverage?: number | undefined;
+    sharesOutstanding?: number | undefined;
+    dividendDate?: Date | undefined;
+    exDividendDate?: Date | undefined;
+    modifiedAt?: Date | undefined;
+}
+
 export class ControllerApiDescriptionModel implements IControllerApiDescriptionModel {
     controllerName?: string | undefined;
     controllerGroupName?: string | undefined;
@@ -9553,6 +11022,126 @@ export interface IFindTenantResultDto {
     tenantId?: string | undefined;
     name?: string | undefined;
     isActive?: boolean;
+}
+
+export class FundStrategyDto implements IFundStrategyDto {
+    id?: number;
+    creationTime?: Date;
+    creatorId?: string | undefined;
+    lastModificationTime?: Date | undefined;
+    lastModifierId?: string | undefined;
+    name?: string | undefined;
+    investTriggerRate?: number;
+    analysisPeriod?: number;
+    portfolioNumber?: number;
+    priceToUse?: number;
+    lossCutRate?: number;
+    investDate?: Date;
+    inUse?: number;
+    ratePerInvesmentPeriod?: number | undefined;
+    ratePerYear?: number | undefined;
+    daysToTest?: number;
+    std?: number | undefined;
+    investStartDate?: Date | undefined;
+    countryToInvest?: string | undefined;
+    createdAt?: Date;
+    disabled?: boolean;
+    coefficientAllowed?: number | undefined;
+
+    constructor(data?: IFundStrategyDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : <any>undefined;
+            this.creatorId = _data["creatorId"];
+            this.lastModificationTime = _data["lastModificationTime"] ? new Date(_data["lastModificationTime"].toString()) : <any>undefined;
+            this.lastModifierId = _data["lastModifierId"];
+            this.name = _data["name"];
+            this.investTriggerRate = _data["investTriggerRate"];
+            this.analysisPeriod = _data["analysisPeriod"];
+            this.portfolioNumber = _data["portfolioNumber"];
+            this.priceToUse = _data["priceToUse"];
+            this.lossCutRate = _data["lossCutRate"];
+            this.investDate = _data["investDate"] ? new Date(_data["investDate"].toString()) : <any>undefined;
+            this.inUse = _data["inUse"];
+            this.ratePerInvesmentPeriod = _data["ratePerInvesmentPeriod"];
+            this.ratePerYear = _data["ratePerYear"];
+            this.daysToTest = _data["daysToTest"];
+            this.std = _data["std"];
+            this.investStartDate = _data["investStartDate"] ? new Date(_data["investStartDate"].toString()) : <any>undefined;
+            this.countryToInvest = _data["countryToInvest"];
+            this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : <any>undefined;
+            this.disabled = _data["disabled"];
+            this.coefficientAllowed = _data["coefficientAllowed"];
+        }
+    }
+
+    static fromJS(data: any): FundStrategyDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new FundStrategyDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["creationTime"] = this.creationTime ? this.creationTime.toISOString() : <any>undefined;
+        data["creatorId"] = this.creatorId;
+        data["lastModificationTime"] = this.lastModificationTime ? this.lastModificationTime.toISOString() : <any>undefined;
+        data["lastModifierId"] = this.lastModifierId;
+        data["name"] = this.name;
+        data["investTriggerRate"] = this.investTriggerRate;
+        data["analysisPeriod"] = this.analysisPeriod;
+        data["portfolioNumber"] = this.portfolioNumber;
+        data["priceToUse"] = this.priceToUse;
+        data["lossCutRate"] = this.lossCutRate;
+        data["investDate"] = this.investDate ? this.investDate.toISOString() : <any>undefined;
+        data["inUse"] = this.inUse;
+        data["ratePerInvesmentPeriod"] = this.ratePerInvesmentPeriod;
+        data["ratePerYear"] = this.ratePerYear;
+        data["daysToTest"] = this.daysToTest;
+        data["std"] = this.std;
+        data["investStartDate"] = this.investStartDate ? this.investStartDate.toISOString() : <any>undefined;
+        data["countryToInvest"] = this.countryToInvest;
+        data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : <any>undefined;
+        data["disabled"] = this.disabled;
+        data["coefficientAllowed"] = this.coefficientAllowed;
+        return data;
+    }
+}
+
+export interface IFundStrategyDto {
+    id?: number;
+    creationTime?: Date;
+    creatorId?: string | undefined;
+    lastModificationTime?: Date | undefined;
+    lastModifierId?: string | undefined;
+    name?: string | undefined;
+    investTriggerRate?: number;
+    analysisPeriod?: number;
+    portfolioNumber?: number;
+    priceToUse?: number;
+    lossCutRate?: number;
+    investDate?: Date;
+    inUse?: number;
+    ratePerInvesmentPeriod?: number | undefined;
+    ratePerYear?: number | undefined;
+    daysToTest?: number;
+    std?: number | undefined;
+    investStartDate?: Date | undefined;
+    countryToInvest?: string | undefined;
+    createdAt?: Date;
+    disabled?: boolean;
+    coefficientAllowed?: number | undefined;
 }
 
 export class GetFeatureListResultDto implements IGetFeatureListResultDto {
@@ -10916,6 +12505,150 @@ export class ObjectExtensionsDto implements IObjectExtensionsDto {
 export interface IObjectExtensionsDto {
     modules?: { [key: string]: ModuleExtensionDto; } | undefined;
     enums?: { [key: string]: ExtensionEnumDto; } | undefined;
+}
+
+export class PagedResultDtoOfCompanyDto implements IPagedResultDtoOfCompanyDto {
+    items?: CompanyDto[] | undefined;
+    totalCount?: number;
+
+    constructor(data?: IPagedResultDtoOfCompanyDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(CompanyDto.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+        }
+    }
+
+    static fromJS(data: any): PagedResultDtoOfCompanyDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PagedResultDtoOfCompanyDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        return data;
+    }
+}
+
+export interface IPagedResultDtoOfCompanyDto {
+    items?: CompanyDto[] | undefined;
+    totalCount?: number;
+}
+
+export class PagedResultDtoOfDictionaryOfStringAndObject implements IPagedResultDtoOfDictionaryOfStringAndObject {
+    items?: { [key: string]: any; }[] | undefined;
+    totalCount?: number;
+
+    constructor(data?: IPagedResultDtoOfDictionaryOfStringAndObject) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(item);
+            }
+            this.totalCount = _data["totalCount"];
+        }
+    }
+
+    static fromJS(data: any): PagedResultDtoOfDictionaryOfStringAndObject {
+        data = typeof data === 'object' ? data : {};
+        let result = new PagedResultDtoOfDictionaryOfStringAndObject();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item);
+        }
+        data["totalCount"] = this.totalCount;
+        return data;
+    }
+}
+
+export interface IPagedResultDtoOfDictionaryOfStringAndObject {
+    items?: { [key: string]: any; }[] | undefined;
+    totalCount?: number;
+}
+
+export class PagedResultDtoOfFundStrategyDto implements IPagedResultDtoOfFundStrategyDto {
+    items?: FundStrategyDto[] | undefined;
+    totalCount?: number;
+
+    constructor(data?: IPagedResultDtoOfFundStrategyDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(FundStrategyDto.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+        }
+    }
+
+    static fromJS(data: any): PagedResultDtoOfFundStrategyDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PagedResultDtoOfFundStrategyDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        return data;
+    }
+}
+
+export interface IPagedResultDtoOfFundStrategyDto {
+    items?: FundStrategyDto[] | undefined;
+    totalCount?: number;
 }
 
 export class PagedResultDtoOfIdentityRoleDto implements IPagedResultDtoOfIdentityRoleDto {

@@ -30,6 +30,14 @@ const router = createRouter({
       component: () => import("../views/StrategyView.vue"),
     },
     {
+      path: "/strategyHistory",
+      name: "strategyHistory",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/StrategyHistoryView.vue"),
+    },
+    {
       path: "/stockList",
       name: "StockList",
       meta: {

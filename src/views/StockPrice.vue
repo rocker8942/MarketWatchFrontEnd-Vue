@@ -92,7 +92,9 @@ export default defineComponent({
                     `${this.sortField} ${this.sortOrder}`,
                     (this.currentPage - 1) * this.pageSize,
                     this.pageSize,
-                    this.searchQuery || undefined
+                    this.searchQuery || undefined,
+                    undefined,
+                    undefined
                 );
                 this.pagedResultDtoOfstockPriceDto = response as PagedResultDtoOfStockPriceDto;
                 this.products = this.pagedResultDtoOfstockPriceDto.items;
