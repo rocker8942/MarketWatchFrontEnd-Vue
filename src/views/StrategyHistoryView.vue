@@ -10,14 +10,14 @@
         v-model="selectedStrategyId"
         clearable
         filterable
-        placeholder="Filter by strategy ID"
+        placeholder="Filter by strategy name"
         class="min-w-[220px]"
         @change="onStrategyIdChanged">
         <el-option
-          v-for="s in strategyIds"
-          :key="s"
-          :label="s"
-          :value="s" />
+          v-for="s in strategies"
+          :key="s.id"
+          :label="s.name"
+          :value="s.id" />
       </el-select>
 
       <el-button :loading="loading" type="primary" @click="reload">
@@ -42,14 +42,14 @@
           <el-table-column
             v-for="col in columns"
             :key="col"
-            :prop="col"
+            :prop="getOriginalColumnName(col)"
             :label="col"
             :min-width="getMinWidth(col)"
             :sortable="isDateColumn(col)">
             <template #default="scope">
-              <span v-if="isDateColumn(col)">{{ formatDate(scope.row[col]) }}</span>
-              <span v-else-if="isRateOfReturnColumn(col)">{{ formatPercentage(scope.row[col]) }}</span>
-              <span v-else>{{ formatValue(scope.row[col]) }}</span>
+              <span v-if="isDateColumn(col)">{{ formatDate(scope.row[getOriginalColumnName(col)]) }}</span>
+              <span v-else-if="isRateOfReturnColumn(col)">{{ formatPercentage(scope.row[getOriginalColumnName(col)]) }}</span>
+              <span v-else>{{ formatValue(scope.row[getOriginalColumnName(col)], col) }}</span>
             </template>
           </el-table-column>
         </el-table>
@@ -61,6 +61,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import ApiService from "@/core/services/apiService";
+import { FundStrategyClient, StockInfoClient } from "@/core/services/marketWatchClient";
 
 type AnyRow = Record<string, any>;
 
@@ -70,11 +71,14 @@ export default defineComponent({
       rows: [] as AnyRow[],
       totalCount: 0,
       loading: false,
-      selectedStrategyId: "" as string | "",
+      selectedStrategyId: "" as number | "",
       strategyIds: [] as string[],
       columns: [] as string[],
       strategyIdKey: "" as string,
       dateKey: "" as string,
+      stockMap: new Map<string, string>(), // stockCode -> stockName
+      strategyMap: new Map<string, string>(), // strategyId -> strategyName
+      strategies: [] as Array<{ id: number; name: string }>,
     };
   },
 
@@ -92,6 +96,54 @@ export default defineComponent({
 
     async onStrategyIdChanged() {
       await this.getList();
+    },
+
+    async loadStocks() {
+      try {
+        const client = new StockInfoClient(undefined, ApiService.vueInstance.axios);
+        const result = await client.stockInfoGetList(undefined, 0, 1000);
+        this.stockMap.clear();
+        if (result.items) {
+          for (const stock of result.items) {
+            // Handle both id/Id and name/Name (PascalCase from ABP)
+            const stockId = (stock as any).id ?? (stock as any).Id;
+            const stockName = (stock as any).name ?? (stock as any).Name;
+
+            if (stockId && stockName) {
+              this.stockMap.set(String(stockId), stockName);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load stocks", e);
+      }
+    },
+
+    async loadStrategies() {
+      try {
+        const client = new FundStrategyClient(undefined, ApiService.vueInstance.axios);
+        const result = await client.fundStrategyGetList(undefined, 0, 1000);
+        this.strategyMap.clear();
+        this.strategies = [];
+        console.log("Raw strategy result:", result);
+        if (result.items) {
+          for (const strategy of result.items) {
+            // Handle both id and Id (PascalCase from ABP)
+            const strategyId = (strategy as any).id ?? (strategy as any).Id;
+            const strategyName = (strategy as any).name ?? (strategy as any).Name;
+
+            if (strategyId !== undefined && strategyName) {
+              this.strategyMap.set(String(strategyId), strategyName);
+              this.strategies.push({ id: strategyId, name: strategyName });
+            }
+          }
+        }
+        console.log("Strategy Map loaded:", this.strategyMap);
+        console.log("Strategy Map size:", this.strategyMap.size);
+        console.log("Strategy Map entries:", Array.from(this.strategyMap.entries()));
+      } catch (e) {
+        console.error("Failed to load strategies", e);
+      }
     },
 
     async getList() {
@@ -152,8 +204,23 @@ export default defineComponent({
       const strategyIdKey = all.find((k) => k.toLowerCase() === "strategyid") || all.find((k) => k.toLowerCase().includes("strategyid")) || "";
       const dateKey = all.find((k) => k.toLowerCase() === "tradedate") || all.find((k) => k.toLowerCase().includes("date")) || "";
 
+      console.log("All column keys:", all);
+      console.log("Strategy ID key found:", strategyIdKey);
+      if (this.rows.length > 0) {
+        console.log("Sample row:", this.rows[0]);
+      }
+
       this.strategyIdKey = strategyIdKey;
       this.dateKey = dateKey;
+
+      // Transform column names
+      const transformColumnName = (col: string): string => {
+        const lc = col.toLowerCase();
+        if (lc === "strategyid") return "StrategyName";
+        if (lc === "mainleader") return "Leader Stock";
+        if (lc === "followstock") return "Follow Stock";
+        return col;
+      };
 
       // Put date + strategyId columns first (if present)
       const ordered: string[] = [];
@@ -164,7 +231,8 @@ export default defineComponent({
         if (!ordered.includes(k)) ordered.push(k);
       }
 
-      this.columns = ordered;
+      // Transform all column names
+      this.columns = ordered.map(transformColumnName);
 
       if (strategyIdKey) {
         const set = new Set<string>();
@@ -178,6 +246,20 @@ export default defineComponent({
       } else {
         this.strategyIds = [];
       }
+    },
+
+    getOriginalColumnName(displayName: string): string {
+      const lc = displayName.toLowerCase();
+      if (lc === "strategyname") return this.strategyIdKey;
+      if (lc === "leader stock") {
+        const keys = Object.keys(this.rows[0] || {});
+        return keys.find((k) => k.toLowerCase() === "mainleader") || displayName;
+      }
+      if (lc === "follow stock") {
+        const keys = Object.keys(this.rows[0] || {});
+        return keys.find((k) => k.toLowerCase() === "followstock") || displayName;
+      }
+      return displayName;
     },
 
     isDateColumn(col: string): boolean {
@@ -204,8 +286,25 @@ export default defineComponent({
       return (value * 100).toFixed(2) + "%";
     },
 
-    formatValue(value: any): string {
+    formatValue(value: any, col: string): string {
       if (value === null || value === undefined || value === "") return "—";
+
+      const lc = col.toLowerCase();
+
+      // Transform strategyId to strategy name
+      if (lc === "strategyname") {
+        const strategyId = String(value).trim();
+        const name = this.strategyMap.get(strategyId);
+        console.log(`Looking up strategy ID: "${strategyId}" (type: ${typeof value}), found: "${name}"`);
+        return name || String(value);
+      }
+
+      // Transform stock codes to stock names
+      if (lc === "leader stock" || lc === "follow stock") {
+        const stockCode = String(value).trim();
+        return this.stockMap.get(stockCode) || stockCode;
+      }
+
       if (typeof value === "number") return String(value);
       if (typeof value === "boolean") return value ? "true" : "false";
       return String(value);
@@ -226,8 +325,9 @@ export default defineComponent({
     },
   },
 
-  mounted() {
-    this.getList();
+  async mounted() {
+    await Promise.all([this.loadStocks(), this.loadStrategies()]);
+    await this.getList();
   },
 });
 </script>
