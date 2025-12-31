@@ -78,6 +78,7 @@ export default defineComponent({
       dateKey: "" as string,
       stockMap: new Map<string, string>(), // stockCode -> stockName
       strategyMap: new Map<string, string>(), // strategyId -> strategyName
+      sellTypeMap: new Map<string, string>(), // sellTypeId -> sellTypeName
       strategies: [] as Array<{ id: number; name: string }>,
     };
   },
@@ -143,6 +144,29 @@ export default defineComponent({
         console.log("Strategy Map entries:", Array.from(this.strategyMap.entries()));
       } catch (e) {
         console.error("Failed to load strategies", e);
+      }
+    },
+
+    async loadSellTypes() {
+      try {
+        const res = await ApiService.vueInstance.axios.get("/api/app/ref-sell-type", {
+          params: { SkipCount: 0, MaxResultCount: 100 }
+        });
+        this.sellTypeMap.clear();
+        const data = res.data;
+        const items = data?.items ?? data?.result?.items ?? [];
+
+        for (const sellType of items) {
+          const id = sellType.id ?? sellType.Id;
+          const name = sellType.name ?? sellType.Name;
+
+          if (id !== undefined && id !== null && name) {
+            this.sellTypeMap.set(String(id), name);
+          }
+        }
+        console.log("SellType Map loaded:", this.sellTypeMap);
+      } catch (e) {
+        console.error("Failed to load sell types", e);
       }
     },
 
@@ -219,6 +243,7 @@ export default defineComponent({
         if (lc === "strategyid") return "StrategyName";
         if (lc === "mainleader") return "Leader Stock";
         if (lc === "followstock") return "Follow Stock";
+        if (lc === "selltype") return "Sell Type";
         return col;
       };
 
@@ -258,6 +283,10 @@ export default defineComponent({
       if (lc === "follow stock") {
         const keys = Object.keys(this.rows[0] || {});
         return keys.find((k) => k.toLowerCase() === "followstock") || displayName;
+      }
+      if (lc === "sell type") {
+        const keys = Object.keys(this.rows[0] || {});
+        return keys.find((k) => k.toLowerCase() === "selltype") || displayName;
       }
       return displayName;
     },
@@ -305,6 +334,13 @@ export default defineComponent({
         return this.stockMap.get(stockCode) || stockCode;
       }
 
+      // Transform sellType ID to sellType name
+      if (lc === "sell type") {
+        const sellTypeId = String(value).trim();
+        const name = this.sellTypeMap.get(sellTypeId);
+        return name || String(value);
+      }
+
       if (typeof value === "number") return String(value);
       if (typeof value === "boolean") return value ? "true" : "false";
       return String(value);
@@ -326,7 +362,7 @@ export default defineComponent({
   },
 
   async mounted() {
-    await Promise.all([this.loadStocks(), this.loadStrategies()]);
+    await Promise.all([this.loadStocks(), this.loadStrategies(), this.loadSellTypes()]);
     await this.getList();
   },
 });
