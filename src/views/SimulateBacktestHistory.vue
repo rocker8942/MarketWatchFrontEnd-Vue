@@ -1,31 +1,37 @@
 <template>
   <div class="analysis-container">
-    <div class="page-header">
-      <h1>Simulate - Backtest History</h1>
-      <p class="page-subtitle">Trade history results from simulations</p>
-    </div>
+    <PageHeader
+      title="Simulate - Backtest History"
+      subtitle="Trade history results from simulations"
+    />
 
-    <div class="mb-4 flex flex-wrap items-center">
-      <el-select
-        v-model="selectedStrategyId"
-        clearable
-        filterable
-        placeholder="Filter by strategy"
-        style="width: 350px; margin-right: 16px;"
-        @change="onStrategyIdChanged">
-        <el-option
-          v-for="s in strategies"
-          :key="s.id"
-          :label="s.name"
-          :value="s.id" />
-      </el-select>
+    <div class="filter-bar">
+      <div class="filter-bar-left">
+        <el-select
+          v-model="selectedStrategyId"
+          clearable
+          filterable
+          placeholder="Filter by strategy"
+          class="strategy-select"
+          @change="onStrategyIdChanged">
+          <el-option
+            v-for="s in strategies"
+            :key="s.id"
+            :label="s.name"
+            :value="s.id" />
+        </el-select>
 
-      <el-button :loading="loading" type="primary" @click="reload" style="margin-right: 16px;">
-        Refresh
-      </el-button>
+        <el-button :loading="loading" type="primary" @click="reload">
+          Refresh
+        </el-button>
+      </div>
 
-      <div class="text-sm text-gray-500">
-        {{ totalCount }} rows
+      <div class="flex-1"></div>
+
+      <div class="filter-bar-right">
+        <div class="results-count">
+          {{ totalCount }} rows
+        </div>
       </div>
     </div>
 
@@ -79,10 +85,14 @@
 import { defineComponent } from "vue";
 import ApiService from "@/core/services/apiService";
 import { StrategyClient, StockInfoClient, RefStrategyTypeClient } from "@/core/services/marketWatchClient";
+import PageHeader from "@/components/PageHeader.vue";
 
 type AnyRow = Record<string, any>;
 
 export default defineComponent({
+  components: {
+    PageHeader
+  },
   data() {
     return {
       rows: [] as AnyRow[],
@@ -580,22 +590,29 @@ export default defineComponent({
   margin: 0 auto;
 }
 
-.page-header {
-  margin-bottom: 2rem;
+/* Filter Bar */
+.filter-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.page-header h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--color-heading);
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.02em;
+.filter-bar-right {
+  display: flex;
+  align-items: center;
 }
 
-.page-subtitle {
-  font-size: 1.0625rem;
+.flex-1 {
+  flex: 1;
+}
+
+.strategy-select {
+  min-width: 350px;
+}
+
+.results-count {
+  font-size: 0.875rem;
   color: var(--color-text-secondary);
-  margin: 0;
 }
 
 .table-section {

@@ -69,7 +69,11 @@ src/
 │   ├── config/          # Global configuration (API endpoints)
 │   └── services/        # API service layer
 ├── views/               # Page components (HomeView, StockList, StockPrice, etc.)
-├── components/          # Reusable components (HeaderComponent, etc.)
+├── components/          # Reusable components
+│   ├── PageHeader.vue   # Consistent page header with title, subtitle, search, and actions
+│   ├── StatusBadge.vue  # Colored status badges (active, pending, cancelled, delay)
+│   ├── FilterBar.vue    # Filter controls for tables
+│   └── HeaderComponent.vue  # Main navigation header
 ├── router/              # Vue Router configuration
 ├── assets/              # Static assets, CSS (including main.css for Tailwind)
 ├── idsrvAuth.ts         # OIDC authentication setup
@@ -81,6 +85,12 @@ src/
 - Tailwind CSS v4 (requires `@tailwindcss/postcss` plugin in [postcss.config.js](postcss.config.js))
 - Element Plus UI library globally registered
 - PrimeVue components available
+- Modern table styling with:
+  - Subtle borders and hover effects
+  - Consistent filter bars with search, dropdowns, and action buttons
+  - Status badges with colored dots (green=Active, orange=Pending, red=Cancelled, purple=Delay)
+  - Clean typography and spacing
+  - Responsive design patterns
 
 ### Routing
 Protected routes (all except home) require authentication and use lazy loading for code splitting.

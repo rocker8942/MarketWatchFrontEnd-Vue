@@ -1,227 +1,410 @@
 <template>
-  <div class="analysis-container">
+  <div class="page-container">
+    <!-- Header -->
     <div class="page-header">
-      <h1>Simulate - Strategy</h1>
-      <p class="page-subtitle">Manage and filter simulation strategies</p>
-    </div>
-
-    <!-- Filter Controls -->
-    <div class="mb-6 flex flex-wrap items-center" style="gap: 16px;">
-      <div>
-        <el-select
-          v-model="selectedCountry"
-          clearable
-          filterable
-          placeholder="Filter by Country"
-          style="width: 180px;"
-          @change="onFilterChanged">
-          <el-option
-            v-for="country in countries"
-            :key="country"
-            :label="country"
-            :value="country" />
-        </el-select>
+      <div class="header-left">
+        <h1 class="page-title">Strategies</h1>
       </div>
-
-      <div>
-        <el-select
-          v-model="selectedStrategyType"
-          clearable
-          filterable
-          :placeholder="strategyTypes.length > 0 ? 'Filter by Strategy Type' : 'No Strategy Types Available'"
-          :disabled="strategyTypes.length === 0"
-          style="width: 200px;"
-          @change="onFilterChanged">
-          <el-option
-            v-for="type in strategyTypes"
-            :key="type.id"
-            :label="type.name"
-            :value="type.id" />
-        </el-select>
-      </div>
-
-      <div>
+      <div class="header-right">
         <el-input
-          v-model.number="minAnnualReturn"
-          clearable
-          placeholder="Min Return %"
-          style="width: 140px;"
-          type="number"
-          @input="onFilterChanged">
-          <template #suffix>%</template>
+          v-model="searchQuery"
+          placeholder="Search"
+          class="search-input"
+          clearable>
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
         </el-input>
-      </div>
-
-      <div>
-        <el-input
-          v-model.number="maxAnnualReturn"
-          clearable
-          placeholder="Max Return %"
-          style="width: 140px;"
-          type="number"
-          @input="onFilterChanged">
-          <template #suffix>%</template>
-        </el-input>
-      </div>
-
-      <div>
-        <el-button :loading="loading" type="primary" @click="reload">
-          Refresh
-        </el-button>
-      </div>
-
-      <div class="text-sm text-gray-500">
-        {{ filteredStrategies.length }} of {{ allStrategies.length }} strategies
       </div>
     </div>
 
-    <!-- Strategy Table -->
-    <div class="table-section">
-      <div class="table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="filteredStrategies"
-          class="professional-table"
-          stripe
-          :header-cell-style="{ background: 'var(--color-surface-variant)', color: 'var(--color-heading)', fontWeight: '600' }">
+    <!-- Filter Bar -->
+    <div class="filter-toolbar">
+      <div class="toolbar-left">
+        <el-dropdown trigger="click">
+          <button class="filter-dropdown-btn">
+            All <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
+          </button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item>All Strategies</el-dropdown-item>
+              <el-dropdown-item divided v-for="country in countries" :key="country" @click="selectedCountry = country">
+                {{ country }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
 
-          <el-table-column prop="id" label="ID" width="80" align="center">
-            <template #default="scope">
-              <span class="id-badge">{{ scope.row.id }}</span>
-            </template>
-          </el-table-column>
+      <div class="toolbar-right">
+        <button class="toolbar-btn" @click="showFilterDialog = true">
+          <el-icon><Filter /></el-icon>
+          Filter
+        </button>
+        <span class="result-count">{{ filteredStrategies.length }} strategies</span>
+      </div>
+    </div>
 
-          <el-table-column prop="countryToInvest" label="Country" min-width="120" />
+    <!-- Table -->
+    <div class="table-container">
+      <el-table
+        v-loading="loading"
+        :data="paginatedStrategies"
+        class="clean-table"
+        :header-cell-style="headerCellStyle"
+        :cell-style="cellStyle"
+        @selection-change="handleSelectionChange">
 
-          <el-table-column prop="strategyType" label="Strategy Type" width="180" align="center">
-            <template #default="scope">
+        <el-table-column type="selection" width="48" />
+
+        <el-table-column label="Name" min-width="200" sortable>
+          <template #default="scope">
+            <div class="name-cell">
               {{ getStrategyTypeName(scope.row.strategyType) }}
-            </template>
-          </el-table-column>
+            </div>
+          </template>
+        </el-table-column>
 
-          <el-table-column prop="investTriggerRate" label="Trigger Rate" width="130" align="right" />
+        <el-table-column label="Country" width="150" sortable prop="countryToInvest" />
 
-          <el-table-column prop="analysisPeriod" label="Analysis Period" width="140" align="right" />
+        <el-table-column label="Annual Return" width="150" sortable>
+          <template #default="scope">
+            {{ formatRate(scope.row.ratePerYear) }}%
+          </template>
+        </el-table-column>
 
-          <el-table-column prop="daysToTest" label="Days to Test" width="120" align="right" />
+        <el-table-column label="Days to Test" width="130" align="right" prop="daysToTest" />
 
-          <el-table-column prop="portfolioNumber" label="Portfolio #" width="120" align="right" />
+        <el-table-column label="Actions" width="120" align="center" fixed="right">
+          <template #default="scope">
+            <div class="action-buttons">
+              <button class="action-icon-btn" @click="viewBacktest(scope.row)" title="View History">
+                <el-icon><Right /></el-icon>
+              </button>
+              <button class="action-icon-btn danger" @click="confirmDelete(scope.row)" title="Delete">
+                <el-icon><Delete /></el-icon>
+              </button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
 
-          <el-table-column prop="ratePerYear" label="Annual Return" width="150" align="right">
-            <template #default="scope">
-              <span :class="getRateClass(scope.row.ratePerYear)">
-                {{ formatRate(scope.row.ratePerYear) }}%
-              </span>
-            </template>
-          </el-table-column>
-
-          <el-table-column prop="inUse" label="In Use" width="90" align="center" />
-
-          <el-table-column label="Actions" width="200" align="center" fixed="right">
-            <template #default="scope">
-              <el-button
-                type="primary"
-                size="small"
-                @click.stop="viewBacktest(scope.row)">
-                View History
-              </el-button>
-              <el-button
-                type="danger"
-                size="small"
-                @click.stop="confirmDelete(scope.row)">
-                Delete
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+      <!-- Pagination -->
+      <div class="pagination-container">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 25, 50, 100]"
+          :total="filteredStrategies.length"
+          layout="total, sizes, prev, pager, next"
+          background
+        />
       </div>
     </div>
+
+    <!-- Filter Dialog -->
+    <el-dialog v-model="showFilterDialog" title="Filter Strategies" width="500px">
+      <el-form label-position="top">
+        <el-form-item label="Strategy Type">
+          <el-select
+            v-model="selectedStrategyType"
+            clearable
+            filterable
+            placeholder="Select strategy type"
+            style="width: 100%">
+            <el-option
+              v-for="type in strategyTypes"
+              :key="type.id"
+              :label="type.name"
+              :value="type.id" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="Annual Return Range">
+          <div style="display: flex; gap: 12px;">
+            <el-input
+              v-model.number="minAnnualReturn"
+              placeholder="Min %"
+              type="number">
+              <template #suffix>%</template>
+            </el-input>
+            <el-input
+              v-model.number="maxAnnualReturn"
+              placeholder="Max %"
+              type="number">
+              <template #suffix>%</template>
+            </el-input>
+          </div>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="clearFilters">Clear</el-button>
+        <el-button type="primary" @click="applyFilters">Apply Filters</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style scoped>
-.analysis-container {
-  padding: var(--space-4xl) var(--space-xl);
-  max-width: 1400px;
-  margin: 0 auto;
+/* Page Container */
+.page-container {
+  padding: 2rem 3rem;
+  max-width: 100%;
+  background: var(--color-background);
+  min-height: 100vh;
 }
 
+/* Header */
 .page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 2rem;
 }
 
-.page-header h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
+.header-left {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 600;
   color: var(--color-heading);
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.02em;
-}
-
-.page-subtitle {
-  font-size: 1.0625rem;
-  color: var(--color-text-secondary);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
-.table-section {
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.search-input {
+  width: 280px;
+}
+
+.search-input :deep(.el-input__wrapper) {
+  background: var(--color-background-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: none;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Filter Toolbar */
+.filter-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
   background: var(--color-background-card);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 16px;
-  padding: var(--space-3xl);
-  box-shadow: var(--shadow-subtle);
-  margin-bottom: var(--space-xl);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
 }
 
-.table-wrapper {
-  overflow-x: auto;
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.professional-table {
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.filter-dropdown-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.filter-dropdown-btn:hover {
+  background: var(--color-surface-variant);
+}
+
+.dropdown-icon {
+  font-size: 14px;
+  margin-left: 2px;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toolbar-btn:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-variant);
+}
+
+.result-count {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+/* Table Container */
+.table-container {
+  background: var(--color-background-card);
+  border: 1px solid var(--color-border-subtle);
   border-radius: 8px;
   overflow: hidden;
 }
 
-.professional-table :deep(.el-table__cell) {
-  padding: 1rem 0.75rem;
+/* Clean Table Styling */
+.clean-table {
+  width: 100%;
 }
 
-.id-badge {
-  display: inline-block;
-  padding: 0.25rem 0.625rem;
-  background: var(--finance-blue);
-  color: white;
+.clean-table :deep(.el-table__header-wrapper) {
+  background: #fafafa;
+}
+
+.clean-table :deep(.el-table__header th) {
+  background: #fafafa !important;
+  border-bottom: 1px solid #f0f0f0;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.875rem 1rem;
+}
+
+.clean-table :deep(.el-table__body td) {
+  border-bottom: 1px solid #f5f5f5;
+  padding: 1rem;
+  font-size: 0.9375rem;
+}
+
+.clean-table :deep(.el-table__row) {
+  transition: background-color 0.15s ease;
+}
+
+.clean-table :deep(.el-table__row:hover) {
+  background: #fafafa !important;
+}
+
+.clean-table :deep(.el-table__body .el-table__row:last-child td) {
+  border-bottom: none;
+}
+
+/* Remove table borders */
+.clean-table :deep(.el-table--border) {
+  border: none;
+}
+
+.clean-table :deep(.el-table--border::after),
+.clean-table :deep(.el-table--group::after),
+.clean-table :deep(.el-table::before) {
+  display: none;
+}
+
+.clean-table :deep(th.el-table__cell),
+.clean-table :deep(td.el-table__cell) {
+  border-right: none;
+}
+
+/* Name Cell */
+.name-cell {
+  font-weight: 500;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.action-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
   border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.rate-value.positive {
-  color: var(--finance-green-light);
-  font-weight: 600;
+.action-icon-btn:hover {
+  background: var(--color-surface-variant);
+  color: var(--color-heading);
 }
 
-.rate-value.negative {
+.action-icon-btn.danger:hover {
+  background: rgba(239, 83, 80, 0.08);
   color: var(--finance-red-light);
-  font-weight: 600;
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.pagination-container :deep(.el-pagination) {
+  gap: 0.5rem;
 }
 
 @media (max-width: 768px) {
-  .analysis-container {
+  .page-container {
     padding: 1.5rem 1rem;
   }
 
-  .page-header h1 {
-    font-size: 2rem;
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
   }
 
-  .table-section {
-    padding: 1rem;
-    border-radius: 8px;
+  .header-right {
+    width: 100%;
   }
 
-  .professional-table :deep(.el-table__cell) {
-    padding: 0.75rem 0.5rem;
+  .search-input {
+    width: 100%;
+  }
+
+  .filter-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .toolbar-right {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 </style>
@@ -231,8 +414,16 @@ import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
 import ApiService from "@/core/services/apiService";
 import { StrategyClient, type StrategyDto, RefStrategyTypeClient, type RefStrategyTypeDto } from "@/core/services/marketWatchClient";
+import { Search, ArrowDown, Filter, Right, Delete } from '@element-plus/icons-vue';
 
 export default defineComponent({
+  components: {
+    Search,
+    ArrowDown,
+    Filter,
+    Right,
+    Delete
+  },
   setup() {
     const router = useRouter();
     return { router };
@@ -247,6 +438,11 @@ export default defineComponent({
       selectedStrategyType: null as number | null,
       minAnnualReturn: null as number | null,
       maxAnnualReturn: null as number | null,
+      searchQuery: "",
+      showFilterDialog: false,
+      currentPage: 1,
+      pageSize: 25,
+      selectedRows: [] as StrategyDto[],
     };
   },
 
@@ -254,14 +450,27 @@ export default defineComponent({
     filteredStrategies(): StrategyDto[] {
       let filtered = this.allStrategies;
 
+      // Search filter
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(s => {
+          const typeName = this.getStrategyTypeName(s.strategyType).toLowerCase();
+          const country = (s.countryToInvest || '').toLowerCase();
+          return typeName.includes(query) || country.includes(query);
+        });
+      }
+
+      // Country filter
       if (this.selectedCountry) {
         filtered = filtered.filter(s => s.countryToInvest === this.selectedCountry);
       }
 
+      // Strategy type filter
       if (this.selectedStrategyType !== null && this.selectedStrategyType !== undefined) {
         filtered = filtered.filter(s => s.strategyType === this.selectedStrategyType);
       }
 
+      // Annual return range filter
       if (this.minAnnualReturn !== null && this.minAnnualReturn !== undefined) {
         const minRate = this.minAnnualReturn / 100;
         filtered = filtered.filter(s => (s.ratePerYear ?? 0) >= minRate);
@@ -273,6 +482,12 @@ export default defineComponent({
       }
 
       return filtered;
+    },
+
+    paginatedStrategies(): StrategyDto[] {
+      const start = (this.currentPage - 1) * this.pageSize;
+      const end = start + this.pageSize;
+      return this.filteredStrategies.slice(start, end);
     },
 
     countries(): string[] {
@@ -298,6 +513,27 @@ export default defineComponent({
         id,
         name: this.getStrategyTypeName(id)
       }));
+    },
+
+    headerCellStyle() {
+      return {
+        background: '#fafafa',
+        color: 'var(--color-text-secondary)',
+        fontWeight: '600',
+        fontSize: '0.8125rem',
+        textTransform: 'uppercase',
+        letterSpacing: '0.03em',
+        padding: '0.875rem 1rem',
+        borderBottom: '1px solid #f0f0f0'
+      };
+    },
+
+    cellStyle() {
+      return {
+        borderBottom: '1px solid #f5f5f5',
+        padding: '1rem',
+        fontSize: '0.9375rem'
+      };
     }
   },
 
@@ -306,12 +542,33 @@ export default defineComponent({
       const type = this.refStrategyTypes.find(t => t.id === typeId);
       return type?.name || `Type ${typeId}`;
     },
+
     async reload() {
       await this.getList();
     },
 
     async onFilterChanged() {
-      // Filter is reactive, no need to reload
+      // Filter is reactive, reset to first page
+      this.currentPage = 1;
+    },
+
+    applyFilters() {
+      this.showFilterDialog = false;
+      this.currentPage = 1;
+    },
+
+    clearFilters() {
+      this.selectedCountry = "";
+      this.selectedStrategyType = null;
+      this.minAnnualReturn = null;
+      this.maxAnnualReturn = null;
+      this.searchQuery = "";
+      this.currentPage = 1;
+      this.showFilterDialog = false;
+    },
+
+    handleSelectionChange(selection: StrategyDto[]) {
+      this.selectedRows = selection;
     },
 
     async getList() {

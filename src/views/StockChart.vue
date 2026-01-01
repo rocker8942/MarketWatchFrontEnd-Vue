@@ -246,7 +246,7 @@ export default defineComponent({
                         : moment().subtract(days, 'days').startOf('day').toDate());
 
                 const maxResultCount = this.selectedPeriod === 'MAX'
-                    ? 1000
+                    ? 100000 // Fetch all available data for MAX period
                     : Math.min(1000, days);
 
                 let response = await stockPriceClient.stockPriceGetStockPriceWithDetails(

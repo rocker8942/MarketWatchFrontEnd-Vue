@@ -1,9 +1,9 @@
 <template>
   <div class="analysis-container">
-    <div class="page-header">
-      <h1>Fund Strategy</h1>
-      <p class="page-subtitle">Data from tblFundStrategy</p>
-    </div>
+    <PageHeader
+      title="Fund Strategy"
+      subtitle="Data from tblFundStrategy"
+    />
 
     <!-- Summary Metrics -->
     <div class="metrics-grid">
@@ -453,8 +453,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import ApiService from "@/core/services/apiService";
+import PageHeader from "@/components/PageHeader.vue";
 
 export default defineComponent({
+  components: {
+    PageHeader
+  },
 
   data() {
     return {

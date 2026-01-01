@@ -1,8 +1,8 @@
+@import "./base.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import "./base.css";
 
 #app {
   max-width: 100%;
@@ -113,26 +113,112 @@ html {
   outline-offset: 2px;
 }
 
-/* Professional Data Tables - Minimalist */
+/* Professional Data Tables - Enhanced for modern UI */
 table {
   border-collapse: collapse;
   width: 100%;
 }
 
 th {
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.8125rem;
   text-align: left;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--color-border-subtle);
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 td {
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--color-border-subtle);
+  font-size: 0.9375rem;
+}
+
+tr {
+  transition: background-color 0.15s ease;
 }
 
 tr:hover {
   background: var(--color-surface-variant);
+}
+
+/* Modern table action buttons */
+.table-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.table-action-btn:hover {
+  background: var(--color-surface-variant);
+  color: var(--color-heading);
+}
+
+.table-action-btn.danger:hover {
+  background: rgba(239, 83, 80, 0.08);
+  color: var(--finance-red-light);
+}
+
+/* Table checkbox styling */
+.table-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.table-checkbox:checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* Filter bar styling */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: var(--color-background-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background-card);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-btn:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-variant);
+}
+
+.filter-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Loading Animations */
@@ -178,30 +264,87 @@ tr:hover {
   font-feature-settings: "tnum";
 }
 
-/* Status Badges */
+/* Status Badges - Updated to match reference design */
 .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.status-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
+}
+
+.status-badge.active {
+  background: rgba(76, 175, 80, 0.08);
+  color: #2e7d32;
+}
+
+.status-badge.active::before {
+  background: #4caf50;
+}
+
+.status-badge.pending {
+  background: rgba(255, 152, 0, 0.08);
+  color: #e65100;
+}
+
+.status-badge.pending::before {
+  background: #ff9800;
+}
+
+.status-badge.cancelled {
+  background: rgba(239, 83, 80, 0.08);
+  color: #c62828;
+}
+
+.status-badge.cancelled::before {
+  background: #ef5350;
+}
+
+.status-badge.delay {
+  background: rgba(156, 39, 176, 0.08);
+  color: #6a1b9a;
+}
+
+.status-badge.delay::before {
+  background: #9c27b0;
 }
 
 .status-badge.success {
-  background: rgba(76, 175, 80, 0.1);
-  color: var(--finance-green-light);
+  background: rgba(76, 175, 80, 0.08);
+  color: #2e7d32;
+}
+
+.status-badge.success::before {
+  background: #4caf50;
 }
 
 .status-badge.error {
-  background: rgba(239, 83, 80, 0.1);
-  color: var(--finance-red-light);
+  background: rgba(239, 83, 80, 0.08);
+  color: #c62828;
+}
+
+.status-badge.error::before {
+  background: #ef5350;
 }
 
 .status-badge.info {
-  background: rgba(25, 118, 210, 0.1);
-  color: var(--finance-blue-light);
+  background: rgba(25, 118, 210, 0.08);
+  color: #1565c0;
+}
+
+.status-badge.info::before {
+  background: #42a5f5;
 }
 
 /* Responsive */

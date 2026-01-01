@@ -1,27 +1,43 @@
 <template>
     <div class="stock-list-container">
-        <div class="page-header">
-            <h1>Securities Directory</h1>
-            <p class="page-subtitle">Browse and search our comprehensive database of securities</p>
-        </div>
+        <PageHeader
+            title="Securities Directory"
+            subtitle="Browse and search our comprehensive database of securities"
+            :show-search="true"
+            search-placeholder="Search"
+            @search="handleHeaderSearch"
+        />
 
-        <div class="search-section">
-            <div class="search-wrapper">
+        <div class="filter-bar">
+            <div class="filter-bar-left">
+                <el-dropdown class="filter-dropdown">
+                    <button class="filter-btn">
+                        All <el-icon class="ml-1"><ArrowDown /></el-icon>
+                    </button>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item>All Securities</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
+            </div>
+
+            <div class="flex-1"></div>
+
+            <div class="filter-bar-right">
                 <el-input
                     v-model="stockCode"
                     class="search-input"
                     placeholder="Search by stock code or name..."
                     clearable
-                    size="large">
+                    @keyup.enter="handleSearch">
                     <template #prefix>
                         <el-icon class="search-icon"><Search /></el-icon>
                     </template>
-                    <template #append>
-                        <el-button @click="handleSearch" type="primary" class="search-btn">
-                            Search
-                        </el-button>
-                    </template>
                 </el-input>
+                <el-button @click="handleSearch" type="primary" class="search-btn">
+                    Search
+                </el-button>
             </div>
         </div>
 
@@ -81,7 +97,8 @@ import DataTablesLib from 'datatables.net';
 import ApiService from "@/core/services/apiService";
 import { StockInfoClient, PagedResultDtoOfStockInfoDto } from "@/core/services/marketWatchClient";
 import moment from 'moment';
-import { Search } from '@element-plus/icons-vue'
+import { Search, ArrowDown } from '@element-plus/icons-vue'
+import PageHeader from '@/components/PageHeader.vue';
 
 DataTable.use(DataTablesLib);
 
@@ -89,7 +106,9 @@ const stockClient = new StockInfoClient(ApiService.baseUrl, ApiService.vueInstan
 
 export default defineComponent({
     components: {
-        Search
+        Search,
+        ArrowDown,
+        PageHeader
     },
 
     data() {
@@ -111,7 +130,7 @@ export default defineComponent({
 
                 // get stockPrice list
                 const response = await stockClient.stockInfoGetStockInfoList(`${this.sortField} ${this.sortOrder}`,
-                 (this.currentPage - 1) * this.pageSize, 
+                 (this.currentPage - 1) * this.pageSize,
                  this.pageSize,
                  this.stockCode
                 );
@@ -124,6 +143,10 @@ export default defineComponent({
             }
         },
         handleSearch() {
+            this.getList();
+        },
+        handleHeaderSearch(query: string) {
+            this.stockCode = query;
             this.getList();
         },
         onPageChange(event) {
@@ -168,48 +191,49 @@ export default defineComponent({
     margin: 0 auto;
 }
 
-.page-header {
-    margin-bottom: 2rem;
+/* Filter Bar */
+.filter-bar-left {
+    display: flex;
+    align-items: center;
 }
 
-.page-header h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--color-heading);
-    margin-bottom: 0.5rem;
-    letter-spacing: -0.02em;
+.filter-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
-.page-subtitle {
-    font-size: 1.0625rem;
-    color: var(--color-text-secondary);
-    margin: 0;
+.flex-1 {
+    flex: 1;
 }
 
-/* Search Section */
-.search-section {
-    margin-bottom: 2.5rem;
+.ml-1 {
+    margin-left: 0.25rem;
 }
 
-.search-wrapper {
-    max-width: 600px;
+.filter-dropdown {
+    background: transparent;
+    border: none;
 }
 
 .search-input {
+    width: 320px;
     font-size: 1rem;
 }
 
 .search-input :deep(.el-input__wrapper) {
     border-radius: 8px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
+    border: 1px solid var(--color-border);
     transition: all 0.2s ease;
 }
 
 .search-input :deep(.el-input__wrapper:hover) {
-    box-shadow: var(--shadow-md);
+    border-color: var(--color-border-strong);
 }
 
 .search-input :deep(.el-input__wrapper.is-focus) {
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
 }
 
@@ -218,7 +242,8 @@ export default defineComponent({
 }
 
 .search-btn {
-    font-weight: 600;
+    font-weight: 500;
+    border-radius: 8px;
 }
 
 /* Table Section - Minimalist */
