@@ -384,6 +384,13 @@ export default defineComponent({
 
     mounted() {
         this.loadRecentStocks();
+
+        // Auto-load stock if stockCode is provided in query params
+        const stockCode = this.$route.query.stockCode;
+        if (stockCode) {
+            this.selectedStockCode = String(stockCode);
+            this.loadStockData();
+        }
     }
 });
 </script>

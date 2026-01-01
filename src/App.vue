@@ -83,6 +83,22 @@ onUnmounted(() => {
               </el-dropdown-menu>
             </template>
           </el-dropdown>
+          <el-dropdown trigger="hover" class="nav-dropdown">
+            <span class="nav-link dropdown-trigger">
+              <span>Simulate</span>
+              <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item>
+                  <RouterLink to="/simulate/strategy" class="dropdown-link">Strategy</RouterLink>
+                </el-dropdown-item>
+                <el-dropdown-item>
+                  <RouterLink to="/simulate/backtest-history" class="dropdown-link">Backtest History</RouterLink>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <RouterLink to="/about" class="nav-link">
             <span>About</span>
           </RouterLink>

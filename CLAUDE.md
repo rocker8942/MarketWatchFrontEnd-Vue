@@ -93,7 +93,8 @@ Protected routes (all except home) require authentication and use lazy loading f
 Recent additions:
 - `GET /strategyHistory` route renders Strategy trade history list (from `tblFundTradeHistory`)
 - StockChart page now displays financial overview section with key metrics from Company entity
-- StrategyView page now includes Name column and Edit functionality for strategies (from `tblFundStrategy`)
+- `/strategy` route (StrategyView) uses `tblFundStrategy` with Name column and Edit functionality
+- `/simulate/strategy` route (SimulateStrategy) uses `Strategy` table for simulation strategies
 
 ## Key Configuration Files
 - [vite.config.ts](vite.config.ts) - Vite config with HTTPS enabled, alias `@` → `./src`
@@ -104,6 +105,7 @@ Recent additions:
 - Vue 3 Composition API with TypeScript
 - Use Tailwind CSS for styling
 - Keep implementations simple and straightforward
+- Do not create a EF migration. Skip it. 
 
 ## log
 - backend log file is at "G:\SourceCode\MarketWatchWeb_AbpBackEnd\src\MarketWatchWeb.HttpApi.Host\Logs\logs.txt"

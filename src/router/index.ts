@@ -68,6 +68,22 @@ const router = createRouter({
         authName: idsrvAuth.authName,
       },
       component: () => import("../views/StockRelations.vue"),
+    },
+    {
+      path: "/simulate/strategy",
+      name: "simulateStrategy",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/SimulateStrategy.vue"),
+    },
+    {
+      path: "/simulate/backtest-history",
+      name: "simulateBacktestHistory",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/SimulateBacktestHistory.vue"),
     }
   ],
 });

@@ -1,0 +1,649 @@
+<template>
+  <div class="analysis-container">
+    <div class="page-header">
+      <h1>Simulate - Backtest History</h1>
+      <p class="page-subtitle">Trade history results from simulations</p>
+    </div>
+
+    <div class="mb-4 flex flex-wrap items-center">
+      <el-select
+        v-model="selectedStrategyId"
+        clearable
+        filterable
+        placeholder="Filter by strategy"
+        style="width: 350px; margin-right: 16px;"
+        @change="onStrategyIdChanged">
+        <el-option
+          v-for="s in strategies"
+          :key="s.id"
+          :label="s.name"
+          :value="s.id" />
+      </el-select>
+
+      <el-button :loading="loading" type="primary" @click="reload" style="margin-right: 16px;">
+        Refresh
+      </el-button>
+
+      <div class="text-sm text-gray-500">
+        {{ totalCount }} rows
+      </div>
+    </div>
+
+    <div class="table-section">
+      <div class="table-wrapper">
+        <el-table
+          v-loading="loading"
+          :data="paginatedRows"
+          class="professional-table"
+          stripe
+          :default-sort="defaultSort"
+          :header-cell-style="{ background: 'var(--color-surface-variant)', color: 'var(--color-heading)', fontWeight: '600' }"
+          :row-key="getRowKey"
+          @sort-change="handleSortChange">
+          <el-table-column
+            v-for="col in columns"
+            :key="col"
+            :prop="getOriginalColumnName(col)"
+            :label="col"
+            :min-width="getMinWidth(col)"
+            :sortable="isSortableColumn(col) ? 'custom' : false">
+            <template #default="scope">
+              <span v-if="isDateColumn(col)">{{ formatDate(scope.row[getOriginalColumnName(col)]) }}</span>
+              <span v-else-if="isRateOfReturnColumn(col)" :class="getRateOfReturnClass(scope.row[getOriginalColumnName(col)])">
+                {{ formatPercentage(scope.row[getOriginalColumnName(col)]) }}
+              </span>
+              <span v-else-if="isStockColumn(col)" class="stock-link" @click="handleStockClick(scope.row[getOriginalColumnName(col)])">
+                {{ formatValue(scope.row[getOriginalColumnName(col)], col) }}
+              </span>
+              <span v-else>{{ formatValue(scope.row[getOriginalColumnName(col)], col) }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[25, 50, 100, 200]"
+          :total="totalCount"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange" />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script lang="ts">
+import { defineComponent } from "vue";
+import ApiService from "@/core/services/apiService";
+import { StrategyClient, StockInfoClient, RefStrategyTypeClient } from "@/core/services/marketWatchClient";
+
+type AnyRow = Record<string, any>;
+
+export default defineComponent({
+  data() {
+    return {
+      rows: [] as AnyRow[],
+      totalCount: 0,
+      loading: false,
+      selectedStrategyId: "" as number | "",
+      strategyIds: [] as string[],
+      columns: [] as string[],
+      strategyIdKey: "" as string,
+      dateKey: "" as string,
+      rateOfReturnKey: "" as string,
+      stockMap: new Map<string, string>(),
+      strategyMap: new Map<string, string>(),
+      strategyTypeMap: new Map<string, string>(),
+      strategyToTypeMap: new Map<string, string>(),
+      sellTypeMap: new Map<string, string>(),
+      strategies: [] as Array<{ id: number; name: string }>,
+      currentPage: 1,
+      pageSize: 50,
+      sortProp: "",
+      sortOrder: "",
+    };
+  },
+
+  computed: {
+    defaultSort(): any {
+      if (!this.dateKey) return undefined;
+      return { prop: this.dateKey, order: "descending" };
+    },
+
+    paginatedRows(): AnyRow[] {
+      // Sort all rows first
+      let sortedRows = [...this.rows];
+
+      if (this.sortProp && this.sortOrder) {
+        sortedRows.sort((a, b) => {
+          const aVal = a[this.sortProp];
+          const bVal = b[this.sortProp];
+
+          // Handle null/undefined values
+          if (aVal === null || aVal === undefined) return 1;
+          if (bVal === null || bVal === undefined) return -1;
+
+          // Handle dates
+          const lowerProp = this.sortProp.toLowerCase();
+          if (lowerProp.includes("date") || this.sortProp === this.dateKey) {
+            const aDate = new Date(aVal).getTime();
+            const bDate = new Date(bVal).getTime();
+            return this.sortOrder === "ascending" ? aDate - bDate : bDate - aDate;
+          }
+
+          // Handle numbers
+          if (typeof aVal === "number" && typeof bVal === "number") {
+            return this.sortOrder === "ascending" ? aVal - bVal : bVal - aVal;
+          }
+
+          // Handle strings
+          const aStr = String(aVal).toLowerCase();
+          const bStr = String(bVal).toLowerCase();
+          if (this.sortOrder === "ascending") {
+            return aStr < bStr ? -1 : aStr > bStr ? 1 : 0;
+          } else {
+            return aStr > bStr ? -1 : aStr < bStr ? 1 : 0;
+          }
+        });
+      }
+
+      // Then paginate
+      const start = (this.currentPage - 1) * this.pageSize;
+      const end = start + this.pageSize;
+      return sortedRows.slice(start, end);
+    },
+  },
+
+  methods: {
+    async reload() {
+      this.currentPage = 1;
+      await this.getList();
+    },
+
+    async onStrategyIdChanged() {
+      this.currentPage = 1;
+      await this.getList();
+    },
+
+    handlePageChange(page: number) {
+      this.currentPage = page;
+    },
+
+    handleSizeChange(size: number) {
+      this.pageSize = size;
+      this.currentPage = 1;
+    },
+
+    handleSortChange({ prop, order }: { prop: string; order: string | null }) {
+      this.sortProp = prop || "";
+      this.sortOrder = order || "";
+      this.currentPage = 1; // Reset to first page when sorting changes
+    },
+
+    async loadStocks() {
+      try {
+        const client = new StockInfoClient(undefined, ApiService.vueInstance.axios);
+        const result = await client.stockInfoGetList(undefined, 0, 1000);
+        this.stockMap.clear();
+        if (result.items) {
+          for (const stock of result.items) {
+            const stockId = (stock as any).id ?? (stock as any).Id;
+            const stockName = (stock as any).name ?? (stock as any).Name;
+
+            if (stockId && stockName) {
+              this.stockMap.set(String(stockId), stockName);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load stocks", e);
+      }
+    },
+
+    async loadStrategyTypes() {
+      try {
+        const client = new RefStrategyTypeClient(undefined, ApiService.vueInstance.axios);
+        const result = await client.refStrategyTypeGetList(undefined, 0, 1000);
+        this.strategyTypeMap.clear();
+        if (result.items) {
+          for (const strategyType of result.items) {
+            const typeId = (strategyType as any).id ?? (strategyType as any).Id;
+            const typeName = (strategyType as any).name ?? (strategyType as any).Name;
+
+            if (typeId !== undefined && typeName) {
+              this.strategyTypeMap.set(String(typeId), typeName);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load strategy types", e);
+      }
+    },
+
+    async loadStrategies() {
+      try {
+        const client = new StrategyClient(undefined, ApiService.vueInstance.axios);
+        const result = await client.strategyGetList(undefined, 0, 1000);
+        this.strategyMap.clear();
+        this.strategyToTypeMap.clear();
+        this.strategies = [];
+        if (result.items) {
+          for (const strategy of result.items) {
+            const strategyId = (strategy as any).id ?? (strategy as any).Id;
+            const strategyType = (strategy as any).strategyType ?? (strategy as any).StrategyType;
+            const ratePerYear = (strategy as any).ratePerYear ?? (strategy as any).RatePerYear;
+            const daysToTest = (strategy as any).daysToTest ?? (strategy as any).DaysToTest;
+
+            if (strategyId !== undefined) {
+              // Build display name with id, type, annual return, and trade days
+              let displayName = `${strategyId}`;
+
+              if (strategyType !== undefined && strategyType !== null) {
+                this.strategyToTypeMap.set(String(strategyId), String(strategyType));
+                const typeName = this.strategyTypeMap.get(String(strategyType));
+                if (typeName) {
+                  displayName += ` - ${typeName}`;
+                }
+              }
+
+              if (ratePerYear !== undefined && ratePerYear !== null) {
+                const formattedReturn = (ratePerYear * 100).toFixed(2);
+                displayName += ` - ${formattedReturn}%`;
+              }
+
+              if (daysToTest !== undefined && daysToTest !== null) {
+                displayName += ` - Days to Test: ${daysToTest}`;
+              }
+
+              this.strategyMap.set(String(strategyId), displayName);
+              this.strategies.push({ id: strategyId, name: displayName });
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load strategies", e);
+      }
+    },
+
+    async loadSellTypes() {
+      try {
+        const res = await ApiService.vueInstance.axios.get("/api/app/ref-sell-type", {
+          params: { SkipCount: 0, MaxResultCount: 100 }
+        });
+        this.sellTypeMap.clear();
+        const data = res.data;
+        const items = data?.items ?? data?.result?.items ?? [];
+
+        for (const sellType of items) {
+          const id = sellType.id ?? sellType.Id;
+          const name = sellType.name ?? sellType.Name;
+
+          if (id !== undefined && id !== null && name) {
+            this.sellTypeMap.set(String(id), name);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load sell types", e);
+      }
+    },
+
+    async getList() {
+      this.loading = true;
+      try {
+        // Don't load anything if no strategy is selected
+        if (!this.selectedStrategyId) {
+          this.rows = [];
+          this.totalCount = 0;
+          this.columns = [];
+          this.loading = false;
+          return;
+        }
+
+        const baseParams: Record<string, any> = {
+          StrategyId: this.selectedStrategyId
+        };
+
+        // Fetch all data in batches (backend limit is 1000)
+        const batchSize = 1000;
+        let allItems: AnyRow[] = [];
+        let skip = 0;
+        let hasMore = true;
+
+        while (hasMore) {
+          const params = {
+            ...baseParams,
+            SkipCount: skip,
+            MaxResultCount: batchSize,
+          };
+
+          const res = await ApiService.vueInstance.axios.get("/api/app/backtest-history", { params });
+          const data = res.data;
+          const payload = data?.result ?? data;
+
+          let items: AnyRow[] = [];
+          let total = 0;
+
+          if (Array.isArray(payload)) {
+            items = payload;
+            total = payload.length;
+          } else if (Array.isArray(payload?.items)) {
+            items = payload.items;
+            total = payload.totalCount ?? payload.items.length;
+          } else {
+            items = [];
+            total = 0;
+          }
+
+          allItems = allItems.concat(items);
+
+          // Check if we got all data
+          if (items.length < batchSize) {
+            hasMore = false;
+          } else {
+            skip += batchSize;
+          }
+        }
+
+        this.rows = allItems;
+        this.totalCount = allItems.length;
+
+        this.refreshKeys();
+
+        // Set default sort if not already set
+        if (!this.sortProp && this.dateKey) {
+          this.sortProp = this.dateKey;
+          this.sortOrder = "descending";
+        }
+      } catch (e) {
+        console.error("Failed to load backtest history", e);
+        this.rows = [];
+        this.totalCount = 0;
+        this.columns = [];
+        this.strategyIds = [];
+        this.strategyIdKey = "";
+        this.dateKey = "";
+        this.rateOfReturnKey = "";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    refreshKeys() {
+      const keys = new Set<string>();
+      for (const row of this.rows.slice(0, 50)) {
+        Object.keys(row || {}).forEach((k) => keys.add(k));
+      }
+
+      const all = Array.from(keys);
+
+      const strategyIdKey = all.find((k) => k.toLowerCase() === "strategyid") || all.find((k) => k.toLowerCase().includes("strategyid")) || "";
+      const dateKey = all.find((k) => k.toLowerCase() === "tradedate") || all.find((k) => k.toLowerCase().includes("date")) || "";
+      const rateOfReturnKey = all.find((k) => k.toLowerCase() === "rateofreturn" || k.toLowerCase() === "rateorreturn") || "";
+
+      this.strategyIdKey = strategyIdKey;
+      this.dateKey = dateKey;
+      this.rateOfReturnKey = rateOfReturnKey;
+
+      // Transform column names
+      const transformColumnName = (col: string): string => {
+        const lc = col.toLowerCase();
+        if (lc === "strategyid") return "StrategyName";
+        if (lc === "mainleader") return "Leader Stock";
+        if (lc === "followstock") return "Follow Stock";
+        if (lc === "selltype") return "Sell Type";
+        if (lc === "tradedate") return "Trade Date";
+        if (lc === "rateofreturn" || lc === "rateorreturn") return "Rate Of Return";
+        return col;
+      };
+
+      // Put date + rateOfReturn + strategyId columns first (if present)
+      const ordered: string[] = [];
+      if (dateKey) ordered.push(dateKey);
+      if (rateOfReturnKey && rateOfReturnKey !== dateKey) ordered.push(rateOfReturnKey);
+      if (strategyIdKey && strategyIdKey !== dateKey && strategyIdKey !== rateOfReturnKey) ordered.push(strategyIdKey);
+
+      for (const k of all) {
+        if (!ordered.includes(k)) ordered.push(k);
+      }
+
+      // Filter out ID columns
+      const filtered = ordered.filter((k) => {
+        const lc = k.toLowerCase();
+        // Keep strategyId since we transform it to StrategyName
+        if (lc === "strategyid") return true;
+        // Hide other ID columns
+        return !lc.endsWith("id") && lc !== "id";
+      });
+
+      // Transform all column names
+      this.columns = filtered.map(transformColumnName);
+
+      if (strategyIdKey) {
+        const set = new Set<string>();
+        for (const row of this.rows) {
+          const v = row?.[strategyIdKey];
+          if (v !== null && v !== undefined && v !== "") {
+            set.add(String(v).trim());
+          }
+        }
+        this.strategyIds = Array.from(set).sort();
+      } else {
+        this.strategyIds = [];
+      }
+    },
+
+    getOriginalColumnName(displayName: string): string {
+      const lc = displayName.toLowerCase();
+      if (lc === "strategyname") return this.strategyIdKey;
+      if (lc === "trade date") return this.dateKey;
+      if (lc === "rate of return") return this.rateOfReturnKey;
+      if (lc === "leader stock") {
+        const keys = Object.keys(this.rows[0] || {});
+        return keys.find((k) => k.toLowerCase() === "mainleader") || displayName;
+      }
+      if (lc === "follow stock") {
+        const keys = Object.keys(this.rows[0] || {});
+        return keys.find((k) => k.toLowerCase() === "followstock") || displayName;
+      }
+      if (lc === "sell type") {
+        const keys = Object.keys(this.rows[0] || {});
+        return keys.find((k) => k.toLowerCase() === "selltype") || displayName;
+      }
+      return displayName;
+    },
+
+    isSortableColumn(col: string): boolean {
+      const lc = col.toLowerCase();
+      // Make Trade Date and Rate Of Return sortable
+      return lc === "trade date" || lc === "rate of return" || this.isDateColumn(col) || this.isRateOfReturnColumn(col);
+    },
+
+    isDateColumn(col: string): boolean {
+      const lc = (col || "").toLowerCase();
+      return lc === (this.dateKey || "").toLowerCase() || lc.includes("date") || lc === "trade date";
+    },
+
+    isRateOfReturnColumn(col: string): boolean {
+      const lc = (col || "").toLowerCase();
+      return lc === "rateorreturn" || lc === "rateofreturn" || lc === "rate of return";
+    },
+
+    isStockColumn(col: string): boolean {
+      const lc = (col || "").toLowerCase();
+      return lc === "leader stock" || lc === "follow stock";
+    },
+
+    handleStockClick(stockCode: string) {
+      if (!stockCode) return;
+      const code = String(stockCode).trim();
+      this.$router.push({ name: "stockChart", query: { stockCode: code } });
+    },
+
+    formatDate(value: any): string {
+      if (!value) return "—";
+      const d = value instanceof Date ? value : new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      return d.toLocaleDateString();
+    },
+
+    formatPercentage(value: any): string {
+      if (value === null || value === undefined || value === "") return "—";
+      if (typeof value !== "number") return String(value);
+      return (value * 100).toFixed(2) + "%";
+    },
+
+    formatValue(value: any, col: string): string {
+      if (value === null || value === undefined || value === "") return "—";
+
+      const lc = col.toLowerCase();
+
+      // Transform strategyId to strategy type name
+      if (lc === "strategyname") {
+        const strategyId = String(value).trim();
+        const strategyTypeId = this.strategyToTypeMap.get(strategyId);
+        if (strategyTypeId) {
+          const strategyTypeName = this.strategyTypeMap.get(strategyTypeId);
+          if (strategyTypeName) {
+            return strategyTypeName;
+          }
+        }
+        // Fallback to strategy name if type not found
+        const name = this.strategyMap.get(strategyId);
+        return name || String(value);
+      }
+
+      // Transform stock codes to stock names
+      if (lc === "leader stock" || lc === "follow stock") {
+        const stockCode = String(value).trim();
+        return this.stockMap.get(stockCode) || stockCode;
+      }
+
+      // Transform sellType ID to sellType name
+      if (lc === "sell type") {
+        const sellTypeId = String(value).trim();
+        const name = this.sellTypeMap.get(sellTypeId);
+        return name || String(value);
+      }
+
+      if (typeof value === "number") return String(value);
+      if (typeof value === "boolean") return value ? "true" : "false";
+      return String(value);
+    },
+
+    getMinWidth(col: string): number {
+      if (this.isDateColumn(col)) return 180;
+      if (this.isRateOfReturnColumn(col)) return 150;
+      const lc = col.toLowerCase();
+      if (lc.includes("id")) return 90;
+      if (lc.includes("price") || lc.includes("rate") || lc.includes("nav")) return 130;
+      return 140;
+    },
+
+    getRowKey(row: AnyRow, index: number): string | number {
+      if (row && (row.id !== undefined && row.id !== null)) return row.id;
+      if (row && (row.Id !== undefined && row.Id !== null)) return row.Id;
+      return index;
+    },
+
+    getRateOfReturnClass(value: any): string {
+      if (value === null || value === undefined || value === "") return "";
+      const numValue = typeof value === "number" ? value : parseFloat(value);
+      if (isNaN(numValue)) return "";
+      if (numValue > 0) return "rate-positive";
+      if (numValue < 0) return "rate-negative";
+      return "";
+    },
+  },
+
+  async mounted() {
+    // Check if strategyId is passed via query params
+    const queryStrategyId = this.$route.query.strategyId;
+    if (queryStrategyId) {
+      this.selectedStrategyId = parseInt(queryStrategyId as string, 10);
+    }
+
+    // Load strategy types first, then load strategies so the type map is available
+    await Promise.all([this.loadStocks(), this.loadStrategyTypes(), this.loadSellTypes()]);
+    await this.loadStrategies();
+    await this.getList();
+  },
+});
+</script>
+
+<style scoped>
+.analysis-container {
+  padding: var(--space-4xl) var(--space-xl);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  font-size: 1.0625rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.table-section {
+  background: var(--color-background-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 16px;
+  padding: var(--space-3xl);
+  box-shadow: var(--shadow-subtle);
+  margin-bottom: var(--space-xl);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.professional-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.stock-link {
+  color: #409eff;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.stock-link:hover {
+  color: #66b1ff;
+}
+
+.pagination-wrapper {
+  margin-top: var(--space-2xl);
+  display: flex;
+  justify-content: center;
+}
+
+.rate-positive {
+  color: #e74c3c;
+  font-weight: 600;
+  display: block;
+  text-align: right;
+}
+
+.rate-negative {
+  color: #3498db;
+  font-weight: 600;
+  display: block;
+  text-align: right;
+}
+</style>
