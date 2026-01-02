@@ -84,6 +84,14 @@ const router = createRouter({
         authName: idsrvAuth.authName,
       },
       component: () => import("../views/SimulateBacktestHistory.vue"),
+    },
+    {
+      path: "/simulate/graph",
+      name: "simulateGraph",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/SimulateGraphView.vue"),
     }
   ],
 });

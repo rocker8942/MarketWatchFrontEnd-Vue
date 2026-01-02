@@ -96,12 +96,12 @@ onUnmounted(() => {
                 <el-dropdown-item>
                   <RouterLink to="/simulate/backtest-history" class="dropdown-link">Backtest History</RouterLink>
                 </el-dropdown-item>
+                <el-dropdown-item>
+                  <RouterLink to="/simulate/graph" class="dropdown-link">SimulateGraph</RouterLink>
+                </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
-          <RouterLink to="/about" class="nav-link">
-            <span>About</span>
-          </RouterLink>
         </nav>
 
         <div class="nav-actions">
@@ -145,7 +145,6 @@ onUnmounted(() => {
             <ul class="footer-links">
               <li><RouterLink to="/StockList">Securities</RouterLink></li>
               <li><RouterLink to="/strategy">Analysis</RouterLink></li>
-              <li><RouterLink to="/about">About Us</RouterLink></li>
             </ul>
           </div>
 
