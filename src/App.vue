@@ -91,13 +91,16 @@ onUnmounted(() => {
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item>
-                  <RouterLink to="/simulate/strategy" class="dropdown-link">Strategy</RouterLink>
+                  <RouterLink to="/simulate/run" class="dropdown-link">Run Simulation</RouterLink>
+                </el-dropdown-item>
+                <el-dropdown-item>
+                  <RouterLink to="/simulate/strategy" class="dropdown-link">Strategies</RouterLink>
                 </el-dropdown-item>
                 <el-dropdown-item>
                   <RouterLink to="/simulate/backtest-history" class="dropdown-link">Backtest History</RouterLink>
                 </el-dropdown-item>
                 <el-dropdown-item>
-                  <RouterLink to="/simulate/graph" class="dropdown-link">SimulateGraph</RouterLink>
+                  <RouterLink to="/simulate/graph" class="dropdown-link">Graph</RouterLink>
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
