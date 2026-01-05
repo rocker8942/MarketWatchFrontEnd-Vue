@@ -41,7 +41,7 @@
           <el-icon><Filter /></el-icon>
           Filter
         </button>
-        <span class="result-count">{{ filteredStrategies.length }} strategies</span>
+        <span class="result-count">{{ sortedStrategies.length }} strategies</span>
       </div>
     </div>
 
@@ -53,7 +53,8 @@
         class="clean-table"
         :header-cell-style="headerCellStyle"
         :cell-style="cellStyle"
-        @selection-change="handleSelectionChange">
+        @selection-change="handleSelectionChange"
+        @sort-change="handleSortChange">
 
         <el-table-column type="selection" width="48" />
 
@@ -67,17 +68,34 @@
 
         <el-table-column label="Country" width="150" sortable prop="countryToInvest" />
 
-        <el-table-column label="Annual Return" width="150" sortable>
+        <el-table-column label="Annual Return" width="150" sortable prop="ratePerYear">
           <template #default="scope">
             {{ formatRate(scope.row.ratePerYear) }}%
           </template>
         </el-table-column>
 
+        <el-table-column label="Entry Trigger" width="130" sortable prop="investTriggerRate">
+          <template #default="scope">
+            {{ formatRate(scope.row.investTriggerRate) }}%
+          </template>
+        </el-table-column>
+
+        <el-table-column label="Stop Loss Rate" width="150" sortable>
+          <template #default="scope">
+            {{ formatRate(scope.row.lossCutRate) }}%
+          </template>
+        </el-table-column>
+
         <el-table-column label="Days to Test" width="130" align="right" prop="daysToTest" />
 
-        <el-table-column label="Actions" width="120" align="center" fixed="right">
+        <el-table-column label="Analysis Period" width="150" align="right" prop="analysisPeriod" />
+
+        <el-table-column label="Actions" width="180" align="center" fixed="right">
           <template #default="scope">
             <div class="action-buttons">
+              <button class="action-icon-btn primary" @click="runSimulation(scope.row)" title="Run Simulation">
+                <el-icon><VideoPlay /></el-icon>
+              </button>
               <button class="action-icon-btn" @click="viewBacktest(scope.row)" title="View History">
                 <el-icon><Right /></el-icon>
               </button>
@@ -95,7 +113,7 @@
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
           :page-sizes="[10, 25, 50, 100]"
-          :total="filteredStrategies.length"
+          :total="sortedStrategies.length"
           layout="total, sizes, prev, pager, next"
           background
         />
@@ -360,6 +378,15 @@
   color: var(--color-heading);
 }
 
+.action-icon-btn.primary {
+  color: var(--el-color-primary);
+}
+
+.action-icon-btn.primary:hover {
+  background: rgba(64, 158, 255, 0.1);
+  color: var(--el-color-primary-light-3);
+}
+
 .action-icon-btn.danger:hover {
   background: rgba(239, 83, 80, 0.08);
   color: var(--finance-red-light);
@@ -414,7 +441,7 @@ import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
 import ApiService from "@/core/services/apiService";
 import { StrategyClient, type StrategyDto, RefStrategyTypeClient, type RefStrategyTypeDto } from "@/core/services/marketWatchClient";
-import { Search, ArrowDown, Filter, Right, Delete } from '@element-plus/icons-vue';
+import { Search, ArrowDown, Filter, Right, Delete, VideoPlay } from '@element-plus/icons-vue';
 
 export default defineComponent({
   components: {
@@ -422,7 +449,8 @@ export default defineComponent({
     ArrowDown,
     Filter,
     Right,
-    Delete
+    Delete,
+    VideoPlay
   },
   setup() {
     const router = useRouter();
@@ -443,6 +471,8 @@ export default defineComponent({
       currentPage: 1,
       pageSize: 25,
       selectedRows: [] as StrategyDto[],
+      sortColumn: "" as string,
+      sortOrder: "" as string // "ascending" or "descending"
     };
   },
 
@@ -484,10 +514,38 @@ export default defineComponent({
       return filtered;
     },
 
+    sortedStrategies(): StrategyDto[] {
+      let sorted = [...this.filteredStrategies];
+
+      if (this.sortColumn && this.sortOrder) {
+        sorted.sort((a, b) => {
+          let aValue: any;
+          let bValue: any;
+
+          switch (this.sortColumn) {
+            case 'ratePerYear':
+              aValue = a.ratePerYear ?? 0;
+              bValue = b.ratePerYear ?? 0;
+              break;
+            default:
+              return 0;
+          }
+
+          if (this.sortOrder === 'ascending') {
+            return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+          } else {
+            return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+          }
+        });
+      }
+
+      return sorted;
+    },
+
     paginatedStrategies(): StrategyDto[] {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
-      return this.filteredStrategies.slice(start, end);
+      return this.sortedStrategies.slice(start, end);
     },
 
     countries(): string[] {
@@ -571,6 +629,19 @@ export default defineComponent({
       this.selectedRows = selection;
     },
 
+    handleSortChange(sortData: { column: any; prop: string; order: string | null }) {
+      if (!sortData.order) {
+        // Clear sort
+        this.sortColumn = "";
+        this.sortOrder = "";
+      } else {
+        this.sortColumn = sortData.prop;
+        this.sortOrder = sortData.order;
+      }
+      // Reset to first page when sorting changes
+      this.currentPage = 1;
+    },
+
     async getList() {
       this.loading = true;
       try {
@@ -611,6 +682,36 @@ export default defineComponent({
       this.router.push({
         name: 'simulateBacktestHistory',
         query: { strategyId: strategy.id?.toString() }
+      });
+    },
+
+    runSimulation(strategy: StrategyDto) {
+      if (!strategy.id) return;
+
+      const countryCode = strategy.countryToInvest || '';
+      console.log('Strategy country code:', countryCode, 'Type:', typeof countryCode, 'Length:', countryCode.length);
+      console.log('Full strategy:', {
+        id: strategy.id,
+        strategyType: strategy.strategyType,
+        countryToInvest: strategy.countryToInvest
+      });
+
+      // Navigate to Run Simulation page with pre-filled parameters
+      // Pass country code as string, SimulateRunView will map it to the correct value
+      this.router.push({
+        name: 'simulateRun',
+        query: {
+          strategyType: strategy.strategyType?.toString(),
+          countryCode: countryCode,
+          analysisPeriod: (strategy.analysisPeriod || 60).toString(),
+          coefficientAllowed: (strategy.coefficientAllowed || 0.85).toString(),
+          investTriggerRate: (strategy.investTriggerRate || 0.02).toString(),
+          lossCutRate: (strategy.lossCutRate || -0.01).toString(),
+          portfolioNumber: (strategy.portfolioNumber || 10).toString(),
+          tradeFee: '0.001',
+          slippage: '0.001',
+          runAsync: 'true'
+        }
       });
     },
 

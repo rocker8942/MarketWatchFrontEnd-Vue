@@ -444,7 +444,7 @@ export default defineComponent({
         analysisPeriod: 60,
         coefficientAllowed: 0.85,
         investTriggerRate: 0.02,
-        lossCutRate: -0.05,
+        lossCutRate: -0.01,
         portfolioNumber: 10,
         tradeFee: 0.001,
         slippage: 0.001,
@@ -455,7 +455,9 @@ export default defineComponent({
       simulationResult: null as SimulationResult | null,
       tradesCurrentPage: 1,
       tradesPageSize: 25,
-      simulationApiUrl: "http://localhost:52335"
+      simulationApiUrl: "http://localhost:52335",
+      statusPollTimer: null as number | null,
+      isLoadingFromRoute: false
     };
   },
 
@@ -475,7 +477,16 @@ export default defineComponent({
         this.strategies = response.data.strategies || [];
         this.countries = response.data.countries || [];
 
-        if (this.strategies.length > 0) {
+        // Check if we have route parameters to load
+        const hasRouteParams = this.$route.query.strategyType !== undefined;
+
+        if (hasRouteParams) {
+          // Wait for Vue to update the DOM with the new options
+          await this.$nextTick();
+          // Load parameters from route after strategies and countries are loaded
+          this.loadParametersFromRoute();
+        } else if (this.strategies.length > 0) {
+          // Default behavior: set first strategy and load recommended parameters
           this.formData.strategyType = this.strategies[0].type;
           this.onStrategyChanged();
         }
@@ -499,12 +510,22 @@ export default defineComponent({
     },
 
     onStrategyChanged() {
+      // Skip auto-updating parameters if we're loading from route
+      if (this.isLoadingFromRoute) {
+        return;
+      }
+
       const strategy = this.strategies.find(s => s.type === this.formData.strategyType);
       if (strategy?.recommendedParameters) {
-        this.formData.analysisPeriod = strategy.recommendedParameters.analysisPeriod;
+        // Set analysis period to 90 for MeanReversion strategy, otherwise use recommended value
+        if (strategy.name === 'MeanReversion') {
+          this.formData.analysisPeriod = 90;
+        } else {
+          this.formData.analysisPeriod = strategy.recommendedParameters.analysisPeriod;
+        }
         this.formData.coefficientAllowed = strategy.recommendedParameters.coefficientAllowed;
         this.formData.investTriggerRate = strategy.recommendedParameters.investTriggerRate;
-        this.formData.lossCutRate = strategy.recommendedParameters.lossCutRate;
+        this.formData.lossCutRate = -0.01; // Default stoploss for all strategies
       }
     },
 
@@ -570,6 +591,10 @@ export default defineComponent({
           this.$message.success("Simulation completed successfully!");
         } else if (this.formData.runAsync) {
           this.$message.info(`Simulation started. ID: ${this.simulationResult?.simulationId}`);
+          // Start polling for status updates
+          if (this.simulationResult?.simulationId) {
+            this.startStatusPolling(this.simulationResult.simulationId);
+          }
         }
       } catch (error: any) {
         console.error("Simulation failed", error);
@@ -580,7 +605,67 @@ export default defineComponent({
       }
     },
 
+    async checkSimulationStatus(simulationId: string) {
+      try {
+        const response = await axios.get(
+          `${this.simulationApiUrl}/api/Simulation/status/${simulationId}`
+        );
+        return response.data;
+      } catch (error) {
+        console.error("Failed to check simulation status", error);
+        return null;
+      }
+    },
+
+    startStatusPolling(simulationId: string) {
+      // Clear any existing timer
+      this.stopStatusPolling();
+
+      // Poll every 3 seconds
+      this.statusPollTimer = window.setInterval(async () => {
+        const status = await this.checkSimulationStatus(simulationId);
+
+        if (status) {
+          this.simulationResult = status;
+
+          // Check if simulation is completed or failed
+          if (status.status === 2) {
+            // Completed
+            this.stopStatusPolling();
+            this.$message.success("Simulation completed successfully!");
+            // Use Element Plus notification for more prominent alert
+            this.$notify({
+              title: "Simulation Complete",
+              message: `Simulation ${simulationId} has finished. Total Return: ${this.formatPercentage(status.summary?.totalReturn)}`,
+              type: "success",
+              duration: 0, // Don't auto close
+              position: "bottom-right"
+            });
+          } else if (status.status === 3) {
+            // Failed
+            this.stopStatusPolling();
+            this.$message.error("Simulation failed!");
+            this.$notify({
+              title: "Simulation Failed",
+              message: `Simulation ${simulationId} failed: ${status.errorMessage || "Unknown error"}`,
+              type: "error",
+              duration: 0,
+              position: "bottom-right"
+            });
+          }
+        }
+      }, 3000); // Poll every 3 seconds
+    },
+
+    stopStatusPolling() {
+      if (this.statusPollTimer !== null) {
+        clearInterval(this.statusPollTimer);
+        this.statusPollTimer = null;
+      }
+    },
+
     resetForm() {
+      this.stopStatusPolling();
       this.formData = {
         strategyType: this.strategies[0]?.type || 0,
         country: 0,
@@ -589,7 +674,7 @@ export default defineComponent({
         analysisPeriod: 60,
         coefficientAllowed: 0.85,
         investTriggerRate: 0.02,
-        lossCutRate: -0.05,
+        lossCutRate: -0.01,
         portfolioNumber: 10,
         tradeFee: 0.001,
         slippage: 0.001,
@@ -623,12 +708,136 @@ export default defineComponent({
     getReturnClass(value: number | null | undefined): string {
       if (value === null || value === undefined) return "";
       return value >= 0 ? "positive" : "negative";
+    },
+
+    loadParametersFromRoute() {
+      const query = this.$route.query;
+
+      // Set flag to prevent onStrategyChanged from overwriting values
+      this.isLoadingFromRoute = true;
+
+      console.log('Loading parameters from route:', query);
+      console.log('Available countries:', this.countries);
+
+      // Populate form fields from query parameters if they exist
+      if (query.strategyType) {
+        this.formData.strategyType = parseInt(query.strategyType as string);
+        console.log('Set strategyType to:', this.formData.strategyType);
+      }
+
+      // Map country code string to numeric value
+      if (query.countryCode !== undefined) {
+        const countryCodeRaw = query.countryCode as string;
+        const countryCode = countryCodeRaw.toUpperCase();
+        console.log('Looking for country code:', countryCode, '(raw:', countryCodeRaw, ')');
+        console.log('Available countries from API:', this.countries);
+
+        // Map country codes to full country names to search in the countries array
+        const countryNameMap: { [key: string]: string[] } = {
+          'US': ['United States', 'USA', 'US', 'America'],
+          'HK': ['Hong Kong', 'HK', 'Hongkong'],
+          'AU': ['Australia', 'AU'],
+          'UK': ['United Kingdom', 'UK', 'Britain', 'Great Britain'],
+          'JP': ['Japan', 'JP'],
+          'CN': ['China', 'CN', 'PRC']
+        };
+
+        let matchingCountry = null;
+
+        // First, try to find by matching country names from the map
+        if (countryCode in countryNameMap) {
+          const possibleNames = countryNameMap[countryCode];
+          for (const name of possibleNames) {
+            matchingCountry = this.countries.find(c =>
+              c.name.toUpperCase() === name.toUpperCase() ||
+              c.name.toUpperCase().includes(name.toUpperCase())
+            );
+            if (matchingCountry) {
+              console.log('Found country by name mapping:', name, '->', matchingCountry.name, 'with value:', matchingCountry.value);
+              break;
+            }
+          }
+        }
+
+        // If not found, try direct search in countries array
+        if (!matchingCountry && countryCode) {
+          matchingCountry = this.countries.find(c =>
+            c.name.toUpperCase().includes(countryCode) ||
+            c.name.toUpperCase().startsWith(countryCode) ||
+            c.name.toUpperCase() === countryCode
+          );
+          if (matchingCountry) {
+            console.log('Found country by code search:', matchingCountry.name, 'with value:', matchingCountry.value);
+          }
+        }
+
+        // Set the country value
+        if (matchingCountry) {
+          this.formData.country = matchingCountry.value;
+          console.log('Final country value set to:', this.formData.country);
+        } else {
+          console.warn('Could not find country for code:', countryCode);
+          // Default to ALL (0) if not found
+          this.formData.country = 0;
+          console.log('Defaulting to ALL (0)');
+        }
+
+        // Force Vue to update the select
+        this.$nextTick(() => {
+          console.log('After nextTick, formData.country is:', this.formData.country);
+        });
+      } else if (query.country !== undefined) {
+        // Fallback: direct numeric value (for backward compatibility)
+        const countryValue = parseInt(query.country as string);
+        this.formData.country = countryValue;
+        console.log('Set country to:', this.formData.country, 'from query:', query.country);
+      }
+
+      if (query.analysisPeriod) {
+        this.formData.analysisPeriod = parseInt(query.analysisPeriod as string);
+      }
+
+      if (query.coefficientAllowed) {
+        this.formData.coefficientAllowed = parseFloat(query.coefficientAllowed as string);
+      }
+
+      if (query.investTriggerRate) {
+        this.formData.investTriggerRate = parseFloat(query.investTriggerRate as string);
+      }
+
+      if (query.lossCutRate) {
+        this.formData.lossCutRate = parseFloat(query.lossCutRate as string);
+      }
+
+      if (query.portfolioNumber) {
+        this.formData.portfolioNumber = parseInt(query.portfolioNumber as string);
+      }
+
+      if (query.tradeFee) {
+        this.formData.tradeFee = parseFloat(query.tradeFee as string);
+      }
+
+      if (query.slippage) {
+        this.formData.slippage = parseFloat(query.slippage as string);
+      }
+
+      if (query.runAsync) {
+        this.formData.runAsync = query.runAsync === 'true';
+      }
+
+      // Reset flag after loading is complete
+      this.isLoadingFromRoute = false;
     }
   },
 
   mounted() {
     this.loadStrategiesAndCountries();
     this.loadAvailableStocks();
+  },
+
+  beforeUnmount() {
+    // Clean up polling timer when component is destroyed
+    this.stopStatusPolling();
   }
 });
 </script>

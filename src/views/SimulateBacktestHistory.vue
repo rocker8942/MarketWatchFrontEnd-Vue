@@ -35,6 +35,74 @@
       </div>
     </div>
 
+    <!-- Summary Section -->
+    <el-card v-if="summary && selectedStrategyId" class="summary-card">
+      <template #header>
+        <div class="card-header">
+          <span class="card-title">Strategy Summary</span>
+        </div>
+      </template>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Strategy Type</div>
+          <div class="metric-value">{{ summary.strategyTypeName || '—' }}</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Annual Return</div>
+          <div class="metric-value" :class="getReturnClass(summary.ratePerYear)">
+            {{ formatPercentage(summary.ratePerYear) }}
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Days to Test</div>
+          <div class="metric-value">{{ summary.daysToTest ?? '—' }}</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Analysis Period</div>
+          <div class="metric-value">{{ summary.analysisPeriod ?? '—' }} days</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Correlation Threshold</div>
+          <div class="metric-value">{{ formatNumber(summary.coefficientAllowed) }}</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Entry Trigger</div>
+          <div class="metric-value">{{ formatPercentage(summary.investTriggerRate) }}</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Stop Loss</div>
+          <div class="metric-value negative">{{ formatPercentage(summary.lossCutRate) }}</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Portfolio Size</div>
+          <div class="metric-value">{{ summary.portfolioNumber ?? '—' }}</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Trade Fee</div>
+          <div class="metric-value">{{ formatPercentage(summary.tradeFee) }}</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Slippage</div>
+          <div class="metric-value">{{ formatPercentage(summary.slippage) }}</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Total Trades</div>
+          <div class="metric-value">{{ summary.totalTrades }}</div>
+        </div>
+      </div>
+    </el-card>
+
     <div class="table-section">
       <div class="table-wrapper">
         <el-table
@@ -52,11 +120,18 @@
             :prop="getOriginalColumnName(col)"
             :label="col"
             :min-width="getMinWidth(col)"
+            :align="getColumnAlign(col)"
             :sortable="isSortableColumn(col) ? 'custom' : false">
             <template #default="scope">
               <span v-if="isDateColumn(col)">{{ formatDate(scope.row[getOriginalColumnName(col)]) }}</span>
               <span v-else-if="isRateOfReturnColumn(col)" :class="getRateOfReturnClass(scope.row[getOriginalColumnName(col)])">
                 {{ formatPercentage(scope.row[getOriginalColumnName(col)]) }}
+              </span>
+              <span v-else-if="isLeaderChangeColumn(col)" :class="getRateOfReturnClass(scope.row[getOriginalColumnName(col)])">
+                {{ formatPercentage(scope.row[getOriginalColumnName(col)]) }}
+              </span>
+              <span v-else-if="isPriceColumn(col)">
+                {{ formatPrice(scope.row[getOriginalColumnName(col)]) }}
               </span>
               <span v-else-if="isStockColumn(col)" class="stock-link" @click="handleStockClick(scope.row[getOriginalColumnName(col)])">
                 {{ formatValue(scope.row[getOriginalColumnName(col)], col) }}
@@ -99,6 +174,7 @@ export default defineComponent({
       totalCount: 0,
       loading: false,
       selectedStrategyId: "" as number | "",
+      selectedStrategyDetails: null as any,
       strategyIds: [] as string[],
       columns: [] as string[],
       strategyIdKey: "" as string,
@@ -165,6 +241,41 @@ export default defineComponent({
       const end = start + this.pageSize;
       return sortedRows.slice(start, end);
     },
+
+    summary(): any {
+      if (!this.selectedStrategyDetails) {
+        return null;
+      }
+
+      const strategy = this.selectedStrategyDetails;
+
+      // Extract strategy fields (handle both PascalCase and camelCase)
+      const strategyType = strategy.strategyType ?? strategy.StrategyType;
+      const ratePerYear = strategy.ratePerYear ?? strategy.RatePerYear;
+      const daysToTest = strategy.daysToTest ?? strategy.DaysToTest;
+      const analysisPeriod = strategy.analysisPeriod ?? strategy.AnalysisPeriod;
+      const coefficientAllowed = strategy.coefficientAllowed ?? strategy.CoefficientAllowed;
+      const investTriggerRate = strategy.investTriggerRate ?? strategy.InvestTriggerRate;
+      const lossCutRate = strategy.lossCutRate ?? strategy.LossCutRate;
+      const portfolioNumber = strategy.portfolioNumber ?? strategy.PortfolioNumber;
+      const tradeFee = strategy.tradeFee ?? strategy.TradeFee;
+      const slippage = strategy.slippage ?? strategy.Slippage;
+
+      return {
+        strategyType,
+        strategyTypeName: this.strategyTypeMap.get(String(strategyType)),
+        ratePerYear,
+        daysToTest,
+        analysisPeriod,
+        coefficientAllowed,
+        investTriggerRate,
+        lossCutRate,
+        portfolioNumber,
+        tradeFee,
+        slippage,
+        totalTrades: this.rows.length
+      };
+    },
   },
 
   methods: {
@@ -175,6 +286,7 @@ export default defineComponent({
 
     async onStrategyIdChanged() {
       this.currentPage = 1;
+      await this.loadSelectedStrategyDetails();
       await this.getList();
     },
 
@@ -300,6 +412,22 @@ export default defineComponent({
       }
     },
 
+    async loadSelectedStrategyDetails() {
+      if (!this.selectedStrategyId) {
+        this.selectedStrategyDetails = null;
+        return;
+      }
+
+      try {
+        const client = new StrategyClient(undefined, ApiService.vueInstance.axios);
+        const strategy = await client.strategyGet(this.selectedStrategyId);
+        this.selectedStrategyDetails = strategy;
+      } catch (e) {
+        console.error("Failed to load strategy details", e);
+        this.selectedStrategyDetails = null;
+      }
+    },
+
     async getList() {
       this.loading = true;
       try {
@@ -405,26 +533,36 @@ export default defineComponent({
         if (lc === "followstock") return "Follow Stock";
         if (lc === "selltype") return "Sell Type";
         if (lc === "tradedate") return "Trade Date";
+        if (lc === "selldate") return "Sell Date";
         if (lc === "rateofreturn" || lc === "rateorreturn") return "Rate Of Return";
         return col;
       };
 
-      // Put date + rateOfReturn + strategyId columns first (if present)
+      // Order columns to match simulate/run table:
+      // 1. Trade Date, 2. Sell Date, 3. Leader Stock, 4. Follow Stock, 5. Rate Of Return, 6. Sell Type, 7. Other columns
       const ordered: string[] = [];
-      if (dateKey) ordered.push(dateKey);
-      if (rateOfReturnKey && rateOfReturnKey !== dateKey) ordered.push(rateOfReturnKey);
-      if (strategyIdKey && strategyIdKey !== dateKey && strategyIdKey !== rateOfReturnKey) ordered.push(strategyIdKey);
+      const sellDateKey = all.find((k) => k.toLowerCase() === "selldate") || "";
+      const leaderKey = all.find((k) => k.toLowerCase() === "mainleader") || "";
+      const followerKey = all.find((k) => k.toLowerCase() === "followstock") || "";
+      const sellTypeKey = all.find((k) => k.toLowerCase() === "selltype") || "";
 
+      // Add columns in the same order as simulate/run table
+      if (dateKey) ordered.push(dateKey);
+      if (sellDateKey) ordered.push(sellDateKey);
+      if (leaderKey) ordered.push(leaderKey);
+      if (followerKey) ordered.push(followerKey);
+      if (rateOfReturnKey) ordered.push(rateOfReturnKey);
+      if (sellTypeKey) ordered.push(sellTypeKey);
+
+      // Add remaining columns
       for (const k of all) {
         if (!ordered.includes(k)) ordered.push(k);
       }
 
-      // Filter out ID columns
+      // Filter out ID columns (including strategyId)
       const filtered = ordered.filter((k) => {
         const lc = k.toLowerCase();
-        // Keep strategyId since we transform it to StrategyName
-        if (lc === "strategyid") return true;
-        // Hide other ID columns
+        // Hide all ID columns
         return !lc.endsWith("id") && lc !== "id";
       });
 
@@ -450,6 +588,10 @@ export default defineComponent({
       if (lc === "strategyname") return this.strategyIdKey;
       if (lc === "trade date") return this.dateKey;
       if (lc === "rate of return") return this.rateOfReturnKey;
+      if (lc === "sell date") {
+        const keys = Object.keys(this.rows[0] || {});
+        return keys.find((k) => k.toLowerCase() === "selldate") || displayName;
+      }
       if (lc === "leader stock") {
         const keys = Object.keys(this.rows[0] || {});
         return keys.find((k) => k.toLowerCase() === "mainleader") || displayName;
@@ -467,13 +609,13 @@ export default defineComponent({
 
     isSortableColumn(col: string): boolean {
       const lc = col.toLowerCase();
-      // Make Trade Date and Rate Of Return sortable
-      return lc === "trade date" || lc === "rate of return" || this.isDateColumn(col) || this.isRateOfReturnColumn(col);
+      // Make Trade Date, Sell Date, Rate Of Return, Leader Change, and Price columns sortable
+      return lc === "trade date" || lc === "sell date" || lc === "rate of return" || this.isDateColumn(col) || this.isRateOfReturnColumn(col) || this.isLeaderChangeColumn(col) || this.isPriceColumn(col);
     },
 
     isDateColumn(col: string): boolean {
       const lc = (col || "").toLowerCase();
-      return lc === (this.dateKey || "").toLowerCase() || lc.includes("date") || lc === "trade date";
+      return lc === (this.dateKey || "").toLowerCase() || lc.includes("date") || lc === "trade date" || lc === "sell date";
     },
 
     isRateOfReturnColumn(col: string): boolean {
@@ -484,6 +626,16 @@ export default defineComponent({
     isStockColumn(col: string): boolean {
       const lc = (col || "").toLowerCase();
       return lc === "leader stock" || lc === "follow stock";
+    },
+
+    isLeaderChangeColumn(col: string): boolean {
+      const lc = (col || "").toLowerCase();
+      return lc === "leader change" || lc === "leaderchange" || lc.includes("leader") && lc.includes("change");
+    },
+
+    isPriceColumn(col: string): boolean {
+      const lc = (col || "").toLowerCase();
+      return lc === "buyprice" || lc === "buy price" || lc === "sellprice" || lc === "sell price";
     },
 
     handleStockClick(stockCode: string) {
@@ -503,6 +655,22 @@ export default defineComponent({
       if (value === null || value === undefined || value === "") return "—";
       if (typeof value !== "number") return String(value);
       return (value * 100).toFixed(2) + "%";
+    },
+
+    formatNumber(value: any): string {
+      if (value === null || value === undefined || value === "") return "—";
+      if (typeof value !== "number") return String(value);
+      return value.toFixed(2);
+    },
+
+    formatPrice(value: any): string {
+      if (value === null || value === undefined || value === "") return "—";
+      if (typeof value !== "number") {
+        const parsed = parseFloat(value);
+        if (isNaN(parsed)) return String(value);
+        value = parsed;
+      }
+      return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     },
 
     formatValue(value: any, col: string): string {
@@ -544,12 +712,38 @@ export default defineComponent({
     },
 
     getMinWidth(col: string): number {
-      if (this.isDateColumn(col)) return 180;
-      if (this.isRateOfReturnColumn(col)) return 150;
       const lc = col.toLowerCase();
-      if (lc.includes("id")) return 90;
-      if (lc.includes("price") || lc.includes("rate") || lc.includes("nav")) return 130;
-      return 140;
+
+      // Date columns
+      if (this.isDateColumn(col)) return 120;
+
+      // Rate of return
+      if (this.isRateOfReturnColumn(col)) return 110;
+
+      // Leader change
+      if (this.isLeaderChangeColumn(col)) return 120;
+
+      // Price columns
+      if (this.isPriceColumn(col)) return 130;
+
+      // Stock columns
+      if (this.isStockColumn(col)) return 140;
+
+      // Sell type
+      if (lc === "sell type") return 150;
+
+      // Default
+      return 120;
+    },
+
+    getColumnAlign(col: string): string {
+      // Right-align percentages and numeric values
+      if (this.isRateOfReturnColumn(col)) return "right";
+      if (this.isLeaderChangeColumn(col)) return "right";
+      if (this.isPriceColumn(col)) return "right";
+
+      // Left-align everything else (dates, stocks, sell type)
+      return "left";
     },
 
     getRowKey(row: AnyRow, index: number): string | number {
@@ -566,6 +760,15 @@ export default defineComponent({
       if (numValue < 0) return "rate-negative";
       return "";
     },
+
+    getReturnClass(value: any): string {
+      if (value === null || value === undefined || value === "") return "";
+      const numValue = typeof value === "number" ? value : parseFloat(value);
+      if (isNaN(numValue)) return "";
+      if (numValue > 0) return "positive";
+      if (numValue < 0) return "negative";
+      return "";
+    },
   },
 
   async mounted() {
@@ -578,6 +781,12 @@ export default defineComponent({
     // Load strategy types first, then load strategies so the type map is available
     await Promise.all([this.loadStocks(), this.loadStrategyTypes(), this.loadSellTypes()]);
     await this.loadStrategies();
+
+    // Load selected strategy details if strategyId is set
+    if (this.selectedStrategyId) {
+      await this.loadSelectedStrategyDetails();
+    }
+
     await this.getList();
   },
 });
@@ -651,16 +860,74 @@ export default defineComponent({
 }
 
 .rate-positive {
-  color: #e74c3c;
+  color: #27ae60;
   font-weight: 600;
-  display: block;
-  text-align: right;
 }
 
 .rate-negative {
-  color: #3498db;
+  color: #e74c3c;
   font-weight: 600;
-  display: block;
-  text-align: right;
+}
+
+/* Summary Card */
+.summary-card {
+  margin-bottom: var(--space-xl);
+  background: var(--color-background-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 16px;
+  box-shadow: var(--shadow-subtle);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.metric-card {
+  background: var(--color-surface-variant);
+  padding: 1.25rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-heading);
+  word-break: break-word;
+}
+
+.metric-card:first-child .metric-value {
+  font-size: 1.125rem;
+}
+
+.metric-value.positive {
+  color: #27ae60;
+}
+
+.metric-value.negative {
+  color: #e74c3c;
 }
 </style>
