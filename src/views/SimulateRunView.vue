@@ -163,6 +163,33 @@
               </el-form-item>
             </el-col>
 
+            <!-- Trend Filter -->
+            <el-col :span="8">
+              <el-form-item label="Use Trend Filter">
+                <el-switch v-model="formData.useTrendFilter" />
+                <span class="form-hint" style="display: block; margin-top: 0.5rem;">
+                  Filter trades based on market trend direction
+                </span>
+              </el-form-item>
+            </el-col>
+
+            <!-- Trend Filter Threshold -->
+            <el-col :span="8">
+              <el-form-item label="Trend Filter Threshold" required>
+                <el-input-number
+                  v-model="formData.trendFilterThreshold"
+                  :min="0"
+                  :max="1"
+                  :step="0.01"
+                  :precision="2"
+                  :disabled="!formData.useTrendFilter"
+                  style="width: 100%" />
+                <span class="form-hint" style="display: block; margin-top: 0.5rem;">
+                  Threshold for trend strength (0-1)
+                </span>
+              </el-form-item>
+            </el-col>
+
             <!-- Stock Codes -->
             <el-col :span="24">
               <el-form-item label="Stock Codes">
@@ -449,7 +476,9 @@ export default defineComponent({
         tradeFee: 0.001,
         slippage: 0.001,
         stockCodes: [] as string[],
-        runAsync: true
+        runAsync: true,
+        useTrendFilter: true,
+        trendFilterThreshold: 0
       },
       running: false,
       simulationResult: null as SimulationResult | null,
@@ -577,7 +606,9 @@ export default defineComponent({
           tradeFee: this.formData.tradeFee,
           slippage: this.formData.slippage,
           stockCodes: this.formData.stockCodes.length > 0 ? this.formData.stockCodes : [],
-          runAsync: this.formData.runAsync
+          runAsync: this.formData.runAsync,
+          useTrendFilter: this.formData.useTrendFilter,
+          trendFilterThreshold: this.formData.trendFilterThreshold
         };
 
         const response = await axios.post(
@@ -679,7 +710,9 @@ export default defineComponent({
         tradeFee: 0.001,
         slippage: 0.001,
         stockCodes: [],
-        runAsync: true
+        runAsync: true,
+        useTrendFilter: true,
+        trendFilterThreshold: 0
       };
       this.simulationResult = null;
       this.onStrategyChanged();
@@ -823,6 +856,22 @@ export default defineComponent({
 
       if (query.runAsync) {
         this.formData.runAsync = query.runAsync === 'true';
+      }
+
+      if (query.startDate) {
+        this.formData.startDate = new Date(query.startDate as string);
+      }
+
+      if (query.endDate) {
+        this.formData.endDate = new Date(query.endDate as string);
+      }
+
+      if (query.useTrendFilter !== undefined) {
+        this.formData.useTrendFilter = query.useTrendFilter === 'true';
+      }
+
+      if (query.trendFilterThreshold) {
+        this.formData.trendFilterThreshold = parseFloat(query.trendFilterThreshold as string);
       }
 
       // Reset flag after loading is complete

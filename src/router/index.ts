@@ -100,6 +100,22 @@ const router = createRouter({
         authName: idsrvAuth.authName,
       },
       component: () => import("../views/SimulateRunView.vue"),
+    },
+    {
+      path: "/optimization/config",
+      name: "optimizationConfig",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/OptimizationConfigView.vue"),
+    },
+    {
+      path: "/optimization/monitor",
+      name: "optimizationMonitor",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/OptimizationMonitorView.vue"),
     }
   ],
 });

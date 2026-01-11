@@ -105,6 +105,22 @@ onUnmounted(() => {
               </el-dropdown-menu>
             </template>
           </el-dropdown>
+          <el-dropdown trigger="hover" class="nav-dropdown">
+            <span class="nav-link dropdown-trigger">
+              <span>Optimize</span>
+              <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item>
+                  <RouterLink to="/optimization/config" class="dropdown-link">New Optimization</RouterLink>
+                </el-dropdown-item>
+                <el-dropdown-item>
+                  <RouterLink to="/optimization/monitor" class="dropdown-link">Monitor Jobs</RouterLink>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </nav>
 
         <div class="nav-actions">
@@ -325,7 +341,7 @@ onUnmounted(() => {
 .dropdown-link {
   display: block;
   width: 100%;
-  color: var(--color-text);
+  color: #374151;
   font-size: 0.9375rem;
   text-decoration: none;
   transition: color 0.2s ease;

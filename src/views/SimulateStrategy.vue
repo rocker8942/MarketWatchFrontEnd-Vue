@@ -698,20 +698,27 @@ export default defineComponent({
 
       // Navigate to Run Simulation page with pre-filled parameters
       // Pass country code as string, SimulateRunView will map it to the correct value
+      const query: any = {
+        strategyType: strategy.strategyType?.toString(),
+        countryCode: countryCode,
+        analysisPeriod: (strategy.analysisPeriod || 60).toString(),
+        coefficientAllowed: (strategy.coefficientAllowed || 0.85).toString(),
+        investTriggerRate: (strategy.investTriggerRate || 0.02).toString(),
+        lossCutRate: (strategy.lossCutRate || -0.01).toString(),
+        portfolioNumber: (strategy.portfolioNumber || 10).toString(),
+        tradeFee: '0.001',
+        slippage: '0.001',
+        runAsync: 'true'
+      };
+
+      // Add start date if available
+      if (strategy.investStartDate) {
+        query.startDate = new Date(strategy.investStartDate).toISOString();
+      }
+
       this.router.push({
         name: 'simulateRun',
-        query: {
-          strategyType: strategy.strategyType?.toString(),
-          countryCode: countryCode,
-          analysisPeriod: (strategy.analysisPeriod || 60).toString(),
-          coefficientAllowed: (strategy.coefficientAllowed || 0.85).toString(),
-          investTriggerRate: (strategy.investTriggerRate || 0.02).toString(),
-          lossCutRate: (strategy.lossCutRate || -0.01).toString(),
-          portfolioNumber: (strategy.portfolioNumber || 10).toString(),
-          tradeFee: '0.001',
-          slippage: '0.001',
-          runAsync: 'true'
-        }
+        query: query
       });
     },
 
