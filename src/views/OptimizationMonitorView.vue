@@ -56,19 +56,25 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="Best Sharpe" width="120" align="right">
+          <el-table-column label="Best Return" width="120" align="right">
             <template #default="scope">
-              <span v-if="scope.row.bestSharpeRatio" class="metric-value">
-                {{ formatNumber(scope.row.bestSharpeRatio) }}
+              <span
+                v-if="scope.row.bestAnnualizedReturn"
+                class="metric-value"
+                :class="{
+                  'return-positive': scope.row.bestAnnualizedReturn > 0,
+                  'return-negative': scope.row.bestAnnualizedReturn < 0
+                }">
+                {{ formatPercentage(scope.row.bestAnnualizedReturn) }}
               </span>
               <span v-else class="empty-value">—</span>
             </template>
           </el-table-column>
 
-          <el-table-column label="Best Return" width="120" align="right">
+          <el-table-column label="Best Sharpe" width="120" align="right">
             <template #default="scope">
-              <span v-if="scope.row.bestAnnualizedReturn" class="metric-value">
-                {{ formatPercentage(scope.row.bestAnnualizedReturn) }}
+              <span v-if="scope.row.bestSharpeRatio" class="metric-value">
+                {{ formatNumber(scope.row.bestSharpeRatio) }}
               </span>
               <span v-else class="empty-value">—</span>
             </template>
@@ -561,6 +567,14 @@ export default defineComponent({
 
 .metric-value {
   font-weight: 500;
+}
+
+.metric-value.return-positive {
+  color: #e74c3c;
+}
+
+.metric-value.return-negative {
+  color: #3498db;
 }
 
 .empty-value {
