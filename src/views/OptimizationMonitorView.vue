@@ -355,7 +355,7 @@ export default defineComponent({
       this.loadingTopPerformers = true;
       try {
         const res = await ApiService.vueInstance.axios.get(
-          `/api/app/simulation-queue/top-performers?optimizationJobId=${jobId}&count=10`
+          `/api/app/optimization-job/${jobId}/top-performers?count=10`
         );
 
         const data = res.data;
