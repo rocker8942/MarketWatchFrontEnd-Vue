@@ -39,7 +39,7 @@
     <!-- Fund Strategy Table (tblFundStrategy) -->
     <div class="table-section">
       <div class="section-header">
-        <h2 class="section-title">tblFundStrategy</h2>
+        <h2 class="section-title">Fund Strategy</h2>
         <p class="section-description">Raw strategy configuration and calculated performance fields</p>
       </div>
 
@@ -60,10 +60,16 @@
 
           <el-table-column prop="countryToInvest" label="Country" min-width="160" />
 
+          <el-table-column prop="ratePerYear" label="Annual Return" width="150" align="right">
+            <template #default="scope">{{ formatRate(scope.row.ratePerYear) }}%</template>
+          </el-table-column>
+
           <el-table-column prop="investTriggerRate" label="Trigger Rate" width="130" align="right" />
           <el-table-column prop="analysisPeriod" label="Analysis Period" width="140" align="right" />
           <el-table-column prop="portfolioNumber" label="Portfolio #" width="120" align="right" />
-          <el-table-column prop="priceToUse" label="Price To Use" width="130" align="right" />
+          <el-table-column prop="priceToUse" label="Price To Use" width="130" align="right">
+            <template #default="scope">{{ getPriceTypeName(scope.row.priceToUse) }}</template>
+          </el-table-column>
           <el-table-column prop="lossCutRate" label="Loss Cut" width="110" align="right" />
 
           <el-table-column prop="investDate" label="Invest Date" width="170">
@@ -88,10 +94,6 @@
 
           <el-table-column prop="ratePerInvesmentPeriod" label="Period Return" width="150" align="right">
             <template #default="scope">{{ formatRate(scope.row.ratePerInvesmentPeriod) }}%</template>
-          </el-table-column>
-
-          <el-table-column prop="ratePerYear" label="Annual Return" width="150" align="right">
-            <template #default="scope">{{ formatRate(scope.row.ratePerYear) }}%</template>
           </el-table-column>
 
           <el-table-column prop="inUse" label="In Use" width="90" align="center" />
@@ -141,7 +143,14 @@
           <el-input-number v-model="editForm.portfolioNumber" :min="1" />
         </el-form-item>
         <el-form-item label="Price To Use">
-          <el-input-number v-model="editForm.priceToUse" :min="1" />
+          <el-select v-model="editForm.priceToUse" placeholder="Select price type">
+            <el-option :value="0" label="Close to Close" />
+            <el-option :value="1" label="Open to Open" />
+            <el-option :value="2" label="High to High" />
+            <el-option :value="3" label="Low to Low" />
+            <el-option :value="4" label="Open to Close" />
+            <el-option :value="5" label="Close to Open" />
+          </el-select>
         </el-form-item>
         <el-form-item label="Loss Cut Rate">
           <el-input-number v-model="editForm.lossCutRate" :precision="2" :step="0.01" />
@@ -571,6 +580,19 @@ export default defineComponent({
       if (rate >= 5) return 'success';
       if (rate >= 0) return 'warning';
       return 'danger';
+    },
+
+    getPriceTypeName(priceType: number | undefined): string {
+      if (priceType === undefined || priceType === null) return '—';
+      const priceTypes: Record<number, string> = {
+        0: 'Close to Close',
+        1: 'Open to Open',
+        2: 'High to High',
+        3: 'Low to Low',
+        4: 'Open to Close',
+        5: 'Close to Open'
+      };
+      return priceTypes[priceType] || String(priceType);
     },
 
     openEditDialog(row: any) {

@@ -84,7 +84,7 @@
             <template #default="scope">
               <div class="action-buttons">
                 <el-button
-                  v-if="scope.row.status === 'Pending'"
+                  v-if="canStartJob(scope.row)"
                   type="primary"
                   size="small"
                   @click.stop="startJob(scope.row.id)">
@@ -454,6 +454,13 @@ export default defineComponent({
         console.error("Failed to parse parameters", error);
         this.$message.error("Failed to parse parameters");
       }
+    },
+
+    canStartJob(job: OptimizationJob): boolean {
+      // Only show Start button if:
+      // 1. Status is Pending AND
+      // 2. No simulations have been processed yet (completedSimulations and failedSimulations are both 0)
+      return job.status === 'Pending' && job.completedSimulations === 0 && job.failedSimulations === 0;
     },
 
     getStrategyName(typeId: number): string {

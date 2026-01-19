@@ -22,8 +22,8 @@ const router = createRouter({
       component: () => import("../views/AboutView.vue"),
     },
     {
-      path: "/strategy",
-      name: "strategy",
+      path: "/fund",
+      name: "fund",
       meta: {
         authName: idsrvAuth.authName,
       },
@@ -36,14 +36,6 @@ const router = createRouter({
         authName: idsrvAuth.authName,
       },
       component: () => import("../views/StrategyHistoryView.vue"),
-    },
-    {
-      path: "/stockList",
-      name: "StockList",
-      meta: {
-        authName: idsrvAuth.authName,
-      },
-      component: () => import("../views/StockList.vue"),
     },
     {
       path: "/stockPrice",

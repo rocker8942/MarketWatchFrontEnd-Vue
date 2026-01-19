@@ -64,18 +64,15 @@ onUnmounted(() => {
               </el-dropdown-menu>
             </template>
           </el-dropdown>
-          <RouterLink to="/StockList" class="nav-link">
-            <span>Securities</span>
-          </RouterLink>
           <el-dropdown trigger="hover" class="nav-dropdown">
             <span class="nav-link dropdown-trigger">
-              <span>Strategy</span>
+              <span>Fund</span>
               <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item>
-                  <RouterLink to="/strategy" class="dropdown-link">Analysis</RouterLink>
+                  <RouterLink to="/fund" class="dropdown-link">Analysis</RouterLink>
                 </el-dropdown-item>
                 <el-dropdown-item>
                   <RouterLink to="/strategyHistory" class="dropdown-link">Strategy History</RouterLink>
@@ -162,8 +159,8 @@ onUnmounted(() => {
           <div class="footer-section">
             <h4 class="footer-heading">Resources</h4>
             <ul class="footer-links">
-              <li><RouterLink to="/StockList">Securities</RouterLink></li>
-              <li><RouterLink to="/strategy">Analysis</RouterLink></li>
+              <li><RouterLink to="/fund">Analysis</RouterLink></li>
+              <li><RouterLink to="/simulate/run">Simulate</RouterLink></li>
             </ul>
           </div>
 
