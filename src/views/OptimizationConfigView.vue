@@ -181,6 +181,16 @@
           <!-- Walk-Forward Config (shown only when WalkForward is selected) -->
           <div v-if="formData.optimizationMethod === 'WalkForward'" class="section-divider">
             <h3 class="section-title">Walk-Forward Configuration</h3>
+            <el-alert
+              v-if="dateRangeTooShort"
+              type="warning"
+              :closable="false"
+              show-icon
+              style="margin-top: 1rem">
+              Date range is too short. Need at least
+              {{ walkForwardConfig.trainingWindowMonths + walkForwardConfig.testingWindowMonths }} months,
+              but selected range is only {{ monthsDiff(formData.startDate, formData.endDate) }} months.
+            </el-alert>
           </div>
 
           <el-row v-if="formData.optimizationMethod === 'WalkForward'" :gutter="24">
@@ -352,6 +362,14 @@ export default defineComponent({
   },
 
   computed: {
+    dateRangeTooShort(): boolean {
+      if (this.formData.optimizationMethod !== 'WalkForward') return false;
+      const totalMonths = this.monthsDiff(this.formData.startDate, this.formData.endDate);
+      const requiredMonths = this.walkForwardConfig.trainingWindowMonths +
+                             this.walkForwardConfig.testingWindowMonths;
+      return totalMonths < requiredMonths;
+    },
+
     estimatedSimulations(): number {
       const counts = {
         analysisPeriod: this.paramRanges.analysisPeriod.split(',').filter(v => v.trim()).length,
@@ -404,6 +422,24 @@ export default defineComponent({
       if (!this.formData.startDate || !this.formData.endDate) {
         this.$message.warning("Please select both start and end dates");
         return;
+      }
+
+      // WalkForward-specific validation
+      if (this.formData.optimizationMethod === 'WalkForward') {
+        const totalMonths = this.monthsDiff(this.formData.startDate, this.formData.endDate);
+        const requiredMonths = this.walkForwardConfig.trainingWindowMonths +
+                               this.walkForwardConfig.testingWindowMonths;
+
+        if (totalMonths < requiredMonths) {
+          this.$message.error(
+            `Date range is too short for walk-forward analysis. ` +
+            `Need at least ${requiredMonths} months ` +
+            `(${this.walkForwardConfig.trainingWindowMonths} training + ` +
+            `${this.walkForwardConfig.testingWindowMonths} testing), ` +
+            `but selected range is only ${totalMonths} months.`
+          );
+          return;
+        }
       }
 
       this.creating = true;
