@@ -201,7 +201,7 @@ export default defineComponent({
 
     paginatedRows(): AnyRow[] {
       // Sort all rows first
-      let sortedRows = [...this.rows];
+      const sortedRows = [...this.rows];
 
       if (this.sortProp && this.sortOrder) {
         sortedRows.sort((a, b) => {

@@ -410,7 +410,7 @@ export default defineComponent({
       return (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
     },
 
-    parseRangeArray(rangeStr: string, parseFunc: Function): any[] {
+    parseRangeArray(rangeStr: string, parseFunc: (value: string) => number): number[] {
       return rangeStr.split(',')
         .map(v => v.trim())
         .filter(v => v)

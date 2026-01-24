@@ -139,15 +139,13 @@
 
 <script lang="ts">
 import LineChart from "../components/charts/LineChart.vue";
-import SparklineChart from "../components/charts/SparklineChart.vue";
 import ApiService from "@/core/services/apiService";
-import { StockPriceClient, PagedResultDtoOfStockPriceDto, StockChartDto } from "@/core/services/marketWatchClient";
+import { StockPriceClient, StockChartDto } from "@/core/services/marketWatchClient";
 
 export default {
   name: "App",
   components: {
     LineChart,
-    SparklineChart,
   },
   data() {
     return {

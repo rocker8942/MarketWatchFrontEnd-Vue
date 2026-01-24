@@ -38,7 +38,7 @@
 
       <div class="toolbar-right">
         <button class="toolbar-btn" @click="showFilterDialog = true">
-          <el-icon><Filter /></el-icon>
+          <el-icon><FilterIcon /></el-icon>
           Filter
         </button>
         <span class="result-count">{{ sortedStrategies.length }} strategies</span>
@@ -441,13 +441,13 @@ import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
 import ApiService from "@/core/services/apiService";
 import { StrategyClient, type StrategyDto, RefStrategyTypeClient, type RefStrategyTypeDto } from "@/core/services/marketWatchClient";
-import { Search, ArrowDown, Filter, Right, Delete, VideoPlay } from '@element-plus/icons-vue';
+import { Search, ArrowDown, Filter as FilterIcon, Right, Delete, VideoPlay } from '@element-plus/icons-vue';
 
 export default defineComponent({
   components: {
     Search,
     ArrowDown,
-    Filter,
+    FilterIcon,
     Right,
     Delete,
     VideoPlay
@@ -515,7 +515,7 @@ export default defineComponent({
     },
 
     sortedStrategies(): StrategyDto[] {
-      let sorted = [...this.filteredStrategies];
+      const sorted = [...this.filteredStrategies];
 
       if (this.sortColumn && this.sortOrder) {
         sorted.sort((a, b) => {

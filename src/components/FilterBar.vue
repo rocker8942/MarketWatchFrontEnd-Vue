@@ -23,7 +23,7 @@
       </button>
 
       <button v-if="showFilter" class="filter-btn">
-        <el-icon><Filter /></el-icon>
+        <el-icon><FilterIcon /></el-icon>
         Filter
       </button>
 
@@ -37,14 +37,14 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { ArrowDown, Calendar, Filter, Plus } from '@element-plus/icons-vue';
+import { ArrowDown, Calendar, Filter as FilterIcon, Plus } from '@element-plus/icons-vue';
 
 export default defineComponent({
   name: 'FilterBar',
   components: {
     ArrowDown,
     Calendar,
-    Filter,
+    FilterIcon,
     Plus
   },
   props: {

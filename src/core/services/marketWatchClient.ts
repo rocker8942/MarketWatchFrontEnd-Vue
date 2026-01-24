@@ -2422,104 +2422,6 @@ export class FundStrategyClient {
     }
 
     /**
-     * @param body (optional) 
-     * @return Success
-     */
-    fundStrategyCreate(body: FundStrategyDto | undefined, cancelToken?: CancelToken): Promise<FundStrategyDto> {
-        let url_ = this.baseUrl + "/api/app/fund-strategy";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_: AxiosRequestConfig = {
-            data: content_,
-            method: "POST",
-            url: url_,
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            },
-            cancelToken
-        };
-
-        return this.instance.request(options_).catch((_error: any) => {
-            if (isAxiosError(_error) && _error.response) {
-                return _error.response;
-            } else {
-                throw _error;
-            }
-        }).then((_response: AxiosResponse) => {
-            return this.processFundStrategyCreate(_response);
-        });
-    }
-
-    protected processFundStrategyCreate(response: AxiosResponse): Promise<FundStrategyDto> {
-        const status = response.status;
-        let _headers: any = {};
-        if (response.headers && typeof response.headers === "object") {
-            for (const k in response.headers) {
-                if (response.headers.hasOwnProperty(k)) {
-                    _headers[k] = response.headers[k];
-                }
-            }
-        }
-        if (status === 200) {
-            const _responseText = response.data;
-            let result200: any = null;
-            let resultData200  = _responseText;
-            result200 = FundStrategyDto.fromJS(resultData200);
-            return Promise.resolve<FundStrategyDto>(result200);
-
-        } else if (status === 403) {
-            const _responseText = response.data;
-            let result403: any = null;
-            let resultData403  = _responseText;
-            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
-            return throwException("Forbidden", status, _responseText, _headers, result403);
-
-        } else if (status === 401) {
-            const _responseText = response.data;
-            let result401: any = null;
-            let resultData401  = _responseText;
-            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
-            return throwException("Unauthorized", status, _responseText, _headers, result401);
-
-        } else if (status === 400) {
-            const _responseText = response.data;
-            let result400: any = null;
-            let resultData400  = _responseText;
-            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
-            return throwException("Bad Request", status, _responseText, _headers, result400);
-
-        } else if (status === 404) {
-            const _responseText = response.data;
-            let result404: any = null;
-            let resultData404  = _responseText;
-            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
-            return throwException("Not Found", status, _responseText, _headers, result404);
-
-        } else if (status === 501) {
-            const _responseText = response.data;
-            let result501: any = null;
-            let resultData501  = _responseText;
-            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
-            return throwException("Server Error", status, _responseText, _headers, result501);
-
-        } else if (status === 500) {
-            const _responseText = response.data;
-            let result500: any = null;
-            let resultData500  = _responseText;
-            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
-            return throwException("Server Error", status, _responseText, _headers, result500);
-
-        } else if (status !== 200 && status !== 204) {
-            const _responseText = response.data;
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-        }
-        return Promise.resolve<FundStrategyDto>(null as any);
-    }
-
-    /**
      * @param sorting (optional) 
      * @param skipCount (optional) 
      * @param maxResultCount (optional) 
@@ -2625,6 +2527,104 @@ export class FundStrategyClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
         return Promise.resolve<PagedResultDtoOfFundStrategyDto>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    fundStrategyCreate(body: FundStrategyDto | undefined, cancelToken?: CancelToken): Promise<FundStrategyDto> {
+        let url_ = this.baseUrl + "/api/app/fund-strategy";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "POST",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processFundStrategyCreate(_response);
+        });
+    }
+
+    protected processFundStrategyCreate(response: AxiosResponse): Promise<FundStrategyDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = FundStrategyDto.fromJS(resultData200);
+            return Promise.resolve<FundStrategyDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<FundStrategyDto>(null as any);
     }
 
     /**
@@ -3340,6 +3340,810 @@ export class LoginClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
         return Promise.resolve<AbpLoginResult>(null as any);
+    }
+}
+
+export class OptimizationJobClient {
+    protected instance: AxiosInstance;
+    protected baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        this.instance = instance || axios.create();
+
+        this.baseUrl = baseUrl ?? "";
+
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    optimizationJobCreate(body: CreateOptimizationJobDto | undefined, cancelToken?: CancelToken): Promise<OptimizationJobDto> {
+        let url_ = this.baseUrl + "/api/app/optimization-job";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "POST",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processOptimizationJobCreate(_response);
+        });
+    }
+
+    protected processOptimizationJobCreate(response: AxiosResponse): Promise<OptimizationJobDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = OptimizationJobDto.fromJS(resultData200);
+            return Promise.resolve<OptimizationJobDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<OptimizationJobDto>(null as any);
+    }
+
+    /**
+     * @param sorting (optional) 
+     * @param skipCount (optional) 
+     * @param maxResultCount (optional) 
+     * @return Success
+     */
+    optimizationJobGetList(sorting: string | undefined, skipCount: number | undefined, maxResultCount: number | undefined, cancelToken?: CancelToken): Promise<PagedResultDtoOfOptimizationJobSummaryDto> {
+        let url_ = this.baseUrl + "/api/app/optimization-job?";
+        if (sorting === null)
+            throw new Error("The parameter 'sorting' cannot be null.");
+        else if (sorting !== undefined)
+            url_ += "Sorting=" + encodeURIComponent("" + sorting) + "&";
+        if (skipCount === null)
+            throw new Error("The parameter 'skipCount' cannot be null.");
+        else if (skipCount !== undefined)
+            url_ += "SkipCount=" + encodeURIComponent("" + skipCount) + "&";
+        if (maxResultCount === null)
+            throw new Error("The parameter 'maxResultCount' cannot be null.");
+        else if (maxResultCount !== undefined)
+            url_ += "MaxResultCount=" + encodeURIComponent("" + maxResultCount) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processOptimizationJobGetList(_response);
+        });
+    }
+
+    protected processOptimizationJobGetList(response: AxiosResponse): Promise<PagedResultDtoOfOptimizationJobSummaryDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = PagedResultDtoOfOptimizationJobSummaryDto.fromJS(resultData200);
+            return Promise.resolve<PagedResultDtoOfOptimizationJobSummaryDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<PagedResultDtoOfOptimizationJobSummaryDto>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    optimizationJobGet(id: number, cancelToken?: CancelToken): Promise<OptimizationJobDto> {
+        let url_ = this.baseUrl + "/api/app/optimization-job/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processOptimizationJobGet(_response);
+        });
+    }
+
+    protected processOptimizationJobGet(response: AxiosResponse): Promise<OptimizationJobDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = OptimizationJobDto.fromJS(resultData200);
+            return Promise.resolve<OptimizationJobDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<OptimizationJobDto>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    optimizationJobDelete(id: number, cancelToken?: CancelToken): Promise<void> {
+        let url_ = this.baseUrl + "/api/app/optimization-job/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "DELETE",
+            url: url_,
+            headers: {
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processOptimizationJobDelete(_response);
+        });
+    }
+
+    protected processOptimizationJobDelete(response: AxiosResponse): Promise<void> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            return Promise.resolve<void>(null as any);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    optimizationJobStart(id: number, cancelToken?: CancelToken): Promise<OptimizationJobDto> {
+        let url_ = this.baseUrl + "/api/app/optimization-job/{id}/start";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "POST",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processOptimizationJobStart(_response);
+        });
+    }
+
+    protected processOptimizationJobStart(response: AxiosResponse): Promise<OptimizationJobDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = OptimizationJobDto.fromJS(resultData200);
+            return Promise.resolve<OptimizationJobDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<OptimizationJobDto>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    optimizationJobCancel(id: number, cancelToken?: CancelToken): Promise<OptimizationJobDto> {
+        let url_ = this.baseUrl + "/api/app/optimization-job/{id}/cancel";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "POST",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processOptimizationJobCancel(_response);
+        });
+    }
+
+    protected processOptimizationJobCancel(response: AxiosResponse): Promise<OptimizationJobDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = OptimizationJobDto.fromJS(resultData200);
+            return Promise.resolve<OptimizationJobDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<OptimizationJobDto>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    optimizationJobGetWithDetails(id: number, cancelToken?: CancelToken): Promise<OptimizationJobDto> {
+        let url_ = this.baseUrl + "/api/app/optimization-job/{id}/with-details";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processOptimizationJobGetWithDetails(_response);
+        });
+    }
+
+    protected processOptimizationJobGetWithDetails(response: AxiosResponse): Promise<OptimizationJobDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = OptimizationJobDto.fromJS(resultData200);
+            return Promise.resolve<OptimizationJobDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<OptimizationJobDto>(null as any);
+    }
+
+    /**
+     * @param count (optional) 
+     * @return Success
+     */
+    optimizationJobGetTopPerformers(id: number, count: number | undefined, cancelToken?: CancelToken): Promise<SimulationQueueSummaryDto[]> {
+        let url_ = this.baseUrl + "/api/app/optimization-job/{id}/top-performers?";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (count === null)
+            throw new Error("The parameter 'count' cannot be null.");
+        else if (count !== undefined)
+            url_ += "count=" + encodeURIComponent("" + count) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processOptimizationJobGetTopPerformers(_response);
+        });
+    }
+
+    protected processOptimizationJobGetTopPerformers(response: AxiosResponse): Promise<SimulationQueueSummaryDto[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(SimulationQueueSummaryDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<SimulationQueueSummaryDto[]>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<SimulationQueueSummaryDto[]>(null as any);
     }
 }
 
@@ -5485,6 +6289,433 @@ export class RoleClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
         }
         return Promise.resolve<void>(null as any);
+    }
+}
+
+export class SimulationQueueClient {
+    protected instance: AxiosInstance;
+    protected baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        this.instance = instance || axios.create();
+
+        this.baseUrl = baseUrl ?? "";
+
+    }
+
+    /**
+     * @return Success
+     */
+    simulationQueueGet(id: number, cancelToken?: CancelToken): Promise<SimulationQueueDto> {
+        let url_ = this.baseUrl + "/api/app/simulation-queue/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processSimulationQueueGet(_response);
+        });
+    }
+
+    protected processSimulationQueueGet(response: AxiosResponse): Promise<SimulationQueueDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = SimulationQueueDto.fromJS(resultData200);
+            return Promise.resolve<SimulationQueueDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<SimulationQueueDto>(null as any);
+    }
+
+    /**
+     * @param optimizationJobId (optional) 
+     * @param sorting (optional) 
+     * @param skipCount (optional) 
+     * @param maxResultCount (optional) 
+     * @return Success
+     */
+    simulationQueueGetList(optimizationJobId: number | undefined, sorting: string | undefined, skipCount: number | undefined, maxResultCount: number | undefined, cancelToken?: CancelToken): Promise<PagedResultDtoOfSimulationQueueDto> {
+        let url_ = this.baseUrl + "/api/app/simulation-queue?";
+        if (optimizationJobId === null)
+            throw new Error("The parameter 'optimizationJobId' cannot be null.");
+        else if (optimizationJobId !== undefined)
+            url_ += "optimizationJobId=" + encodeURIComponent("" + optimizationJobId) + "&";
+        if (sorting === null)
+            throw new Error("The parameter 'sorting' cannot be null.");
+        else if (sorting !== undefined)
+            url_ += "Sorting=" + encodeURIComponent("" + sorting) + "&";
+        if (skipCount === null)
+            throw new Error("The parameter 'skipCount' cannot be null.");
+        else if (skipCount !== undefined)
+            url_ += "SkipCount=" + encodeURIComponent("" + skipCount) + "&";
+        if (maxResultCount === null)
+            throw new Error("The parameter 'maxResultCount' cannot be null.");
+        else if (maxResultCount !== undefined)
+            url_ += "MaxResultCount=" + encodeURIComponent("" + maxResultCount) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processSimulationQueueGetList(_response);
+        });
+    }
+
+    protected processSimulationQueueGetList(response: AxiosResponse): Promise<PagedResultDtoOfSimulationQueueDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = PagedResultDtoOfSimulationQueueDto.fromJS(resultData200);
+            return Promise.resolve<PagedResultDtoOfSimulationQueueDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<PagedResultDtoOfSimulationQueueDto>(null as any);
+    }
+
+    /**
+     * @param count (optional) 
+     * @return Success
+     */
+    simulationQueueGetTopPerformers(optimizationJobId: number, count: number | undefined, cancelToken?: CancelToken): Promise<SimulationQueueSummaryDto[]> {
+        let url_ = this.baseUrl + "/api/app/simulation-queue/top-performers/{optimizationJobId}?";
+        if (optimizationJobId === undefined || optimizationJobId === null)
+            throw new Error("The parameter 'optimizationJobId' must be defined.");
+        url_ = url_.replace("{optimizationJobId}", encodeURIComponent("" + optimizationJobId));
+        if (count === null)
+            throw new Error("The parameter 'count' cannot be null.");
+        else if (count !== undefined)
+            url_ += "count=" + encodeURIComponent("" + count) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processSimulationQueueGetTopPerformers(_response);
+        });
+    }
+
+    protected processSimulationQueueGetTopPerformers(response: AxiosResponse): Promise<SimulationQueueSummaryDto[]> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(SimulationQueueSummaryDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return Promise.resolve<SimulationQueueSummaryDto[]>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<SimulationQueueSummaryDto[]>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    simulationQueueRetry(id: number, cancelToken?: CancelToken): Promise<SimulationQueueDto> {
+        let url_ = this.baseUrl + "/api/app/simulation-queue/{id}/retry";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "POST",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processSimulationQueueRetry(_response);
+        });
+    }
+
+    protected processSimulationQueueRetry(response: AxiosResponse): Promise<SimulationQueueDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = SimulationQueueDto.fromJS(resultData200);
+            return Promise.resolve<SimulationQueueDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<SimulationQueueDto>(null as any);
     }
 }
 
@@ -11013,6 +12244,70 @@ export interface IControllerInterfaceApiDescriptionModel {
     methods?: InterfaceMethodApiDescriptionModel[] | undefined;
 }
 
+export class CreateOptimizationJobDto implements ICreateOptimizationJobDto {
+    strategyType?: number;
+    country?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    optimizationMethod?: string | undefined;
+    parameterRanges?: ParameterRangesDto;
+    walkForwardConfig?: WalkForwardConfigDto;
+    configurationOptions?: OptimizationConfigDto;
+
+    constructor(data?: ICreateOptimizationJobDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.strategyType = _data["strategyType"];
+            this.country = _data["country"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.optimizationMethod = _data["optimizationMethod"];
+            this.parameterRanges = _data["parameterRanges"] ? ParameterRangesDto.fromJS(_data["parameterRanges"]) : <any>undefined;
+            this.walkForwardConfig = _data["walkForwardConfig"] ? WalkForwardConfigDto.fromJS(_data["walkForwardConfig"]) : <any>undefined;
+            this.configurationOptions = _data["configurationOptions"] ? OptimizationConfigDto.fromJS(_data["configurationOptions"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): CreateOptimizationJobDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateOptimizationJobDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["strategyType"] = this.strategyType;
+        data["country"] = this.country;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["optimizationMethod"] = this.optimizationMethod;
+        data["parameterRanges"] = this.parameterRanges ? this.parameterRanges.toJSON() : <any>undefined;
+        data["walkForwardConfig"] = this.walkForwardConfig ? this.walkForwardConfig.toJSON() : <any>undefined;
+        data["configurationOptions"] = this.configurationOptions ? this.configurationOptions.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ICreateOptimizationJobDto {
+    strategyType?: number;
+    country?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    optimizationMethod?: string | undefined;
+    parameterRanges?: ParameterRangesDto;
+    walkForwardConfig?: WalkForwardConfigDto;
+    configurationOptions?: OptimizationConfigDto;
+}
+
 export class CurrentCultureDto implements ICurrentCultureDto {
     displayName?: string | undefined;
     englishName?: string | undefined;
@@ -13652,6 +14947,274 @@ export interface IObjectExtensionsDto {
     enums?: { [key: string]: ExtensionEnumDto; } | undefined;
 }
 
+export class OptimizationConfigDto implements IOptimizationConfigDto {
+    maxCombinations?: number;
+    seedFromHistory?: boolean;
+    topPercentToRefine?: number;
+    stockCodes?: string[] | undefined;
+
+    constructor(data?: IOptimizationConfigDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.maxCombinations = _data["maxCombinations"];
+            this.seedFromHistory = _data["seedFromHistory"];
+            this.topPercentToRefine = _data["topPercentToRefine"];
+            if (Array.isArray(_data["stockCodes"])) {
+                this.stockCodes = [] as any;
+                for (let item of _data["stockCodes"])
+                    this.stockCodes!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): OptimizationConfigDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new OptimizationConfigDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["maxCombinations"] = this.maxCombinations;
+        data["seedFromHistory"] = this.seedFromHistory;
+        data["topPercentToRefine"] = this.topPercentToRefine;
+        if (Array.isArray(this.stockCodes)) {
+            data["stockCodes"] = [];
+            for (let item of this.stockCodes)
+                data["stockCodes"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IOptimizationConfigDto {
+    maxCombinations?: number;
+    seedFromHistory?: boolean;
+    topPercentToRefine?: number;
+    stockCodes?: string[] | undefined;
+}
+
+export class OptimizationJobDto implements IOptimizationJobDto {
+    id?: number;
+    creationTime?: Date;
+    creatorId?: string | undefined;
+    lastModificationTime?: Date | undefined;
+    lastModifierId?: string | undefined;
+    strategyType?: number;
+    country?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    optimizationMethod?: string | undefined;
+    parameterRanges?: string | undefined;
+    status?: string | undefined;
+    totalSimulations?: number;
+    completedSimulations?: number;
+    failedSimulations?: number;
+    startedAt?: Date | undefined;
+    completedAt?: Date | undefined;
+    bestParameters?: string | undefined;
+    bestSharpeRatio?: number | undefined;
+    bestAnnualizedReturn?: number | undefined;
+    errorMessage?: string | undefined;
+    configurationOptions?: string | undefined;
+    walkForwardConfig?: string | undefined;
+    readonly progressPercentage?: number | undefined;
+
+    constructor(data?: IOptimizationJobDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : <any>undefined;
+            this.creatorId = _data["creatorId"];
+            this.lastModificationTime = _data["lastModificationTime"] ? new Date(_data["lastModificationTime"].toString()) : <any>undefined;
+            this.lastModifierId = _data["lastModifierId"];
+            this.strategyType = _data["strategyType"];
+            this.country = _data["country"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.optimizationMethod = _data["optimizationMethod"];
+            this.parameterRanges = _data["parameterRanges"];
+            this.status = _data["status"];
+            this.totalSimulations = _data["totalSimulations"];
+            this.completedSimulations = _data["completedSimulations"];
+            this.failedSimulations = _data["failedSimulations"];
+            this.startedAt = _data["startedAt"] ? new Date(_data["startedAt"].toString()) : <any>undefined;
+            this.completedAt = _data["completedAt"] ? new Date(_data["completedAt"].toString()) : <any>undefined;
+            this.bestParameters = _data["bestParameters"];
+            this.bestSharpeRatio = _data["bestSharpeRatio"];
+            this.bestAnnualizedReturn = _data["bestAnnualizedReturn"];
+            this.errorMessage = _data["errorMessage"];
+            this.configurationOptions = _data["configurationOptions"];
+            this.walkForwardConfig = _data["walkForwardConfig"];
+            (<any>this).progressPercentage = _data["progressPercentage"];
+        }
+    }
+
+    static fromJS(data: any): OptimizationJobDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new OptimizationJobDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["creationTime"] = this.creationTime ? this.creationTime.toISOString() : <any>undefined;
+        data["creatorId"] = this.creatorId;
+        data["lastModificationTime"] = this.lastModificationTime ? this.lastModificationTime.toISOString() : <any>undefined;
+        data["lastModifierId"] = this.lastModifierId;
+        data["strategyType"] = this.strategyType;
+        data["country"] = this.country;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["optimizationMethod"] = this.optimizationMethod;
+        data["parameterRanges"] = this.parameterRanges;
+        data["status"] = this.status;
+        data["totalSimulations"] = this.totalSimulations;
+        data["completedSimulations"] = this.completedSimulations;
+        data["failedSimulations"] = this.failedSimulations;
+        data["startedAt"] = this.startedAt ? this.startedAt.toISOString() : <any>undefined;
+        data["completedAt"] = this.completedAt ? this.completedAt.toISOString() : <any>undefined;
+        data["bestParameters"] = this.bestParameters;
+        data["bestSharpeRatio"] = this.bestSharpeRatio;
+        data["bestAnnualizedReturn"] = this.bestAnnualizedReturn;
+        data["errorMessage"] = this.errorMessage;
+        data["configurationOptions"] = this.configurationOptions;
+        data["walkForwardConfig"] = this.walkForwardConfig;
+        data["progressPercentage"] = this.progressPercentage;
+        return data;
+    }
+}
+
+export interface IOptimizationJobDto {
+    id?: number;
+    creationTime?: Date;
+    creatorId?: string | undefined;
+    lastModificationTime?: Date | undefined;
+    lastModifierId?: string | undefined;
+    strategyType?: number;
+    country?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    optimizationMethod?: string | undefined;
+    parameterRanges?: string | undefined;
+    status?: string | undefined;
+    totalSimulations?: number;
+    completedSimulations?: number;
+    failedSimulations?: number;
+    startedAt?: Date | undefined;
+    completedAt?: Date | undefined;
+    bestParameters?: string | undefined;
+    bestSharpeRatio?: number | undefined;
+    bestAnnualizedReturn?: number | undefined;
+    errorMessage?: string | undefined;
+    configurationOptions?: string | undefined;
+    walkForwardConfig?: string | undefined;
+    progressPercentage?: number | undefined;
+}
+
+export class OptimizationJobSummaryDto implements IOptimizationJobSummaryDto {
+    id?: number;
+    strategyType?: number;
+    country?: string | undefined;
+    optimizationMethod?: string | undefined;
+    status?: string | undefined;
+    totalSimulations?: number;
+    completedSimulations?: number;
+    failedSimulations?: number;
+    progressPercentage?: number | undefined;
+    bestSharpeRatio?: number | undefined;
+    bestAnnualizedReturn?: number | undefined;
+    creationTime?: Date;
+    completedAt?: Date | undefined;
+
+    constructor(data?: IOptimizationJobSummaryDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.strategyType = _data["strategyType"];
+            this.country = _data["country"];
+            this.optimizationMethod = _data["optimizationMethod"];
+            this.status = _data["status"];
+            this.totalSimulations = _data["totalSimulations"];
+            this.completedSimulations = _data["completedSimulations"];
+            this.failedSimulations = _data["failedSimulations"];
+            this.progressPercentage = _data["progressPercentage"];
+            this.bestSharpeRatio = _data["bestSharpeRatio"];
+            this.bestAnnualizedReturn = _data["bestAnnualizedReturn"];
+            this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : <any>undefined;
+            this.completedAt = _data["completedAt"] ? new Date(_data["completedAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): OptimizationJobSummaryDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new OptimizationJobSummaryDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["strategyType"] = this.strategyType;
+        data["country"] = this.country;
+        data["optimizationMethod"] = this.optimizationMethod;
+        data["status"] = this.status;
+        data["totalSimulations"] = this.totalSimulations;
+        data["completedSimulations"] = this.completedSimulations;
+        data["failedSimulations"] = this.failedSimulations;
+        data["progressPercentage"] = this.progressPercentage;
+        data["bestSharpeRatio"] = this.bestSharpeRatio;
+        data["bestAnnualizedReturn"] = this.bestAnnualizedReturn;
+        data["creationTime"] = this.creationTime ? this.creationTime.toISOString() : <any>undefined;
+        data["completedAt"] = this.completedAt ? this.completedAt.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IOptimizationJobSummaryDto {
+    id?: number;
+    strategyType?: number;
+    country?: string | undefined;
+    optimizationMethod?: string | undefined;
+    status?: string | undefined;
+    totalSimulations?: number;
+    completedSimulations?: number;
+    failedSimulations?: number;
+    progressPercentage?: number | undefined;
+    bestSharpeRatio?: number | undefined;
+    bestAnnualizedReturn?: number | undefined;
+    creationTime?: Date;
+    completedAt?: Date | undefined;
+}
+
 export class PagedResultDtoOfCompanyDto implements IPagedResultDtoOfCompanyDto {
     items?: CompanyDto[] | undefined;
     totalCount?: number;
@@ -13892,6 +15455,54 @@ export interface IPagedResultDtoOfIdentityUserDto {
     totalCount?: number;
 }
 
+export class PagedResultDtoOfOptimizationJobSummaryDto implements IPagedResultDtoOfOptimizationJobSummaryDto {
+    items?: OptimizationJobSummaryDto[] | undefined;
+    totalCount?: number;
+
+    constructor(data?: IPagedResultDtoOfOptimizationJobSummaryDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(OptimizationJobSummaryDto.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+        }
+    }
+
+    static fromJS(data: any): PagedResultDtoOfOptimizationJobSummaryDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PagedResultDtoOfOptimizationJobSummaryDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        return data;
+    }
+}
+
+export interface IPagedResultDtoOfOptimizationJobSummaryDto {
+    items?: OptimizationJobSummaryDto[] | undefined;
+    totalCount?: number;
+}
+
 export class PagedResultDtoOfRefSellTypeDto implements IPagedResultDtoOfRefSellTypeDto {
     items?: RefSellTypeDto[] | undefined;
     totalCount?: number;
@@ -13985,6 +15596,54 @@ export class PagedResultDtoOfRefStrategyTypeDto implements IPagedResultDtoOfRefS
 
 export interface IPagedResultDtoOfRefStrategyTypeDto {
     items?: RefStrategyTypeDto[] | undefined;
+    totalCount?: number;
+}
+
+export class PagedResultDtoOfSimulationQueueDto implements IPagedResultDtoOfSimulationQueueDto {
+    items?: SimulationQueueDto[] | undefined;
+    totalCount?: number;
+
+    constructor(data?: IPagedResultDtoOfSimulationQueueDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(SimulationQueueDto.fromJS(item));
+            }
+            this.totalCount = _data["totalCount"];
+        }
+    }
+
+    static fromJS(data: any): PagedResultDtoOfSimulationQueueDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PagedResultDtoOfSimulationQueueDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        data["totalCount"] = this.totalCount;
+        return data;
+    }
+}
+
+export interface IPagedResultDtoOfSimulationQueueDto {
+    items?: SimulationQueueDto[] | undefined;
     totalCount?: number;
 }
 
@@ -14258,6 +15917,146 @@ export interface IParameterApiDescriptionModel {
     constraintTypes?: string[] | undefined;
     bindingSourceId?: string | undefined;
     descriptorName?: string | undefined;
+}
+
+export class ParameterRangesDto implements IParameterRangesDto {
+    analysisPeriod?: number[] | undefined;
+    coefficientAllowed?: number[] | undefined;
+    investTriggerRate?: number[] | undefined;
+    lossCutRate?: number[] | undefined;
+    portfolioNumber?: number[] | undefined;
+    tradeFee?: number[] | undefined;
+    slippage?: number[] | undefined;
+    useTrendFilter?: boolean[] | undefined;
+    trendFilterThreshold?: number[] | undefined;
+
+    constructor(data?: IParameterRangesDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["analysisPeriod"])) {
+                this.analysisPeriod = [] as any;
+                for (let item of _data["analysisPeriod"])
+                    this.analysisPeriod!.push(item);
+            }
+            if (Array.isArray(_data["coefficientAllowed"])) {
+                this.coefficientAllowed = [] as any;
+                for (let item of _data["coefficientAllowed"])
+                    this.coefficientAllowed!.push(item);
+            }
+            if (Array.isArray(_data["investTriggerRate"])) {
+                this.investTriggerRate = [] as any;
+                for (let item of _data["investTriggerRate"])
+                    this.investTriggerRate!.push(item);
+            }
+            if (Array.isArray(_data["lossCutRate"])) {
+                this.lossCutRate = [] as any;
+                for (let item of _data["lossCutRate"])
+                    this.lossCutRate!.push(item);
+            }
+            if (Array.isArray(_data["portfolioNumber"])) {
+                this.portfolioNumber = [] as any;
+                for (let item of _data["portfolioNumber"])
+                    this.portfolioNumber!.push(item);
+            }
+            if (Array.isArray(_data["tradeFee"])) {
+                this.tradeFee = [] as any;
+                for (let item of _data["tradeFee"])
+                    this.tradeFee!.push(item);
+            }
+            if (Array.isArray(_data["slippage"])) {
+                this.slippage = [] as any;
+                for (let item of _data["slippage"])
+                    this.slippage!.push(item);
+            }
+            if (Array.isArray(_data["useTrendFilter"])) {
+                this.useTrendFilter = [] as any;
+                for (let item of _data["useTrendFilter"])
+                    this.useTrendFilter!.push(item);
+            }
+            if (Array.isArray(_data["trendFilterThreshold"])) {
+                this.trendFilterThreshold = [] as any;
+                for (let item of _data["trendFilterThreshold"])
+                    this.trendFilterThreshold!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): ParameterRangesDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ParameterRangesDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.analysisPeriod)) {
+            data["analysisPeriod"] = [];
+            for (let item of this.analysisPeriod)
+                data["analysisPeriod"].push(item);
+        }
+        if (Array.isArray(this.coefficientAllowed)) {
+            data["coefficientAllowed"] = [];
+            for (let item of this.coefficientAllowed)
+                data["coefficientAllowed"].push(item);
+        }
+        if (Array.isArray(this.investTriggerRate)) {
+            data["investTriggerRate"] = [];
+            for (let item of this.investTriggerRate)
+                data["investTriggerRate"].push(item);
+        }
+        if (Array.isArray(this.lossCutRate)) {
+            data["lossCutRate"] = [];
+            for (let item of this.lossCutRate)
+                data["lossCutRate"].push(item);
+        }
+        if (Array.isArray(this.portfolioNumber)) {
+            data["portfolioNumber"] = [];
+            for (let item of this.portfolioNumber)
+                data["portfolioNumber"].push(item);
+        }
+        if (Array.isArray(this.tradeFee)) {
+            data["tradeFee"] = [];
+            for (let item of this.tradeFee)
+                data["tradeFee"].push(item);
+        }
+        if (Array.isArray(this.slippage)) {
+            data["slippage"] = [];
+            for (let item of this.slippage)
+                data["slippage"].push(item);
+        }
+        if (Array.isArray(this.useTrendFilter)) {
+            data["useTrendFilter"] = [];
+            for (let item of this.useTrendFilter)
+                data["useTrendFilter"].push(item);
+        }
+        if (Array.isArray(this.trendFilterThreshold)) {
+            data["trendFilterThreshold"] = [];
+            for (let item of this.trendFilterThreshold)
+                data["trendFilterThreshold"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IParameterRangesDto {
+    analysisPeriod?: number[] | undefined;
+    coefficientAllowed?: number[] | undefined;
+    investTriggerRate?: number[] | undefined;
+    lossCutRate?: number[] | undefined;
+    portfolioNumber?: number[] | undefined;
+    tradeFee?: number[] | undefined;
+    slippage?: number[] | undefined;
+    useTrendFilter?: boolean[] | undefined;
+    trendFilterThreshold?: number[] | undefined;
 }
 
 export class PermissionGrantInfoDto implements IPermissionGrantInfoDto {
@@ -15062,6 +16861,206 @@ export interface ISendTestEmailInput {
     targetEmailAddress: string;
     subject: string;
     body?: string | undefined;
+}
+
+export class SimulationQueueDto implements ISimulationQueueDto {
+    id?: number;
+    creationTime?: Date;
+    creatorId?: string | undefined;
+    lastModificationTime?: Date | undefined;
+    lastModifierId?: string | undefined;
+    optimizationJobId?: number;
+    simulationId?: string | undefined;
+    strategyType?: number;
+    country?: string | undefined;
+    parameters?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    status?: string | undefined;
+    priority?: number;
+    requestedAt?: Date;
+    startedAt?: Date | undefined;
+    completedAt?: Date | undefined;
+    simulationResult?: string | undefined;
+    totalReturn?: number | undefined;
+    annualizedReturn?: number | undefined;
+    sharpeRatio?: number | undefined;
+    maxDrawdown?: number | undefined;
+    winRate?: number | undefined;
+    totalTrades?: number | undefined;
+    errorMessage?: string | undefined;
+    retryCount?: number;
+    walkForwardWindowIndex?: number | undefined;
+
+    constructor(data?: ISimulationQueueDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.creationTime = _data["creationTime"] ? new Date(_data["creationTime"].toString()) : <any>undefined;
+            this.creatorId = _data["creatorId"];
+            this.lastModificationTime = _data["lastModificationTime"] ? new Date(_data["lastModificationTime"].toString()) : <any>undefined;
+            this.lastModifierId = _data["lastModifierId"];
+            this.optimizationJobId = _data["optimizationJobId"];
+            this.simulationId = _data["simulationId"];
+            this.strategyType = _data["strategyType"];
+            this.country = _data["country"];
+            this.parameters = _data["parameters"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.status = _data["status"];
+            this.priority = _data["priority"];
+            this.requestedAt = _data["requestedAt"] ? new Date(_data["requestedAt"].toString()) : <any>undefined;
+            this.startedAt = _data["startedAt"] ? new Date(_data["startedAt"].toString()) : <any>undefined;
+            this.completedAt = _data["completedAt"] ? new Date(_data["completedAt"].toString()) : <any>undefined;
+            this.simulationResult = _data["simulationResult"];
+            this.totalReturn = _data["totalReturn"];
+            this.annualizedReturn = _data["annualizedReturn"];
+            this.sharpeRatio = _data["sharpeRatio"];
+            this.maxDrawdown = _data["maxDrawdown"];
+            this.winRate = _data["winRate"];
+            this.totalTrades = _data["totalTrades"];
+            this.errorMessage = _data["errorMessage"];
+            this.retryCount = _data["retryCount"];
+            this.walkForwardWindowIndex = _data["walkForwardWindowIndex"];
+        }
+    }
+
+    static fromJS(data: any): SimulationQueueDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SimulationQueueDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["creationTime"] = this.creationTime ? this.creationTime.toISOString() : <any>undefined;
+        data["creatorId"] = this.creatorId;
+        data["lastModificationTime"] = this.lastModificationTime ? this.lastModificationTime.toISOString() : <any>undefined;
+        data["lastModifierId"] = this.lastModifierId;
+        data["optimizationJobId"] = this.optimizationJobId;
+        data["simulationId"] = this.simulationId;
+        data["strategyType"] = this.strategyType;
+        data["country"] = this.country;
+        data["parameters"] = this.parameters;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["status"] = this.status;
+        data["priority"] = this.priority;
+        data["requestedAt"] = this.requestedAt ? this.requestedAt.toISOString() : <any>undefined;
+        data["startedAt"] = this.startedAt ? this.startedAt.toISOString() : <any>undefined;
+        data["completedAt"] = this.completedAt ? this.completedAt.toISOString() : <any>undefined;
+        data["simulationResult"] = this.simulationResult;
+        data["totalReturn"] = this.totalReturn;
+        data["annualizedReturn"] = this.annualizedReturn;
+        data["sharpeRatio"] = this.sharpeRatio;
+        data["maxDrawdown"] = this.maxDrawdown;
+        data["winRate"] = this.winRate;
+        data["totalTrades"] = this.totalTrades;
+        data["errorMessage"] = this.errorMessage;
+        data["retryCount"] = this.retryCount;
+        data["walkForwardWindowIndex"] = this.walkForwardWindowIndex;
+        return data;
+    }
+}
+
+export interface ISimulationQueueDto {
+    id?: number;
+    creationTime?: Date;
+    creatorId?: string | undefined;
+    lastModificationTime?: Date | undefined;
+    lastModifierId?: string | undefined;
+    optimizationJobId?: number;
+    simulationId?: string | undefined;
+    strategyType?: number;
+    country?: string | undefined;
+    parameters?: string | undefined;
+    startDate?: Date;
+    endDate?: Date;
+    status?: string | undefined;
+    priority?: number;
+    requestedAt?: Date;
+    startedAt?: Date | undefined;
+    completedAt?: Date | undefined;
+    simulationResult?: string | undefined;
+    totalReturn?: number | undefined;
+    annualizedReturn?: number | undefined;
+    sharpeRatio?: number | undefined;
+    maxDrawdown?: number | undefined;
+    winRate?: number | undefined;
+    totalTrades?: number | undefined;
+    errorMessage?: string | undefined;
+    retryCount?: number;
+    walkForwardWindowIndex?: number | undefined;
+}
+
+export class SimulationQueueSummaryDto implements ISimulationQueueSummaryDto {
+    id?: number;
+    status?: string | undefined;
+    sharpeRatio?: number | undefined;
+    annualizedReturn?: number | undefined;
+    totalReturn?: number | undefined;
+    parameters?: string | undefined;
+    completedAt?: Date | undefined;
+
+    constructor(data?: ISimulationQueueSummaryDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.status = _data["status"];
+            this.sharpeRatio = _data["sharpeRatio"];
+            this.annualizedReturn = _data["annualizedReturn"];
+            this.totalReturn = _data["totalReturn"];
+            this.parameters = _data["parameters"];
+            this.completedAt = _data["completedAt"] ? new Date(_data["completedAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): SimulationQueueSummaryDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SimulationQueueSummaryDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["status"] = this.status;
+        data["sharpeRatio"] = this.sharpeRatio;
+        data["annualizedReturn"] = this.annualizedReturn;
+        data["totalReturn"] = this.totalReturn;
+        data["parameters"] = this.parameters;
+        data["completedAt"] = this.completedAt ? this.completedAt.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ISimulationQueueSummaryDto {
+    id?: number;
+    status?: string | undefined;
+    sharpeRatio?: number | undefined;
+    annualizedReturn?: number | undefined;
+    totalReturn?: number | undefined;
+    parameters?: string | undefined;
+    completedAt?: Date | undefined;
 }
 
 export class StockChartDto implements IStockChartDto {
@@ -16182,6 +18181,50 @@ export class VerifyPasswordResetTokenInput implements IVerifyPasswordResetTokenI
 export interface IVerifyPasswordResetTokenInput {
     userId?: string;
     resetToken: string;
+}
+
+export class WalkForwardConfigDto implements IWalkForwardConfigDto {
+    trainingWindowMonths?: number;
+    testingWindowMonths?: number;
+    stepSizeMonths?: number;
+
+    constructor(data?: IWalkForwardConfigDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.trainingWindowMonths = _data["trainingWindowMonths"];
+            this.testingWindowMonths = _data["testingWindowMonths"];
+            this.stepSizeMonths = _data["stepSizeMonths"];
+        }
+    }
+
+    static fromJS(data: any): WalkForwardConfigDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new WalkForwardConfigDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["trainingWindowMonths"] = this.trainingWindowMonths;
+        data["testingWindowMonths"] = this.testingWindowMonths;
+        data["stepSizeMonths"] = this.stepSizeMonths;
+        return data;
+    }
+}
+
+export interface IWalkForwardConfigDto {
+    trainingWindowMonths?: number;
+    testingWindowMonths?: number;
+    stepSizeMonths?: number;
 }
 
 export class WindowsTimeZone implements IWindowsTimeZone {

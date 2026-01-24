@@ -53,6 +53,30 @@
               </el-form-item>
             </el-col>
 
+            <!-- Analysis Method -->
+            <el-col :span="24" v-if="isMeanReversionStrategy">
+              <el-form-item label="Analysis Method" required>
+                <el-radio-group v-model="formData.analysisMethod" @change="onAnalysisMethodChanged">
+                  <el-radio :value="0">
+                    <div style="display: inline-block;">
+                      <div style="font-weight: 500;">Correlation</div>
+                      <div style="font-size: 0.75rem; color: var(--color-text-secondary);">
+                        Measures synchronous co-movement between stocks (-1 to 1)
+                      </div>
+                    </div>
+                  </el-radio>
+                  <el-radio :value="1" style="margin-top: 0.5rem;">
+                    <div style="display: inline-block;">
+                      <div style="font-weight: 500;">Cointegration</div>
+                      <div style="font-size: 0.75rem; color: var(--color-text-secondary);">
+                        Identifies long-term equilibrium relationships (statistical pairs trading)
+                      </div>
+                    </div>
+                  </el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </el-col>
+
             <!-- Date Range -->
             <el-col :span="12">
               <el-form-item label="Start Date" required>
@@ -89,14 +113,17 @@
 
             <!-- Coefficient Allowed -->
             <el-col :span="8">
-              <el-form-item label="Correlation Threshold" required>
+              <el-form-item :label="coefficientAllowedLabel" required>
                 <el-input-number
                   v-model="formData.coefficientAllowed"
-                  :min="0"
-                  :max="1"
-                  :step="0.05"
-                  :precision="2"
+                  :min="coefficientAllowedMin"
+                  :max="coefficientAllowedMax"
+                  :step="coefficientAllowedStep"
+                  :precision="coefficientAllowedPrecision"
                   style="width: 100%" />
+                <span class="form-hint" style="display: block; margin-top: 0.5rem;">
+                  {{ coefficientAllowedHint }}
+                </span>
               </el-form-item>
             </el-col>
 
@@ -113,14 +140,17 @@
 
             <!-- Invest Trigger Rate -->
             <el-col :span="8">
-              <el-form-item label="Entry Trigger (%)" required>
+              <el-form-item :label="investTriggerRateLabel" required>
                 <el-input-number
                   v-model="formData.investTriggerRate"
-                  :min="0"
-                  :max="1"
-                  :step="0.01"
-                  :precision="2"
+                  :min="investTriggerRateMin"
+                  :max="investTriggerRateMax"
+                  :step="investTriggerRateStep"
+                  :precision="investTriggerRatePrecision"
                   style="width: 100%" />
+                <span class="form-hint" style="display: block; margin-top: 0.5rem;">
+                  {{ investTriggerRateHint }}
+                </span>
               </el-form-item>
             </el-col>
 
@@ -206,7 +236,7 @@
                   placeholder="Select stocks or leave empty to use all available stocks"
                   style="width: 100%; margin-top: 0.5rem">
                   <el-option
-                    v-for="stock in availableStocks"
+                    v-for="stock in filteredStocks"
                     :key="stock.code"
                     :label="`${stock.code} - ${stock.name}`"
                     :value="stock.code" />
@@ -402,6 +432,20 @@ import { VideoPlay } from '@element-plus/icons-vue';
 import { StockInfoClient } from "@/core/services/marketWatchClient";
 import ApiService from "@/core/services/apiService";
 
+enum AnalysisMethod {
+  Correlation = 0,
+  Cointegration = 1
+}
+
+enum CointegrationMethod {
+  EngleGranger = 0
+}
+
+enum CorrelationMethod {
+  PearsonSIMD = 0,
+  Spearman = 1
+}
+
 interface Strategy {
   type: number;
   name: string;
@@ -462,7 +506,7 @@ export default defineComponent({
     return {
       strategies: [] as Strategy[],
       countries: [] as Country[],
-      availableStocks: [] as Array<{ code: string; name: string }>,
+      availableStocks: [] as Array<{ code: string; name: string; country: string }>,
       formData: {
         strategyType: 0,
         country: 0,
@@ -478,7 +522,10 @@ export default defineComponent({
         stockCodes: [] as string[],
         runAsync: true,
         useTrendFilter: true,
-        trendFilterThreshold: 0
+        trendFilterThreshold: 0.08,
+        analysisMethod: AnalysisMethod.Correlation,
+        cointegrationMethod: CointegrationMethod.EngleGranger,
+        correlationMethod: CorrelationMethod.PearsonSIMD
       },
       running: false,
       simulationResult: null as SimulationResult | null,
@@ -496,6 +543,92 @@ export default defineComponent({
       const start = (this.tradesCurrentPage - 1) * this.tradesPageSize;
       const end = start + this.tradesPageSize;
       return this.simulationResult.summary.trades.slice(start, end);
+    },
+
+    filteredStocks(): Array<{ code: string; name: string; country: string }> {
+      if (this.formData.country === 0) {
+        // Show all stocks
+        return this.availableStocks;
+      }
+
+      // Map country code to country string
+      const countryMap: { [key: number]: string[] } = {
+        1: ['US', 'USA', 'United States'],
+        2: ['AU', 'AUS', 'Australia', 'ASX'],
+        3: ['Korea', 'KR', 'South Korea']
+      };
+
+      const countryStrings = countryMap[this.formData.country] || [];
+
+      // Filter stocks by country
+      return this.availableStocks.filter(stock => {
+        // Check if stock's country matches any of the country strings
+        return countryStrings.some(countryStr =>
+          stock.country?.toUpperCase() === countryStr.toUpperCase() ||
+          stock.country?.toUpperCase().includes(countryStr.toUpperCase())
+        );
+      });
+    },
+
+    isMeanReversionStrategy(): boolean {
+      const strategy = this.strategies.find(s => s.type === this.formData.strategyType);
+      return strategy?.name === 'MeanReversion';
+    },
+
+    isCointegrationMode(): boolean {
+      return this.formData.analysisMethod === AnalysisMethod.Cointegration;
+    },
+
+    coefficientAllowedLabel(): string {
+      return this.isCointegrationMode ? 'P-Value Threshold' : 'Correlation Threshold';
+    },
+
+    coefficientAllowedMin(): number {
+      return 0;
+    },
+
+    coefficientAllowedMax(): number {
+      return this.isCointegrationMode ? 0.20 : 1.0;
+    },
+
+    coefficientAllowedStep(): number {
+      return this.isCointegrationMode ? 0.01 : 0.05;
+    },
+
+    coefficientAllowedPrecision(): number {
+      return this.isCointegrationMode ? 3 : 2;
+    },
+
+    coefficientAllowedHint(): string {
+      return this.isCointegrationMode
+        ? 'Maximum p-value for cointegration (0-0.20, lower = stronger relationship)'
+        : 'Minimum correlation coefficient (0-1, higher = stronger relationship)';
+    },
+
+    investTriggerRateLabel(): string {
+      return this.isCointegrationMode ? 'Z-Score Threshold' : 'Entry Trigger (%)';
+    },
+
+    investTriggerRateMin(): number {
+      return 0;
+    },
+
+    investTriggerRateMax(): number {
+      return this.isCointegrationMode ? 5.0 : 1.0;
+    },
+
+    investTriggerRateStep(): number {
+      return this.isCointegrationMode ? 0.1 : 0.01;
+    },
+
+    investTriggerRatePrecision(): number {
+      return this.isCointegrationMode ? 1 : 2;
+    },
+
+    investTriggerRateHint(): string {
+      return this.isCointegrationMode
+        ? 'Enter trade when spread is this many standard deviations from mean (1.5-3.0 typical)'
+        : 'Enter trade when stocks diverge by this percentage';
     }
   },
 
@@ -530,8 +663,9 @@ export default defineComponent({
         const client = new StockInfoClient(undefined, ApiService.vueInstance.axios);
         const result = await client.stockInfoGetList(undefined, 0, 1000);
         this.availableStocks = (result.items || []).map((stock: any) => ({
-          code: stock.stockCode || stock.code || '',
-          name: stock.name || ''
+          code: stock.stockCode || stock.code || stock.id || '',
+          name: stock.name || '',
+          country: stock.country || ''
         })).filter(s => s.code);
       } catch (error) {
         console.error("Failed to load stocks", error);
@@ -558,6 +692,19 @@ export default defineComponent({
       }
     },
 
+    onAnalysisMethodChanged() {
+      // Update parameters based on analysis method
+      if (this.formData.analysisMethod === AnalysisMethod.Cointegration) {
+        // Switch to cointegration mode - use recommended cointegration parameters
+        this.formData.coefficientAllowed = 0.05; // p-value threshold
+        this.formData.investTriggerRate = 2.0; // z-score threshold
+      } else {
+        // Switch to correlation mode - use recommended correlation parameters
+        this.formData.coefficientAllowed = 0.80; // correlation threshold
+        this.formData.investTriggerRate = 0.02; // percentage divergence
+      }
+    },
+
     disabledStartDate(date: Date) {
       if (!this.formData.endDate) return false;
       return date > this.formData.endDate;
@@ -569,12 +716,12 @@ export default defineComponent({
     },
 
     selectTopStocks() {
-      if (this.availableStocks.length === 0) {
-        this.$message.warning("No stocks available. Please wait for stocks to load.");
+      if (this.filteredStocks.length === 0) {
+        this.$message.warning("No stocks available for the selected country. Please select a different country.");
         return;
       }
-      this.formData.stockCodes = this.availableStocks.slice(0, 20).map(s => s.code);
-      this.$message.success(`Selected top ${this.formData.stockCodes.length} stocks`);
+      this.formData.stockCodes = this.filteredStocks.slice(0, 20).map(s => s.code);
+      this.$message.success(`Selected top ${this.formData.stockCodes.length} stocks from ${this.formData.country === 0 ? 'all countries' : 'selected country'}`);
     },
 
     clearStocks() {
@@ -608,7 +755,10 @@ export default defineComponent({
           stockCodes: this.formData.stockCodes.length > 0 ? this.formData.stockCodes : [],
           runAsync: this.formData.runAsync,
           useTrendFilter: this.formData.useTrendFilter,
-          trendFilterThreshold: this.formData.trendFilterThreshold
+          trendFilterThreshold: this.formData.trendFilterThreshold,
+          analysisMethod: this.formData.analysisMethod,
+          cointegrationMethod: this.formData.cointegrationMethod,
+          correlationMethod: this.formData.correlationMethod
         };
 
         const response = await axios.post(
@@ -669,7 +819,7 @@ export default defineComponent({
               title: "Simulation Complete",
               message: `Simulation ${simulationId} has finished. Total Return: ${this.formatPercentage(status.summary?.totalReturn)}`,
               type: "success",
-              duration: 0, // Don't auto close
+              duration: 5000, // Auto close after 5 seconds
               position: "bottom-right"
             });
           } else if (status.status === 3) {
@@ -680,7 +830,7 @@ export default defineComponent({
               title: "Simulation Failed",
               message: `Simulation ${simulationId} failed: ${status.errorMessage || "Unknown error"}`,
               type: "error",
-              duration: 0,
+              duration: 5000, // Auto close after 5 seconds
               position: "bottom-right"
             });
           }
@@ -712,7 +862,10 @@ export default defineComponent({
         stockCodes: [],
         runAsync: true,
         useTrendFilter: true,
-        trendFilterThreshold: 0
+        trendFilterThreshold: 0.08,
+        analysisMethod: AnalysisMethod.Correlation,
+        cointegrationMethod: CointegrationMethod.EngleGranger,
+        correlationMethod: CorrelationMethod.PearsonSIMD
       };
       this.simulationResult = null;
       this.onStrategyChanged();
@@ -874,8 +1027,30 @@ export default defineComponent({
         this.formData.trendFilterThreshold = parseFloat(query.trendFilterThreshold as string);
       }
 
+      if (query.analysisMethod !== undefined) {
+        this.formData.analysisMethod = parseInt(query.analysisMethod as string);
+      }
+
+      if (query.cointegrationMethod !== undefined) {
+        this.formData.cointegrationMethod = parseInt(query.cointegrationMethod as string);
+      }
+
+      if (query.correlationMethod !== undefined) {
+        this.formData.correlationMethod = parseInt(query.correlationMethod as string);
+      }
+
       // Reset flag after loading is complete
       this.isLoadingFromRoute = false;
+    }
+  },
+
+  watch: {
+    'formData.country'(newCountry, oldCountry) {
+      // Clear stock selection when country changes
+      if (newCountry !== oldCountry && !this.isLoadingFromRoute) {
+        this.formData.stockCodes = [];
+        this.$message.info(`Country changed. Stock selection cleared.`);
+      }
     }
   },
 
