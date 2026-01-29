@@ -8,18 +8,28 @@
         <div class="content-wrapper">
             <!-- Search Bar -->
             <div class="search-section">
-                <el-input
+                <el-autocomplete
                     v-model="searchQuery"
+                    :fetch-suggestions="querySearch"
                     placeholder="Search by stock code or name"
                     clearable
+                    @select="handleStockSelect"
                     @keyup.enter="handleSearch"
                     @clear="handleSearch"
                     class="search-input"
-                    size="large">
+                    size="large"
+                    :trigger-on-focus="true"
+                    value-key="code">
                     <template #prefix>
                         <el-icon><Search /></el-icon>
                     </template>
-                </el-input>
+                    <template #default="{ item }">
+                        <div class="stock-option">
+                            <span class="stock-code">{{ item.code }}</span>
+                            <span class="stock-name">{{ item.name }}</span>
+                        </div>
+                    </template>
+                </el-autocomplete>
                 <el-button type="primary" @click="handleSearch" size="large" class="search-btn">Search</el-button>
             </div>
 
@@ -29,7 +39,9 @@
                     :data="formattedProducts"
                     style="width: 100%"
                     @sort-change="handleSortChange"
-                    stripe>
+                    class="professional-table"
+                    stripe
+                    :header-cell-style="{ background: 'var(--color-surface-variant)', color: 'var(--color-heading)', fontWeight: '600' }">
                     <el-table-column prop="code" label="Code" width="120" fixed></el-table-column>
                     <el-table-column prop="name" label="Name" min-width="300" sortable="custom"></el-table-column>
                     <el-table-column prop="currentPrice" label="Price" width="140" align="right"></el-table-column>
@@ -58,10 +70,11 @@ import { Search } from '@element-plus/icons-vue';
 // import DataTable from 'datatables.net-vue3';
 // import DataTablesLib from 'datatables.net';
 import ApiService from "@/core/services/apiService";
-import { StockPriceClient, PagedResultDtoOfStockPriceDto } from "@/core/services/marketWatchClient";
+import { StockPriceClient, PagedResultDtoOfStockPriceDto, StockInfoClient } from "@/core/services/marketWatchClient";
 import moment from 'moment';
 
 const stockClient = new StockPriceClient(ApiService.baseUrl, ApiService.vueInstance.axios);
+const stockInfoClient = new StockInfoClient(ApiService.baseUrl, ApiService.vueInstance.axios);
 
 //DataTable.use(DataTablesLib);
 
@@ -80,6 +93,7 @@ export default defineComponent({
             sortField: '',
             sortOrder: '',
             searchQuery: '',
+            recentStocks: [] as Array<{ code: string, name: string }>,
         };
     },
 
@@ -112,6 +126,9 @@ export default defineComponent({
         formatCurrency(value) {
             return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
         },
+        formatNumber(value) {
+            return value ? value.toLocaleString('en-US') : '0';
+        },
         handlePageChange(page) {
             this.currentPage = page;
             this.getList();
@@ -128,6 +145,46 @@ export default defineComponent({
             this.getList();
         },
 
+        async loadRecentStocks() {
+            try {
+                console.log('Loading all stocks...');
+                // Get all available stock codes from StockInfo
+                const response = await stockInfoClient.stockInfoGetList(
+                    'name asc',
+                    0,
+                    1000 // Get all stocks
+                );
+
+                console.log('Stock response:', response);
+
+                // Map to autocomplete format with id as code and name
+                this.recentStocks = response.items?.map(item => ({
+                    code: item.id || '',
+                    name: item.name || ''
+                })) || [];
+
+                console.log('All stocks loaded:', this.recentStocks.length, this.recentStocks);
+            } catch (error) {
+                console.error('Error loading stocks:', error);
+            }
+        },
+
+        querySearch(queryString: string, cb: any) {
+            const results = queryString
+                ? this.recentStocks.filter(stock =>
+                    stock.code.toLowerCase().includes(queryString.toLowerCase()) ||
+                    stock.name.toLowerCase().includes(queryString.toLowerCase())
+                )
+                : this.recentStocks;
+            cb(results);
+        },
+
+        handleStockSelect(item: any) {
+            console.log('Stock selected:', item);
+            this.searchQuery = item.code;
+            this.handleSearch();
+        },
+
     },
 
     computed: {
@@ -136,11 +193,13 @@ export default defineComponent({
                 ...product,
                 date: moment(product.date).format('YYYY-MM-DD'),
                 currentPrice: this.formatCurrency(product.currentPrice),
+                volume: this.formatNumber(product.volume),
             })) : [];
         }
     },
 
     mounted() {
+        this.loadRecentStocks();
         this.getList();
     },
 });
@@ -158,24 +217,27 @@ export default defineComponent({
 }
 
 .page-header h1 {
-    font-size: 2.25rem;
+    font-size: 2.5rem;
     font-weight: 700;
     color: var(--color-heading);
     margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
 }
 
 .subtitle {
-    font-size: 1rem;
+    font-size: 1.0625rem;
     color: var(--color-text-secondary);
     margin: 0;
+    line-height: 1.5;
 }
 
 .content-wrapper {
     background: var(--color-background-card);
     border: 1px solid var(--color-border-subtle);
     border-radius: 16px;
-    padding: var(--space-2xl);
+    padding: var(--space-3xl);
     box-shadow: var(--shadow-subtle);
+    transition: box-shadow 0.2s ease;
 }
 
 /* Search Section */
@@ -194,12 +256,54 @@ export default defineComponent({
     min-width: 120px;
 }
 
+/* Stock Autocomplete Option Styling */
+.stock-option {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.stock-code {
+    font-weight: 500;
+    color: #202124;
+    min-width: 60px;
+}
+
+.stock-name {
+    color: #5f6368;
+    font-size: 0.875rem;
+}
+
 /* Table Container */
 .table-container {
     background: var(--color-background);
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 1.5rem;
+}
+
+/* Professional Table Styling */
+.professional-table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.professional-table :deep(.el-table__header) {
+    font-weight: 600;
+}
+
+.professional-table :deep(.el-table__row) {
+    transition: all 0.2s ease;
+}
+
+.professional-table :deep(.el-table__row:hover) {
+    background: var(--color-surface-variant) !important;
+}
+
+.professional-table :deep(.el-table__cell) {
+    padding: 1rem 0.75rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
 }
 
 /* Pagination */
@@ -240,28 +344,6 @@ export default defineComponent({
     .stock-price-page {
         padding: 3rem 2rem;
     }
-}
-
-/* Element Plus table customization */
-:deep(.el-table) {
-    --el-table-border-color: var(--color-border);
-    --el-table-bg-color: var(--color-background);
-    --el-table-tr-bg-color: var(--color-background);
-    --el-table-header-bg-color: var(--color-surface-variant);
-    --el-table-header-text-color: var(--color-heading);
-    --el-table-text-color: var(--color-text);
-    --el-table-row-hover-bg-color: var(--color-surface-variant);
-}
-
-:deep(.el-table th.el-table__cell) {
-    font-weight: 600;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-}
-
-:deep(.el-table td.el-table__cell) {
-    font-size: 0.9375rem;
 }
 
 /* Element Plus pagination customization */

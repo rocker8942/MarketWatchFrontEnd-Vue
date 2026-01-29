@@ -478,7 +478,8 @@ export default defineComponent({
 
   computed: {
     filteredStrategies(): StrategyDto[] {
-      let filtered = this.allStrategies;
+      // Filter out disabled (soft-deleted) strategies
+      let filtered = this.allStrategies.filter(s => !s.disabled);
 
       // Search filter
       if (this.searchQuery) {
