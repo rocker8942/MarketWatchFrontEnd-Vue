@@ -17361,6 +17361,10 @@ export interface IStrategyDto {
     disabled?: boolean;
     coefficientAllowed?: number | undefined;
     strategyType?: number | undefined;
+    primaryIndicator?: string | null;
+    indicatorPeriod?: number | null;
+    secondaryIndicator?: string | null;
+    indicatorParameters?: string | null;
 }
 
 export class TenantCreateDto implements ITenantCreateDto {

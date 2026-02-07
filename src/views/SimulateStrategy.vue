@@ -20,22 +20,6 @@
 
     <!-- Filter Bar -->
     <div class="filter-toolbar">
-      <div class="toolbar-left">
-        <el-dropdown trigger="click">
-          <button class="filter-dropdown-btn">
-            All <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
-          </button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item>All Strategies</el-dropdown-item>
-              <el-dropdown-item divided v-for="country in countries" :key="country" @click="selectedCountry = country">
-                {{ country }}
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-
       <div class="toolbar-right">
         <button class="toolbar-btn" @click="showFilterDialog = true">
           <el-icon><FilterIcon /></el-icon>
@@ -90,6 +74,12 @@
 
         <el-table-column label="Analysis Period" width="150" align="right" prop="analysisPeriod" />
 
+        <el-table-column label="Analysis Method" width="150" sortable prop="analysisMethod">
+          <template #default="scope">
+            {{ getAnalysisMethodName(scope.row.analysisMethod) }}
+          </template>
+        </el-table-column>
+
         <el-table-column label="Actions" width="180" align="center" fixed="right">
           <template #default="scope">
             <div class="action-buttons">
@@ -123,6 +113,21 @@
     <!-- Filter Dialog -->
     <el-dialog v-model="showFilterDialog" title="Filter Strategies" width="500px">
       <el-form label-position="top">
+        <el-form-item label="Country">
+          <el-select
+            v-model="selectedCountry"
+            clearable
+            filterable
+            placeholder="Select country"
+            style="width: 100%">
+            <el-option
+              v-for="country in countries"
+              :key="country"
+              :label="country"
+              :value="country" />
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="Strategy Type">
           <el-select
             v-model="selectedStrategyType"
@@ -151,6 +156,23 @@
               placeholder="Max %"
               type="number">
               <template #suffix>%</template>
+            </el-input>
+          </div>
+        </el-form-item>
+
+        <el-form-item label="Days To Test Range">
+          <div style="display: flex; gap: 12px;">
+            <el-input
+              v-model.number="minDaysToTest"
+              placeholder="Min days"
+              type="number">
+              <template #suffix>days</template>
+            </el-input>
+            <el-input
+              v-model.number="maxDaysToTest"
+              placeholder="Max days"
+              type="number">
+              <template #suffix>days</template>
             </el-input>
           </div>
         </el-form-item>
@@ -215,7 +237,7 @@
 .filter-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 1rem 1.5rem;
   background: var(--color-background-card);
   border: 1px solid var(--color-border-subtle);
@@ -223,40 +245,10 @@
   margin-bottom: 1.5rem;
 }
 
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
 .toolbar-right {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-}
-
-.filter-dropdown-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  color: var(--color-text);
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.filter-dropdown-btn:hover {
-  background: var(--color-surface-variant);
-}
-
-.dropdown-icon {
-  font-size: 14px;
-  margin-left: 2px;
 }
 
 .toolbar-btn {
@@ -441,12 +433,11 @@ import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
 import ApiService from "@/core/services/apiService";
 import { StrategyClient, type StrategyDto, RefStrategyTypeClient, type RefStrategyTypeDto } from "@/core/services/marketWatchClient";
-import { Search, ArrowDown, Filter as FilterIcon, Right, Delete, VideoPlay } from '@element-plus/icons-vue';
+import { Search, Filter as FilterIcon, Right, Delete, VideoPlay } from '@element-plus/icons-vue';
 
 export default defineComponent({
   components: {
     Search,
-    ArrowDown,
     FilterIcon,
     Right,
     Delete,
@@ -466,6 +457,8 @@ export default defineComponent({
       selectedStrategyType: null as number | null,
       minAnnualReturn: null as number | null,
       maxAnnualReturn: null as number | null,
+      minDaysToTest: null as number | null,
+      maxDaysToTest: null as number | null,
       searchQuery: "",
       showFilterDialog: false,
       currentPage: 1,
@@ -510,6 +503,15 @@ export default defineComponent({
       if (this.maxAnnualReturn !== null && this.maxAnnualReturn !== undefined) {
         const maxRate = this.maxAnnualReturn / 100;
         filtered = filtered.filter(s => (s.ratePerYear ?? 0) <= maxRate);
+      }
+
+      // Days to test range filter
+      if (this.minDaysToTest !== null && this.minDaysToTest !== undefined) {
+        filtered = filtered.filter(s => (s.daysToTest ?? 0) >= this.minDaysToTest!);
+      }
+
+      if (this.maxDaysToTest !== null && this.maxDaysToTest !== undefined) {
+        filtered = filtered.filter(s => (s.daysToTest ?? 0) <= this.maxDaysToTest!);
       }
 
       return filtered;
@@ -602,6 +604,18 @@ export default defineComponent({
       return type?.name || `Type ${typeId}`;
     },
 
+    getAnalysisMethodName(methodId: number | undefined): string {
+      if (methodId === undefined || methodId === null) return 'Correlation';
+      switch (methodId) {
+        case 0:
+          return 'Correlation';
+        case 1:
+          return 'Cointegration';
+        default:
+          return `Method ${methodId}`;
+      }
+    },
+
     async reload() {
       await this.getList();
     },
@@ -621,6 +635,8 @@ export default defineComponent({
       this.selectedStrategyType = null;
       this.minAnnualReturn = null;
       this.maxAnnualReturn = null;
+      this.minDaysToTest = null;
+      this.maxDaysToTest = null;
       this.searchQuery = "";
       this.currentPage = 1;
       this.showFilterDialog = false;
