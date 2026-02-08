@@ -22,20 +22,20 @@ const router = createRouter({
       component: () => import("../views/AboutView.vue"),
     },
     {
-      path: "/strategy",
-      name: "strategy",
+      path: "/fund",
+      name: "fund",
       meta: {
         authName: idsrvAuth.authName,
       },
       component: () => import("../views/StrategyView.vue"),
     },
     {
-      path: "/stockList",
-      name: "StockList",
+      path: "/strategyHistory",
+      name: "strategyHistory",
       meta: {
         authName: idsrvAuth.authName,
       },
-      component: () => import("../views/StockList.vue"),
+      component: () => import("../views/StrategyHistoryView.vue"),
     },
     {
       path: "/stockPrice",
@@ -46,13 +46,77 @@ const router = createRouter({
       component: () => import("../views/StockPrice.vue"),
     },
     {
+      path: "/stockChart",
+      name: "stockChart",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/StockChart.vue"),
+    },
+    {
+      path: "/movers",
+      name: "movers",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/MoversView.vue"),
+    },
+    {
       path: "/stockRelations/:stockId",
       name: "stockRelations",
       meta: {
         authName: idsrvAuth.authName,
       },
       component: () => import("../views/StockRelations.vue"),
-    }
+    },
+    {
+      path: "/simulate/strategy",
+      name: "simulateStrategy",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/SimulateStrategy.vue"),
+    },
+    {
+      path: "/simulate/backtest-history",
+      name: "simulateBacktestHistory",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/SimulateBacktestHistory.vue"),
+    },
+    {
+      path: "/simulate/graph",
+      name: "simulateGraph",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/SimulateGraphView.vue"),
+    },
+    {
+      path: "/simulate/run",
+      name: "simulateRun",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/SimulateRunView.vue"),
+    },
+    {
+      path: "/optimization/config",
+      name: "optimizationConfig",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/OptimizationConfigView.vue"),
+    },
+    {
+      path: "/optimization/monitor",
+      name: "optimizationMonitor",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/OptimizationMonitorView.vue"),
+    },
   ],
 });
 

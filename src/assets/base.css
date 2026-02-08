@@ -1,52 +1,98 @@
-/* color palette from <https://github.com/vuejs/theme> */
+/* Modern Finance Theme - Professional Dark UI */
 :root {
-  --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
+  /* Primary Finance Colors */
+  --finance-navy: #0a1929;
+  --finance-navy-light: #132f4c;
+  --finance-navy-dark: #001e3c;
 
-  --vt-c-black: #181818;
-  --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
+  /* Accent Colors */
+  --finance-blue: #1976d2;
+  --finance-blue-light: #42a5f5;
+  --finance-blue-dark: #1565c0;
 
-  --vt-c-indigo: #2c3e50;
+  --finance-green: #2e7d32;
+  --finance-green-light: #4caf50;
+  --finance-red: #d32f2f;
+  --finance-red-light: #ef5350;
 
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
+  /* Neutral Colors */
+  --finance-gray-50: #f5f7fa;
+  --finance-gray-100: #e3e8ef;
+  --finance-gray-200: #cbd5e1;
+  --finance-gray-300: #94a3b8;
+  --finance-gray-400: #64748b;
+  --finance-gray-500: #475569;
+  --finance-gray-600: #334155;
+  --finance-gray-700: #1e293b;
+  --finance-gray-800: #0f172a;
+  --finance-gray-900: #020617;
 
-  --vt-c-text-light-1: var(--vt-c-indigo);
-  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-  --vt-c-text-dark-1: var(--vt-c-white);
-  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+  /* UI Colors */
+  --color-white: #ffffff;
+  --color-border-subtle: rgba(148, 163, 184, 0.1);
+  --color-border: rgba(148, 163, 184, 0.2);
+  --color-border-strong: rgba(148, 163, 184, 0.3);
+
+  /* Shadows - Minimalist (reduced by 50%) */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.04), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+
+  /* Spacing Scale */
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 2.5rem;
+  --space-3xl: 3rem;
+  --space-4xl: 4rem;
+  --space-5xl: 5rem;
 }
 
-/* semantic color variables for this project */
+/* Light Theme */
 :root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
+  --color-background: var(--color-white);
+  --color-background-soft: var(--finance-gray-50);
+  --color-background-mute: var(--finance-gray-100);
+  --color-background-card: var(--color-white);
 
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
+  --color-surface: var(--color-white);
+  --color-surface-variant: var(--finance-gray-50);
 
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
+  --color-heading: var(--finance-navy);
+  --color-text: var(--finance-gray-800);
+  --color-text-secondary: var(--finance-gray-500);
+
+  --color-primary: var(--finance-blue);
+  --color-primary-hover: var(--finance-blue-dark);
 
   --section-gap: 160px;
 }
 
+/* Dark Theme */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-background: var(--vt-c-black);
-    --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
+    --color-background: var(--finance-navy);
+    --color-background-soft: var(--finance-navy-light);
+    --color-background-mute: var(--finance-gray-800);
+    --color-background-card: var(--finance-navy-light);
 
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
+    --color-surface: var(--finance-navy-light);
+    --color-surface-variant: var(--finance-gray-700);
 
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
+    --color-heading: var(--color-white);
+    --color-text: var(--finance-gray-100);
+    --color-text-secondary: var(--finance-gray-300);
+
+    --color-primary: var(--finance-blue-light);
+    --color-primary-hover: var(--finance-blue);
+
+    --color-border-subtle: rgba(255, 255, 255, 0.05);
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-border-strong: rgba(255, 255, 255, 0.2);
   }
 }
 
@@ -64,7 +110,7 @@ body {
   color: var(--color-text);
   background: var(--color-background);
   transition: color 0.5s, background-color 0.5s;
-  line-height: 1.6;
+  line-height: 1.7;
   font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
     Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 15px;

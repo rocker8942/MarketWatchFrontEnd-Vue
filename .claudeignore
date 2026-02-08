@@ -1,0 +1,29 @@
+# Dependency Directories
+node_modules/
+bin/
+obj/
+packages/
+
+# IDE and OS files
+.vs/
+.vscode/
+.idea/
+.DS_Store
+*.user
+*.suo
+
+# Secrets and Configs
+*.env
+*.config
+appsettings.json
+appsettings.Development.json
+secrets.json
+
+# Build Artifacts
+*.dll
+*.exe
+*.pdb
+*.nupkg
+
+# Large Generated Files
+TestResults/

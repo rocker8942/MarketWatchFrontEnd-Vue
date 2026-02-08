@@ -26,3 +26,6 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+.omc/continuation-count.json
+.omc/sessions/e01f37d1-98b0-47e2-aa71-f3cd12ab2365.json
+.omc/state/subagent-tracking.json
