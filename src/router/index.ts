@@ -54,6 +54,14 @@ const router = createRouter({
       component: () => import("../views/StockChart.vue"),
     },
     {
+      path: "/movers",
+      name: "movers",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
+      component: () => import("../views/MoversView.vue"),
+    },
+    {
       path: "/stockRelations/:stockId",
       name: "stockRelations",
       meta: {
@@ -108,7 +116,7 @@ const router = createRouter({
         authName: idsrvAuth.authName,
       },
       component: () => import("../views/OptimizationMonitorView.vue"),
-    }
+    },
   ],
 });
 

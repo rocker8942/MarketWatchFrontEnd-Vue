@@ -7596,6 +7596,217 @@ export class StockPriceClient {
     }
 
     /**
+     * @param period (optional) 
+     * @param country (optional) 
+     * @return Success
+     */
+    stockPriceGetMovers(period: string | undefined, country: string | undefined, cancelToken?: CancelToken): Promise<MoversResponseDto> {
+        let url_ = this.baseUrl + "/api/app/stock-price/movers?";
+        if (period === null)
+            throw new Error("The parameter 'period' cannot be null.");
+        else if (period !== undefined)
+            url_ += "period=" + encodeURIComponent("" + period) + "&";
+        if (country === null)
+            throw new Error("The parameter 'country' cannot be null.");
+        else if (country !== undefined)
+            url_ += "country=" + encodeURIComponent("" + country) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processStockPriceGetMovers(_response);
+        });
+    }
+
+    protected processStockPriceGetMovers(response: AxiosResponse): Promise<MoversResponseDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = MoversResponseDto.fromJS(resultData200);
+            return Promise.resolve<MoversResponseDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<MoversResponseDto>(null as any);
+    }
+
+    /**
+     * @param stockCode (optional) 
+     * @param days (optional) 
+     * @param fullHistory (optional) 
+     * @return Success
+     */
+    stockPriceRefreshStockPriceFromYahoo(stockCode: string | undefined, days: number | undefined, fullHistory: boolean | undefined, cancelToken?: CancelToken): Promise<RefreshStockPriceResponseDto> {
+        let url_ = this.baseUrl + "/api/app/stock-price/refresh-stock-price-from-yahoo?";
+        if (stockCode === null)
+            throw new Error("The parameter 'stockCode' cannot be null.");
+        else if (stockCode !== undefined)
+            url_ += "stockCode=" + encodeURIComponent("" + stockCode) + "&";
+        if (days === null)
+            throw new Error("The parameter 'days' cannot be null.");
+        else if (days !== undefined)
+            url_ += "days=" + encodeURIComponent("" + days) + "&";
+        if (fullHistory === null)
+            throw new Error("The parameter 'fullHistory' cannot be null.");
+        else if (fullHistory !== undefined)
+            url_ += "fullHistory=" + encodeURIComponent("" + fullHistory) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "POST",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processStockPriceRefreshStockPriceFromYahoo(_response);
+        });
+    }
+
+    protected processStockPriceRefreshStockPriceFromYahoo(response: AxiosResponse): Promise<RefreshStockPriceResponseDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = RefreshStockPriceResponseDto.fromJS(resultData200);
+            return Promise.resolve<RefreshStockPriceResponseDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<RefreshStockPriceResponseDto>(null as any);
+    }
+
+    /**
      * @param body (optional) 
      * @return Success
      */
@@ -14807,6 +15018,118 @@ export interface IModuleExtensionDto {
     configuration?: { [key: string]: any; } | undefined;
 }
 
+export class MoverEntryDto implements IMoverEntryDto {
+    code?: string | undefined;
+    name?: string | undefined;
+    currentPrice?: number;
+    previousPrice?: number;
+    changePercent?: number;
+
+    constructor(data?: IMoverEntryDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.code = _data["code"];
+            this.name = _data["name"];
+            this.currentPrice = _data["currentPrice"];
+            this.previousPrice = _data["previousPrice"];
+            this.changePercent = _data["changePercent"];
+        }
+    }
+
+    static fromJS(data: any): MoverEntryDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new MoverEntryDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["code"] = this.code;
+        data["name"] = this.name;
+        data["currentPrice"] = this.currentPrice;
+        data["previousPrice"] = this.previousPrice;
+        data["changePercent"] = this.changePercent;
+        return data;
+    }
+}
+
+export interface IMoverEntryDto {
+    code?: string | undefined;
+    name?: string | undefined;
+    currentPrice?: number;
+    previousPrice?: number;
+    changePercent?: number;
+}
+
+export class MoversResponseDto implements IMoversResponseDto {
+    topGainers?: MoverEntryDto[] | undefined;
+    topLosers?: MoverEntryDto[] | undefined;
+    timestamp?: Date;
+
+    constructor(data?: IMoversResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["topGainers"])) {
+                this.topGainers = [] as any;
+                for (let item of _data["topGainers"])
+                    this.topGainers!.push(MoverEntryDto.fromJS(item));
+            }
+            if (Array.isArray(_data["topLosers"])) {
+                this.topLosers = [] as any;
+                for (let item of _data["topLosers"])
+                    this.topLosers!.push(MoverEntryDto.fromJS(item));
+            }
+            this.timestamp = _data["timestamp"] ? new Date(_data["timestamp"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): MoversResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new MoversResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.topGainers)) {
+            data["topGainers"] = [];
+            for (let item of this.topGainers)
+                data["topGainers"].push(item.toJSON());
+        }
+        if (Array.isArray(this.topLosers)) {
+            data["topLosers"] = [];
+            for (let item of this.topLosers)
+                data["topLosers"].push(item.toJSON());
+        }
+        data["timestamp"] = this.timestamp ? this.timestamp.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IMoversResponseDto {
+    topGainers?: MoverEntryDto[] | undefined;
+    topLosers?: MoverEntryDto[] | undefined;
+    timestamp?: Date;
+}
+
 export class MultiTenancyInfoDto implements IMultiTenancyInfoDto {
     isEnabled?: boolean;
 
@@ -15929,6 +16252,8 @@ export class ParameterRangesDto implements IParameterRangesDto {
     slippage?: number[] | undefined;
     useTrendFilter?: boolean[] | undefined;
     trendFilterThreshold?: number[] | undefined;
+    primaryIndicator?: string | undefined;
+    indicatorPeriod?: number[] | undefined;
 
     constructor(data?: IParameterRangesDto) {
         if (data) {
@@ -15985,6 +16310,12 @@ export class ParameterRangesDto implements IParameterRangesDto {
                 this.trendFilterThreshold = [] as any;
                 for (let item of _data["trendFilterThreshold"])
                     this.trendFilterThreshold!.push(item);
+            }
+            this.primaryIndicator = _data["primaryIndicator"];
+            if (Array.isArray(_data["indicatorPeriod"])) {
+                this.indicatorPeriod = [] as any;
+                for (let item of _data["indicatorPeriod"])
+                    this.indicatorPeriod!.push(item);
             }
         }
     }
@@ -16043,6 +16374,12 @@ export class ParameterRangesDto implements IParameterRangesDto {
             for (let item of this.trendFilterThreshold)
                 data["trendFilterThreshold"].push(item);
         }
+        data["primaryIndicator"] = this.primaryIndicator;
+        if (Array.isArray(this.indicatorPeriod)) {
+            data["indicatorPeriod"] = [];
+            for (let item of this.indicatorPeriod)
+                data["indicatorPeriod"].push(item);
+        }
         return data;
     }
 }
@@ -16057,6 +16394,8 @@ export interface IParameterRangesDto {
     slippage?: number[] | undefined;
     useTrendFilter?: boolean[] | undefined;
     trendFilterThreshold?: number[] | undefined;
+    primaryIndicator?: string | undefined;
+    indicatorPeriod?: number[] | undefined;
 }
 
 export class PermissionGrantInfoDto implements IPermissionGrantInfoDto {
@@ -16461,6 +16800,54 @@ export class RefStrategyTypeDto implements IRefStrategyTypeDto {
 export interface IRefStrategyTypeDto {
     id?: number;
     name?: string | undefined;
+}
+
+export class RefreshStockPriceResponseDto implements IRefreshStockPriceResponseDto {
+    stockCode?: string | undefined;
+    recordsUpdated?: number;
+    success?: boolean;
+    message?: string | undefined;
+
+    constructor(data?: IRefreshStockPriceResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.stockCode = _data["stockCode"];
+            this.recordsUpdated = _data["recordsUpdated"];
+            this.success = _data["success"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): RefreshStockPriceResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new RefreshStockPriceResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["stockCode"] = this.stockCode;
+        data["recordsUpdated"] = this.recordsUpdated;
+        data["success"] = this.success;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface IRefreshStockPriceResponseDto {
+    stockCode?: string | undefined;
+    recordsUpdated?: number;
+    success?: boolean;
+    message?: string | undefined;
 }
 
 export class RegisterDto implements IRegisterDto {
@@ -17266,6 +17653,13 @@ export class StrategyDto implements IStrategyDto {
     disabled?: boolean;
     coefficientAllowed?: number | undefined;
     strategyType?: number | undefined;
+    correlationMethod?: number;
+    analysisMethod?: number;
+    cointegrationMethod?: number;
+    primaryIndicator?: string | undefined;
+    indicatorPeriod?: number | undefined;
+    secondaryIndicator?: string | undefined;
+    indicatorParameters?: string | undefined;
 
     constructor(data?: IStrategyDto) {
         if (data) {
@@ -17300,6 +17694,13 @@ export class StrategyDto implements IStrategyDto {
             this.disabled = _data["disabled"];
             this.coefficientAllowed = _data["coefficientAllowed"];
             this.strategyType = _data["strategyType"];
+            this.correlationMethod = _data["correlationMethod"];
+            this.analysisMethod = _data["analysisMethod"];
+            this.cointegrationMethod = _data["cointegrationMethod"];
+            this.primaryIndicator = _data["primaryIndicator"];
+            this.indicatorPeriod = _data["indicatorPeriod"];
+            this.secondaryIndicator = _data["secondaryIndicator"];
+            this.indicatorParameters = _data["indicatorParameters"];
         }
     }
 
@@ -17334,6 +17735,13 @@ export class StrategyDto implements IStrategyDto {
         data["disabled"] = this.disabled;
         data["coefficientAllowed"] = this.coefficientAllowed;
         data["strategyType"] = this.strategyType;
+        data["correlationMethod"] = this.correlationMethod;
+        data["analysisMethod"] = this.analysisMethod;
+        data["cointegrationMethod"] = this.cointegrationMethod;
+        data["primaryIndicator"] = this.primaryIndicator;
+        data["indicatorPeriod"] = this.indicatorPeriod;
+        data["secondaryIndicator"] = this.secondaryIndicator;
+        data["indicatorParameters"] = this.indicatorParameters;
         return data;
     }
 }
@@ -17361,10 +17769,13 @@ export interface IStrategyDto {
     disabled?: boolean;
     coefficientAllowed?: number | undefined;
     strategyType?: number | undefined;
-    primaryIndicator?: string | null;
-    indicatorPeriod?: number | null;
-    secondaryIndicator?: string | null;
-    indicatorParameters?: string | null;
+    correlationMethod?: number;
+    analysisMethod?: number;
+    cointegrationMethod?: number;
+    primaryIndicator?: string | undefined;
+    indicatorPeriod?: number | undefined;
+    secondaryIndicator?: string | undefined;
+    indicatorParameters?: string | undefined;
 }
 
 export class TenantCreateDto implements ITenantCreateDto {

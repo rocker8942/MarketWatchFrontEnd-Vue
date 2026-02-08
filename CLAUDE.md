@@ -114,7 +114,17 @@ npm run test:e2e:ci            # E2E tests (headless)
 - Automatically injects Bearer token from OIDC auth into all axios requests
 - Base URL configured via `GlobalConfig.APIServer`
 - Methods: `get()`, `post()`, `update()`, `delete()`
-- marketWatchClient.ts is auto-generated from backend. Run "G:\SourceCode\MarketWatchWeb_AbpBackEnd\src\MarketWatchWeb.HttpApi.Host\CreateClient.bat"
+
+**TypeScript API Client Generation:**
+
+- **CRITICAL**: `src/core/services/marketWatchClient.ts` is **AUTO-GENERATED** from backend Swagger
+- **NEVER manually edit** marketWatchClient.ts - changes will be overwritten
+- To regenerate after backend API changes:
+  1. Ensure backend is running at https://localhost:44324
+  2. Run: `G:\SourceCode\MarketWatchWeb_AbpBackEnd\src\MarketWatchWeb.HttpApi.Host\CreateClient.bat`
+  3. Or run: `cd G:\SourceCode\MarketWatchWeb_AbpBackEnd\src\MarketWatchWeb.HttpApi.Host && dotnet-nswag run nswag.json`
+- Generation uses NSwag from backend Swagger endpoint
+- Output path configured in `nswag.json`: `../../../MarketWatchFrontEnd-Vue/src/core/services/marketWatchClient.ts`
 
 ### Directory Structure
 

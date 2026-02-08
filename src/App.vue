@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from "vue-router";
 import Header from "./components/HeaderComponent.vue";
-import { ArrowDown, TrendCharts } from '@element-plus/icons-vue';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ArrowDown, TrendCharts } from "@element-plus/icons-vue";
+import { ref, onMounted, onUnmounted } from "vue";
 
 // Market status indicator
 const currentTime = ref(new Date());
@@ -31,7 +31,15 @@ onUnmounted(() => {
     <div class="market-status-banner">
       <div class="banner-container">
         <div class="market-time">
-          {{ currentTime.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}
+          {{
+            currentTime.toLocaleString("en-US", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          }}
         </div>
       </div>
     </div>
@@ -56,10 +64,19 @@ onUnmounted(() => {
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item>
-                  <RouterLink to="/stockPrice" class="dropdown-link">Price List</RouterLink>
+                  <RouterLink to="/stockPrice" class="dropdown-link"
+                    >Price List</RouterLink
+                  >
                 </el-dropdown-item>
                 <el-dropdown-item>
-                  <RouterLink to="/stockChart" class="dropdown-link">Stock Chart</RouterLink>
+                  <RouterLink to="/stockChart" class="dropdown-link"
+                    >Stock Chart</RouterLink
+                  >
+                </el-dropdown-item>
+                <el-dropdown-item>
+                  <RouterLink to="/movers" class="dropdown-link"
+                    >Movers</RouterLink
+                  >
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -72,10 +89,14 @@ onUnmounted(() => {
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item>
-                  <RouterLink to="/fund" class="dropdown-link">Analysis</RouterLink>
+                  <RouterLink to="/fund" class="dropdown-link"
+                    >Analysis</RouterLink
+                  >
                 </el-dropdown-item>
                 <el-dropdown-item>
-                  <RouterLink to="/strategyHistory" class="dropdown-link">Strategy History</RouterLink>
+                  <RouterLink to="/strategyHistory" class="dropdown-link"
+                    >Strategy History</RouterLink
+                  >
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -88,16 +109,26 @@ onUnmounted(() => {
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item>
-                  <RouterLink to="/simulate/run" class="dropdown-link">Run Simulation</RouterLink>
+                  <RouterLink to="/simulate/run" class="dropdown-link"
+                    >Run Simulation</RouterLink
+                  >
                 </el-dropdown-item>
                 <el-dropdown-item>
-                  <RouterLink to="/simulate/strategy" class="dropdown-link">Strategies</RouterLink>
+                  <RouterLink to="/simulate/strategy" class="dropdown-link"
+                    >Strategies</RouterLink
+                  >
                 </el-dropdown-item>
                 <el-dropdown-item>
-                  <RouterLink to="/simulate/backtest-history" class="dropdown-link">Backtest History</RouterLink>
+                  <RouterLink
+                    to="/simulate/backtest-history"
+                    class="dropdown-link"
+                    >Backtest History</RouterLink
+                  >
                 </el-dropdown-item>
                 <el-dropdown-item>
-                  <RouterLink to="/simulate/graph" class="dropdown-link">Graph</RouterLink>
+                  <RouterLink to="/simulate/graph" class="dropdown-link"
+                    >Graph</RouterLink
+                  >
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -110,10 +141,14 @@ onUnmounted(() => {
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item>
-                  <RouterLink to="/optimization/config" class="dropdown-link">New Optimization</RouterLink>
+                  <RouterLink to="/optimization/config" class="dropdown-link"
+                    >New Optimization</RouterLink
+                  >
                 </el-dropdown-item>
                 <el-dropdown-item>
-                  <RouterLink to="/optimization/monitor" class="dropdown-link">Monitor Jobs</RouterLink>
+                  <RouterLink to="/optimization/monitor" class="dropdown-link"
+                    >Monitor Jobs</RouterLink
+                  >
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -124,7 +159,8 @@ onUnmounted(() => {
           <button
             v-if="$oidc.isAuthenticated"
             @click="$oidc.signOut"
-            class="signout-btn">
+            class="signout-btn"
+          >
             Sign Out
           </button>
         </div>
@@ -143,7 +179,8 @@ onUnmounted(() => {
           <div class="footer-section">
             <h4 class="footer-heading">MarketWatch</h4>
             <p class="footer-description">
-              Professional market intelligence and trading insights for informed investment decisions.
+              Professional market intelligence and trading insights for informed
+              investment decisions.
             </p>
           </div>
 
@@ -153,6 +190,7 @@ onUnmounted(() => {
               <li><RouterLink to="/">Dashboard</RouterLink></li>
               <li><RouterLink to="/stockPrice">Price List</RouterLink></li>
               <li><RouterLink to="/stockChart">Charts</RouterLink></li>
+              <li><RouterLink to="/movers">Movers</RouterLink></li>
             </ul>
           </div>
 
@@ -175,8 +213,14 @@ onUnmounted(() => {
         </div>
 
         <div class="footer-bottom">
-          <p class="copyright">&copy; {{ new Date().getFullYear() }} MarketWatch. All rights reserved.</p>
-          <p class="disclaimer">Investment involves risk. Past performance is not indicative of future results.</p>
+          <p class="copyright">
+            &copy; {{ new Date().getFullYear() }} MarketWatch. All rights
+            reserved.
+          </p>
+          <p class="disclaimer">
+            Investment involves risk. Past performance is not indicative of
+            future results.
+          </p>
         </div>
       </div>
     </footer>
@@ -231,7 +275,8 @@ onUnmounted(() => {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

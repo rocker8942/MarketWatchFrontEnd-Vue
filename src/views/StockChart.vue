@@ -40,7 +40,42 @@
             <div class="chart-section">
                 <!-- Stock Header -->
                 <div class="stock-title-section">
-                    <h1 class="company-name">{{ loadedStockName }}</h1>
+                    <div class="title-row">
+                        <h1 class="company-name">{{ loadedStockName }}</h1>
+                        <div class="header-actions">
+                            <!-- Refresh mode selector -->
+                            <el-select
+                                v-model="refreshMode"
+                                size="default"
+                                style="width: 150px; margin-right: 0.5rem;">
+                                <el-option label="Last 30 Days" value="recent" />
+                                <el-option label="All History" value="full" />
+                            </el-select>
+
+                            <!-- Refresh button -->
+                            <el-button
+                                type="primary"
+                                @click="refreshStockPrice"
+                                :disabled="refreshing"
+                                size="default">
+                                <el-icon :class="{ 'is-loading': refreshing }">
+                                    <Loading v-if="refreshing" />
+                                    <Refresh v-else />
+                                </el-icon>
+                                Refresh Data
+                            </el-button>
+
+                            <!-- Yahoo Finance link -->
+                            <el-button
+                                type="primary"
+                                link
+                                @click="openYahooFinance"
+                                class="yahoo-link">
+                                <el-icon><Link /></el-icon>
+                                View on Yahoo Finance
+                            </el-button>
+                        </div>
+                    </div>
 
                     <div v-if="latestPrice" class="price-section">
                         <div class="current-price">{{ formatCurrency(latestPrice.currentPrice) }}</div>
@@ -149,7 +184,8 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import AreaChart from "../components/charts/AreaChart.vue";
-import { Loading, TrendCharts, Warning } from '@element-plus/icons-vue';
+import { Loading, TrendCharts, Warning, Link, Refresh } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 import ApiService from "@/core/services/apiService";
 import { StockPriceClient, StockPriceDto, StockInfoClient, CompanyClient, CompanyDto } from "@/core/services/marketWatchClient";
 import moment from 'moment';
@@ -163,7 +199,9 @@ export default defineComponent({
         AreaChart,
         Loading,
         TrendCharts,
-        Warning
+        Warning,
+        Link,
+        Refresh
     },
 
     data() {
@@ -172,6 +210,8 @@ export default defineComponent({
             loadedStockCode: '', // Track the stock code that's currently loaded in the chart
             selectedPeriod: '6M',
             loading: false,
+            refreshing: false,
+            refreshMode: 'recent' as 'recent' | 'full',
             recentStocks: [] as Array<{ code: string, name: string }>,
             stockPrices: [] as StockPriceDto[],
             latestPrice: null as StockPriceDto | null,
@@ -379,6 +419,85 @@ export default defineComponent({
         formatRatio(value: number | undefined): string {
             if (!value) return 'N/A';
             return value.toFixed(2);
+        },
+
+        openYahooFinance() {
+            if (this.loadedStockCode) {
+                window.open(`https://au.finance.yahoo.com/quote/${this.loadedStockCode}`, '_blank');
+            }
+        },
+
+        async refreshStockPrice() {
+            if (!this.loadedStockCode) {
+                ElMessage.warning('No stock selected');
+                return;
+            }
+
+            this.refreshing = true;
+            try {
+                const isFullHistory = this.refreshMode === 'full';
+                const days = isFullHistory ? undefined : 30;
+
+                console.log(`Refreshing stock price for: ${this.loadedStockCode}, mode: ${this.refreshMode}`);
+
+                // For full history, create a custom axios instance with extended timeout
+                let response;
+                if (isFullHistory) {
+                    // Get the current access token
+                    const token = this.$oidc.accessToken;
+
+                    // Create temporary client with 3-minute timeout and auth token
+                    const customAxios = ApiService.vueInstance.axios.create({
+                        baseURL: ApiService.baseUrl,
+                        timeout: 180000, // 3 minutes
+                        headers: {
+                            ...ApiService.vueInstance.axios.defaults.headers.common,
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+
+                    const customClient = new StockPriceClient(ApiService.baseUrl, customAxios);
+                    response = await customClient.stockPriceRefreshStockPriceFromYahoo(
+                        this.loadedStockCode,
+                        days,
+                        true // fullHistory
+                    );
+                } else {
+                    // Use standard client with default timeout
+                    response = await stockPriceClient.stockPriceRefreshStockPriceFromYahoo(
+                        this.loadedStockCode,
+                        days,
+                        false // fullHistory
+                    );
+                }
+
+                console.log('Refresh response:', response);
+
+                if (response.success) {
+                    const modeText = isFullHistory ? 'full historical' : '30-day';
+                    ElMessage.success({
+                        message: `Successfully refreshed ${response.recordsUpdated} ${modeText} price records for ${this.loadedStockCode}`,
+                        duration: 4000
+                    });
+
+                    // Reload the chart data after successful refresh
+                    await this.loadStockData();
+                } else {
+                    ElMessage.error('Failed to refresh stock price data');
+                }
+            } catch (error: any) {
+                console.error('Error refreshing stock price:', error);
+
+                // Detect timeout specifically
+                if (error.code === 'ECONNABORTED') {
+                    const modeText = this.refreshMode === 'full' ? 'Full history' : 'Data';
+                    ElMessage.error(`${modeText} refresh timed out. Please try again.`);
+                } else {
+                    ElMessage.error('An error occurred while refreshing stock price data');
+                }
+            } finally {
+                this.refreshing = false;
+            }
         }
     },
 
@@ -471,12 +590,32 @@ export default defineComponent({
     margin-bottom: 1.5rem;
 }
 
+.title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
 .company-name {
     font-size: 1.75rem;
     font-weight: 400;
     color: #202124;
-    margin: 0 0 1rem 0;
+    margin: 0;
     line-height: 1.3;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.yahoo-link {
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
 .price-section {
