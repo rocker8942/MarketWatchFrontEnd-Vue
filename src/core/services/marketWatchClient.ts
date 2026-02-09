@@ -6292,6 +6292,307 @@ export class RoleClient {
     }
 }
 
+export class SimulationProxyClient {
+    protected instance: AxiosInstance;
+    protected baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        this.instance = instance || axios.create();
+
+        this.baseUrl = baseUrl ?? "";
+
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    simulationProxyRunSimulation(body: SimulationRequestDto | undefined, cancelToken?: CancelToken): Promise<SimulationResultDto> {
+        let url_ = this.baseUrl + "/api/app/simulation-proxy/run-simulation";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: AxiosRequestConfig = {
+            data: content_,
+            method: "POST",
+            url: url_,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processSimulationProxyRunSimulation(_response);
+        });
+    }
+
+    protected processSimulationProxyRunSimulation(response: AxiosResponse): Promise<SimulationResultDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = SimulationResultDto.fromJS(resultData200);
+            return Promise.resolve<SimulationResultDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<SimulationResultDto>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    simulationProxyGetSimulationStatus(simulationId: string, cancelToken?: CancelToken): Promise<SimulationResultDto> {
+        let url_ = this.baseUrl + "/api/app/simulation-proxy/simulation-status/{simulationId}";
+        if (simulationId === undefined || simulationId === null)
+            throw new Error("The parameter 'simulationId' must be defined.");
+        url_ = url_.replace("{simulationId}", encodeURIComponent("" + simulationId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processSimulationProxyGetSimulationStatus(_response);
+        });
+    }
+
+    protected processSimulationProxyGetSimulationStatus(response: AxiosResponse): Promise<SimulationResultDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = SimulationResultDto.fromJS(resultData200);
+            return Promise.resolve<SimulationResultDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<SimulationResultDto>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    simulationProxyGetStrategies( cancelToken?: CancelToken): Promise<StrategiesResponseDto> {
+        let url_ = this.baseUrl + "/api/app/simulation-proxy/strategies";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processSimulationProxyGetStrategies(_response);
+        });
+    }
+
+    protected processSimulationProxyGetStrategies(response: AxiosResponse): Promise<StrategiesResponseDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = StrategiesResponseDto.fromJS(resultData200);
+            return Promise.resolve<StrategiesResponseDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<StrategiesResponseDto>(null as any);
+    }
+}
+
 export class SimulationQueueClient {
     protected instance: AxiosInstance;
     protected baseUrl: string;
@@ -17250,6 +17551,46 @@ export interface ISendTestEmailInput {
     body?: string | undefined;
 }
 
+export class SimulationCountryDto implements ISimulationCountryDto {
+    value?: number;
+    name?: string | undefined;
+
+    constructor(data?: ISimulationCountryDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.value = _data["value"];
+            this.name = _data["name"];
+        }
+    }
+
+    static fromJS(data: any): SimulationCountryDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SimulationCountryDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["value"] = this.value;
+        data["name"] = this.name;
+        return data;
+    }
+}
+
+export interface ISimulationCountryDto {
+    value?: number;
+    name?: string | undefined;
+}
+
 export class SimulationQueueDto implements ISimulationQueueDto {
     id?: number;
     creationTime?: Date;
@@ -17450,6 +17791,358 @@ export interface ISimulationQueueSummaryDto {
     completedAt?: Date | undefined;
 }
 
+export class SimulationRecommendedParametersDto implements ISimulationRecommendedParametersDto {
+    analysisPeriod?: number;
+    coefficientAllowed?: number;
+    investTriggerRate?: number;
+    lossCutRate?: number;
+
+    constructor(data?: ISimulationRecommendedParametersDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.analysisPeriod = _data["analysisPeriod"];
+            this.coefficientAllowed = _data["coefficientAllowed"];
+            this.investTriggerRate = _data["investTriggerRate"];
+            this.lossCutRate = _data["lossCutRate"];
+        }
+    }
+
+    static fromJS(data: any): SimulationRecommendedParametersDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SimulationRecommendedParametersDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["analysisPeriod"] = this.analysisPeriod;
+        data["coefficientAllowed"] = this.coefficientAllowed;
+        data["investTriggerRate"] = this.investTriggerRate;
+        data["lossCutRate"] = this.lossCutRate;
+        return data;
+    }
+}
+
+export interface ISimulationRecommendedParametersDto {
+    analysisPeriod?: number;
+    coefficientAllowed?: number;
+    investTriggerRate?: number;
+    lossCutRate?: number;
+}
+
+export class SimulationRequestDto implements ISimulationRequestDto {
+    strategyType?: number;
+    country?: number;
+    startDate?: Date;
+    endDate?: Date;
+    analysisPeriod?: number;
+    coefficientAllowed?: number;
+    investTriggerRate?: number;
+    lossCutRate?: number;
+    portfolioNumber?: number;
+    tradeFee?: number;
+    slippage?: number;
+    stockCodes?: string[] | undefined;
+    runAsync?: boolean;
+    useTrendFilter?: boolean;
+    trendFilterThreshold?: number;
+    analysisMethod?: number;
+    cointegrationMethod?: number;
+    correlationMethod?: number;
+    primaryIndicator?: string | undefined;
+    indicatorPeriod?: number | undefined;
+
+    constructor(data?: ISimulationRequestDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.strategyType = _data["strategyType"];
+            this.country = _data["country"];
+            this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
+            this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
+            this.analysisPeriod = _data["analysisPeriod"];
+            this.coefficientAllowed = _data["coefficientAllowed"];
+            this.investTriggerRate = _data["investTriggerRate"];
+            this.lossCutRate = _data["lossCutRate"];
+            this.portfolioNumber = _data["portfolioNumber"];
+            this.tradeFee = _data["tradeFee"];
+            this.slippage = _data["slippage"];
+            if (Array.isArray(_data["stockCodes"])) {
+                this.stockCodes = [] as any;
+                for (let item of _data["stockCodes"])
+                    this.stockCodes!.push(item);
+            }
+            this.runAsync = _data["runAsync"];
+            this.useTrendFilter = _data["useTrendFilter"];
+            this.trendFilterThreshold = _data["trendFilterThreshold"];
+            this.analysisMethod = _data["analysisMethod"];
+            this.cointegrationMethod = _data["cointegrationMethod"];
+            this.correlationMethod = _data["correlationMethod"];
+            this.primaryIndicator = _data["primaryIndicator"];
+            this.indicatorPeriod = _data["indicatorPeriod"];
+        }
+    }
+
+    static fromJS(data: any): SimulationRequestDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SimulationRequestDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["strategyType"] = this.strategyType;
+        data["country"] = this.country;
+        data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
+        data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
+        data["analysisPeriod"] = this.analysisPeriod;
+        data["coefficientAllowed"] = this.coefficientAllowed;
+        data["investTriggerRate"] = this.investTriggerRate;
+        data["lossCutRate"] = this.lossCutRate;
+        data["portfolioNumber"] = this.portfolioNumber;
+        data["tradeFee"] = this.tradeFee;
+        data["slippage"] = this.slippage;
+        if (Array.isArray(this.stockCodes)) {
+            data["stockCodes"] = [];
+            for (let item of this.stockCodes)
+                data["stockCodes"].push(item);
+        }
+        data["runAsync"] = this.runAsync;
+        data["useTrendFilter"] = this.useTrendFilter;
+        data["trendFilterThreshold"] = this.trendFilterThreshold;
+        data["analysisMethod"] = this.analysisMethod;
+        data["cointegrationMethod"] = this.cointegrationMethod;
+        data["correlationMethod"] = this.correlationMethod;
+        data["primaryIndicator"] = this.primaryIndicator;
+        data["indicatorPeriod"] = this.indicatorPeriod;
+        return data;
+    }
+}
+
+export interface ISimulationRequestDto {
+    strategyType?: number;
+    country?: number;
+    startDate?: Date;
+    endDate?: Date;
+    analysisPeriod?: number;
+    coefficientAllowed?: number;
+    investTriggerRate?: number;
+    lossCutRate?: number;
+    portfolioNumber?: number;
+    tradeFee?: number;
+    slippage?: number;
+    stockCodes?: string[] | undefined;
+    runAsync?: boolean;
+    useTrendFilter?: boolean;
+    trendFilterThreshold?: number;
+    analysisMethod?: number;
+    cointegrationMethod?: number;
+    correlationMethod?: number;
+    primaryIndicator?: string | undefined;
+    indicatorPeriod?: number | undefined;
+}
+
+export class SimulationResultDto implements ISimulationResultDto {
+    simulationId?: string | undefined;
+    status?: number;
+    strategyId?: number;
+    summary?: SimulationSummaryDto;
+    errorMessage?: string | undefined;
+    requestedAt?: Date;
+    completedAt?: Date | undefined;
+
+    constructor(data?: ISimulationResultDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.simulationId = _data["simulationId"];
+            this.status = _data["status"];
+            this.strategyId = _data["strategyId"];
+            this.summary = _data["summary"] ? SimulationSummaryDto.fromJS(_data["summary"]) : <any>undefined;
+            this.errorMessage = _data["errorMessage"];
+            this.requestedAt = _data["requestedAt"] ? new Date(_data["requestedAt"].toString()) : <any>undefined;
+            this.completedAt = _data["completedAt"] ? new Date(_data["completedAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): SimulationResultDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SimulationResultDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["simulationId"] = this.simulationId;
+        data["status"] = this.status;
+        data["strategyId"] = this.strategyId;
+        data["summary"] = this.summary ? this.summary.toJSON() : <any>undefined;
+        data["errorMessage"] = this.errorMessage;
+        data["requestedAt"] = this.requestedAt ? this.requestedAt.toISOString() : <any>undefined;
+        data["completedAt"] = this.completedAt ? this.completedAt.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ISimulationResultDto {
+    simulationId?: string | undefined;
+    status?: number;
+    strategyId?: number;
+    summary?: SimulationSummaryDto;
+    errorMessage?: string | undefined;
+    requestedAt?: Date;
+    completedAt?: Date | undefined;
+}
+
+export class SimulationStrategyDto implements ISimulationStrategyDto {
+    type?: number;
+    name?: string | undefined;
+    description?: string | undefined;
+    recommendedParameters?: SimulationRecommendedParametersDto;
+
+    constructor(data?: ISimulationStrategyDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.type = _data["type"];
+            this.name = _data["name"];
+            this.description = _data["description"];
+            this.recommendedParameters = _data["recommendedParameters"] ? SimulationRecommendedParametersDto.fromJS(_data["recommendedParameters"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): SimulationStrategyDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SimulationStrategyDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["type"] = this.type;
+        data["name"] = this.name;
+        data["description"] = this.description;
+        data["recommendedParameters"] = this.recommendedParameters ? this.recommendedParameters.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ISimulationStrategyDto {
+    type?: number;
+    name?: string | undefined;
+    description?: string | undefined;
+    recommendedParameters?: SimulationRecommendedParametersDto;
+}
+
+export class SimulationSummaryDto implements ISimulationSummaryDto {
+    totalReturn?: number;
+    annualizedReturn?: number;
+    sharpeRatio?: number;
+    maxDrawdown?: number;
+    winRate?: number;
+    totalTrades?: number;
+    daysSimulated?: number;
+    volatility?: number;
+    trades?: TradeDetailDto[] | undefined;
+
+    constructor(data?: ISimulationSummaryDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.totalReturn = _data["totalReturn"];
+            this.annualizedReturn = _data["annualizedReturn"];
+            this.sharpeRatio = _data["sharpeRatio"];
+            this.maxDrawdown = _data["maxDrawdown"];
+            this.winRate = _data["winRate"];
+            this.totalTrades = _data["totalTrades"];
+            this.daysSimulated = _data["daysSimulated"];
+            this.volatility = _data["volatility"];
+            if (Array.isArray(_data["trades"])) {
+                this.trades = [] as any;
+                for (let item of _data["trades"])
+                    this.trades!.push(TradeDetailDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): SimulationSummaryDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SimulationSummaryDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["totalReturn"] = this.totalReturn;
+        data["annualizedReturn"] = this.annualizedReturn;
+        data["sharpeRatio"] = this.sharpeRatio;
+        data["maxDrawdown"] = this.maxDrawdown;
+        data["winRate"] = this.winRate;
+        data["totalTrades"] = this.totalTrades;
+        data["daysSimulated"] = this.daysSimulated;
+        data["volatility"] = this.volatility;
+        if (Array.isArray(this.trades)) {
+            data["trades"] = [];
+            for (let item of this.trades)
+                data["trades"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ISimulationSummaryDto {
+    totalReturn?: number;
+    annualizedReturn?: number;
+    sharpeRatio?: number;
+    maxDrawdown?: number;
+    winRate?: number;
+    totalTrades?: number;
+    daysSimulated?: number;
+    volatility?: number;
+    trades?: TradeDetailDto[] | undefined;
+}
+
 export class StockChartDto implements IStockChartDto {
     id?: number;
     name?: string | undefined;
@@ -17628,6 +18321,62 @@ export interface IStockPriceDto {
     closePrice?: number;
     volume?: number;
     adjClosePrice?: number;
+}
+
+export class StrategiesResponseDto implements IStrategiesResponseDto {
+    strategies?: SimulationStrategyDto[] | undefined;
+    countries?: SimulationCountryDto[] | undefined;
+
+    constructor(data?: IStrategiesResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["strategies"])) {
+                this.strategies = [] as any;
+                for (let item of _data["strategies"])
+                    this.strategies!.push(SimulationStrategyDto.fromJS(item));
+            }
+            if (Array.isArray(_data["countries"])) {
+                this.countries = [] as any;
+                for (let item of _data["countries"])
+                    this.countries!.push(SimulationCountryDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): StrategiesResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new StrategiesResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.strategies)) {
+            data["strategies"] = [];
+            for (let item of this.strategies)
+                data["strategies"].push(item.toJSON());
+        }
+        if (Array.isArray(this.countries)) {
+            data["countries"] = [];
+            for (let item of this.countries)
+                data["countries"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IStrategiesResponseDto {
+    strategies?: SimulationStrategyDto[] | undefined;
+    countries?: SimulationCountryDto[] | undefined;
 }
 
 export class StrategyDto implements IStrategyDto {
@@ -18028,6 +18777,70 @@ export class TimingDto implements ITimingDto {
 
 export interface ITimingDto {
     timeZone?: TimeZone;
+}
+
+export class TradeDetailDto implements ITradeDetailDto {
+    entryDate?: Date;
+    exitDate?: Date;
+    leaderCode?: string | undefined;
+    followerCode?: string | undefined;
+    entryPrice?: number;
+    exitPrice?: number;
+    return?: number;
+    exitReason?: string | undefined;
+
+    constructor(data?: ITradeDetailDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.entryDate = _data["entryDate"] ? new Date(_data["entryDate"].toString()) : <any>undefined;
+            this.exitDate = _data["exitDate"] ? new Date(_data["exitDate"].toString()) : <any>undefined;
+            this.leaderCode = _data["leaderCode"];
+            this.followerCode = _data["followerCode"];
+            this.entryPrice = _data["entryPrice"];
+            this.exitPrice = _data["exitPrice"];
+            this.return = _data["return"];
+            this.exitReason = _data["exitReason"];
+        }
+    }
+
+    static fromJS(data: any): TradeDetailDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TradeDetailDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["entryDate"] = this.entryDate ? this.entryDate.toISOString() : <any>undefined;
+        data["exitDate"] = this.exitDate ? this.exitDate.toISOString() : <any>undefined;
+        data["leaderCode"] = this.leaderCode;
+        data["followerCode"] = this.followerCode;
+        data["entryPrice"] = this.entryPrice;
+        data["exitPrice"] = this.exitPrice;
+        data["return"] = this.return;
+        data["exitReason"] = this.exitReason;
+        return data;
+    }
+}
+
+export interface ITradeDetailDto {
+    entryDate?: Date;
+    exitDate?: Date;
+    leaderCode?: string | undefined;
+    followerCode?: string | undefined;
+    entryPrice?: number;
+    exitPrice?: number;
+    return?: number;
+    exitReason?: string | undefined;
 }
 
 export class TypeApiDescriptionModel implements ITypeApiDescriptionModel {

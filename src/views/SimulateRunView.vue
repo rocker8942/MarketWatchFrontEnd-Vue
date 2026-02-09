@@ -630,7 +630,6 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import axios from "axios";
 import PageHeader from "@/components/PageHeader.vue";
 import { VideoPlay } from "@element-plus/icons-vue";
 import { StockInfoClient } from "@/core/services/marketWatchClient";
@@ -693,7 +692,7 @@ interface SimulationSummary {
 interface SimulationResult {
   simulationId: string;
   status: number;
-  strategyId: number;
+  strategyId?: number;
   summary: SimulationSummary | null;
   errorMessage: string | null;
   requestedAt: string;
@@ -763,7 +762,6 @@ export default defineComponent({
       simulationResult: null as SimulationResult | null,
       tradesCurrentPage: 1,
       tradesPageSize: 25,
-      simulationApiUrl: "http://localhost:52335",
       statusPollTimer: null as number | null,
       isLoadingFromRoute: false,
     };
@@ -915,8 +913,9 @@ export default defineComponent({
   methods: {
     async loadStrategiesAndCountries() {
       try {
-        const response = await axios.get(
-          `${this.simulationApiUrl}/api/Simulation/strategies`
+        // Call secured ABP endpoint - ApiService automatically includes Bearer token
+        const response = await ApiService.vueInstance.axios.get(
+          "/api/app/simulation-proxy/strategies"
         );
         this.strategies = response.data.strategies || [];
         this.countries = response.data.countries || [];
@@ -1073,7 +1072,7 @@ export default defineComponent({
       this.simulationResult = null;
 
       try {
-        const requestPayload = {
+        const requestPayload: any = {
           strategyType: this.formData.strategyType,
           country: this.formData.country,
           startDate: this.formData.startDate.toISOString(),
@@ -1093,12 +1092,19 @@ export default defineComponent({
           analysisMethod: this.formData.analysisMethod,
           cointegrationMethod: this.formData.cointegrationMethod,
           correlationMethod: this.formData.correlationMethod,
-          primaryIndicator: this.formData.primaryIndicator,
-          indicatorPeriod: this.formData.indicatorPeriod,
         };
 
-        const response = await axios.post(
-          `${this.simulationApiUrl}/api/Simulation/run`,
+        // Only include indicator fields if they're set (indicator-based strategy)
+        if (this.formData.primaryIndicator !== null) {
+          requestPayload.primaryIndicator = this.formData.primaryIndicator;
+        }
+        if (this.formData.indicatorPeriod !== null) {
+          requestPayload.indicatorPeriod = this.formData.indicatorPeriod;
+        }
+
+        // Call secured ABP endpoint - ApiService automatically includes Bearer token
+        const response = await ApiService.vueInstance.axios.post(
+          "/api/app/simulation-proxy/run-simulation",
           requestPayload
         );
 
@@ -1130,8 +1136,9 @@ export default defineComponent({
 
     async checkSimulationStatus(simulationId: string) {
       try {
-        const response = await axios.get(
-          `${this.simulationApiUrl}/api/Simulation/status/${simulationId}`
+        // Call secured ABP endpoint - ApiService automatically includes Bearer token
+        const response = await ApiService.vueInstance.axios.get(
+          `/api/app/simulation-proxy/simulation-status/${simulationId}`
         );
         return response.data;
       } catch (error) {
