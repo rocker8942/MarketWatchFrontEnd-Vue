@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@primevue/themes": "^4.0.0",
-    "axios": "^1.7.2",
+    "axios": "^1.13.5",
     "datatables.net": "^2.3.2",
     "datatables.net-vue3": "^3.0.4",
     "echarts": "^6.0.0",
