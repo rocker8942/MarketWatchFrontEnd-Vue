@@ -162,8 +162,9 @@ export function createOidcAuth(
     response_type: "id_token",
     scope: "openid profile",
     automaticSilentRenew: true,
+    accessTokenExpiringNotificationTime: 300, // start silent renew 5 min before expiry
     userStore: new WebStorageStateStore({
-      store: sessionStorage,
+      store: localStorage,
     }),
     post_logout_redirect_uri: appUrl,
     redirect_uri: `${appUrl}/auth/signinwin/${nameSlug}`,
