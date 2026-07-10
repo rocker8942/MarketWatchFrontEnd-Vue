@@ -17962,7 +17962,7 @@ export interface ISimulationRequestDto {
 export class SimulationResultDto implements ISimulationResultDto {
     simulationId?: string | undefined;
     status?: number;
-    strategyId?: number;
+    strategyId?: number | undefined;
     summary?: SimulationSummaryDto;
     errorMessage?: string | undefined;
     requestedAt?: Date;
@@ -18012,7 +18012,7 @@ export class SimulationResultDto implements ISimulationResultDto {
 export interface ISimulationResultDto {
     simulationId?: string | undefined;
     status?: number;
-    strategyId?: number;
+    strategyId?: number | undefined;
     summary?: SimulationSummaryDto;
     errorMessage?: string | undefined;
     requestedAt?: Date;

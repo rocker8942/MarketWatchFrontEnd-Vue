@@ -11,7 +11,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import VChart from 'vue-echarts';
-import { useChartTheme } from './composables/useChartTheme';
+import {
+  formatChartAxisDateLabel,
+  isMultiYearSeries,
+  shouldShowYearTick,
+  useChartTheme,
+} from './composables/useChartTheme';
 
 interface Props {
   data: any[];
@@ -40,6 +45,7 @@ const chartOption = computed(() => {
 
   const dates = dataPoints.map(row => row[0]);
   const values = dataPoints.map(row => row[1]);
+  const showYearLabels = isMultiYearSeries(dates);
 
   return {
     ...baseOptions.value,
@@ -61,6 +67,12 @@ const chartOption = computed(() => {
       type: 'category',
       data: dates,
       boundaryGap: false,
+      axisLabel: {
+        ...baseOptions.value.xAxis.axisLabel,
+        formatter: (value: unknown) => formatChartAxisDateLabel(value, showYearLabels),
+        interval: showYearLabels ? (index: number) => shouldShowYearTick(dates, index) : 'auto',
+        hideOverlap: true,
+      },
     },
     yAxis: {
       ...baseOptions.value.yAxis,

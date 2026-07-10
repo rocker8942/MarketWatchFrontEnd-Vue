@@ -48,7 +48,7 @@
           :data="pagedResultDtoOfStrategyDto.items"
           class="professional-table"
           stripe
-          :header-cell-style="{ background: 'var(--color-surface-variant)', color: 'var(--color-heading)', fontWeight: '600' }">
+          :header-cell-style="{ background: 'var(--color-surface-variant)', color: 'var(--color-heading)', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '0.4375rem 0.875rem' }">
 
           <el-table-column prop="id" label="ID" width="80" align="center">
             <template #default="scope">
@@ -214,8 +214,8 @@
 .metric-card {
   background: var(--color-background-card);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 16px;
-  padding: var(--space-2xl);
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
   box-shadow: var(--shadow-subtle);
   transition: all 0.2s ease;
 }
@@ -223,6 +223,7 @@
 .metric-card:hover {
   box-shadow: var(--shadow-md);
   border-color: var(--color-border);
+  transform: translateY(-2px);
 }
 
 .metric-content {
@@ -266,14 +267,18 @@
 .section-header {
   margin-bottom: var(--space-xl);
   padding-bottom: var(--space-md);
-  border-bottom: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .section-title {
-  font-size: 1.5rem;
-  font-weight: 500;
+  font-size: 0.875rem;
+  font-weight: 600;
   color: var(--color-heading);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
+  padding-left: 0.625rem;
+  border-left: 3px solid var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .section-description {

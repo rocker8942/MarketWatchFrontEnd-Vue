@@ -7,7 +7,7 @@
 
     <!-- Key Metrics Summary -->
     <div class="metrics-grid">
-      <div class="metric-card">
+      <div class="metric-card card-spx">
         <div class="metric-label">S&P 500</div>
         <div class="metric-value">{{ formatValue(getSPXLatest()) }}</div>
         <div class="metric-change positive">
@@ -16,7 +16,7 @@
         </div>
       </div>
 
-      <div class="metric-card">
+      <div class="metric-card card-ftse">
         <div class="metric-label">FTSE 100</div>
         <div class="metric-value">{{ formatValue(getFTSELatest()) }}</div>
         <div class="metric-change positive">
@@ -25,7 +25,7 @@
         </div>
       </div>
 
-      <div class="metric-card">
+      <div class="metric-card card-gold">
         <div class="metric-label">Gold (GLD)</div>
         <div class="metric-value">{{ formatValue(getGoldLatest()) }}</div>
         <div class="metric-change negative">
@@ -34,7 +34,7 @@
         </div>
       </div>
 
-      <div class="metric-card">
+      <div class="metric-card card-dollar">
         <div class="metric-label">US Dollar (UUP)</div>
         <div class="metric-value">{{ formatValue(getDollarLatest()) }}</div>
         <div class="metric-change positive">
@@ -55,7 +55,7 @@
             <h3 class="chart-title">S&P 500</h3>
             <span class="chart-code">^GSPC</span>
           </div>
-          <LineChart v-if="data" :data="data" :height="320" />
+          <LineChart v-if="data" :data="data" :height="220" />
           <div v-else class="chart-loading">Loading...</div>
         </div>
         <div class="chart-card">
@@ -63,7 +63,7 @@
             <h3 class="chart-title">FTSE 100</h3>
             <span class="chart-code">^FTSE</span>
           </div>
-          <LineChart v-if="ftse" :data="ftse" :height="320" />
+          <LineChart v-if="ftse" :data="ftse" :height="220" />
           <div v-else class="chart-loading">Loading...</div>
         </div>
         <div class="chart-card">
@@ -71,7 +71,7 @@
             <h3 class="chart-title">China</h3>
             <span class="chart-code">FXI</span>
           </div>
-          <LineChart v-if="china" :data="china" :height="320" />
+          <LineChart v-if="china" :data="china" :height="220" />
           <div v-else class="chart-loading">Loading...</div>
         </div>
       </div>
@@ -88,7 +88,7 @@
             <h3 class="chart-title">Korea</h3>
             <span class="chart-code">EWY</span>
           </div>
-          <LineChart v-if="korea" :data="korea" :height="320" />
+          <LineChart v-if="korea" :data="korea" :height="220" />
           <div v-else class="chart-loading">Loading...</div>
         </div>
         <div class="chart-card">
@@ -96,7 +96,7 @@
             <h3 class="chart-title">Australia</h3>
             <span class="chart-code">EWA</span>
           </div>
-          <LineChart v-if="australia" :data="australia" :height="320" />
+          <LineChart v-if="australia" :data="australia" :height="220" />
           <div v-else class="chart-loading">Loading...</div>
         </div>
         <div class="chart-card">
@@ -104,7 +104,7 @@
             <h3 class="chart-title">US Dollar</h3>
             <span class="chart-code">UUP</span>
           </div>
-          <LineChart v-if="dollar" :data="dollar" :height="320" />
+          <LineChart v-if="dollar" :data="dollar" :height="220" />
           <div v-else class="chart-loading">Loading...</div>
         </div>
       </div>
@@ -121,7 +121,7 @@
             <h3 class="chart-title">Gold</h3>
             <span class="chart-code">GLD</span>
           </div>
-          <LineChart v-if="gold" :data="gold" :height="320" />
+          <LineChart v-if="gold" :data="gold" :height="220" />
           <div v-else class="chart-loading">Loading...</div>
         </div>
         <div class="chart-card">
@@ -129,7 +129,7 @@
             <h3 class="chart-title">30-Year Treasury</h3>
             <span class="chart-code">^TYX</span>
           </div>
-          <LineChart v-if="tbond" :data="tbond" :height="320" />
+          <LineChart v-if="tbond" :data="tbond" :height="220" />
           <div v-else class="chart-loading">Loading...</div>
         </div>
       </div>
@@ -223,15 +223,15 @@ export default {
 }
 
 .dashboard-header h1 {
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-heading);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   letter-spacing: -0.02em;
 }
 
 .subtitle {
-  font-size: 1.0625rem;
+  font-size: 0.8125rem;
   color: var(--color-text-secondary);
   margin: 0;
 }
@@ -239,16 +239,17 @@ export default {
 /* Metrics Grid - Minimalist */
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--space-xl);
-  margin-bottom: var(--space-4xl);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-3xl);
 }
 
 .metric-card {
   background: var(--color-background-card);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 16px;
-  padding: var(--space-2xl);
+  border-radius: 8px;
+  border-top-width: 3px;
+  padding: 0.875rem 1rem;
   box-shadow: var(--shadow-subtle);
   transition: all 0.2s ease;
 }
@@ -256,30 +257,36 @@ export default {
 .metric-card:hover {
   box-shadow: var(--shadow-md);
   border-color: var(--color-border);
+  transform: translateY(-2px);
 }
 
+.card-spx  { border-top-color: #1976d2; }
+.card-ftse { border-top-color: #10b981; }
+.card-gold { border-top-color: #f59e0b; }
+.card-dollar { border-top-color: #64748b; }
+
 .metric-label {
-  font-size: 0.875rem;
+  font-size: 0.6875rem;
   font-weight: 500;
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.375rem;
 }
 
 .metric-value {
-  font-size: 2rem;
+  font-size: 1.375rem;
   font-weight: 700;
   color: var(--color-heading);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   font-variant-numeric: tabular-nums;
 }
 
 .metric-change {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
-  font-size: 0.9375rem;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 
@@ -301,25 +308,31 @@ export default {
 }
 
 .section-title {
-  font-size: 1.5rem;
-  font-weight: 500;
+  font-size: 0.875rem;
+  font-weight: 600;
   color: var(--color-heading);
-  margin-bottom: var(--space-xl);
-  padding-bottom: var(--space-sm);
-  border-bottom: 1px solid var(--color-border-subtle);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-xs);
+  padding-left: 0.625rem;
+  border-bottom: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
+  display: flex;
+  align-items: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .chart-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  gap: var(--space-2xl);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-lg);
 }
 
 .chart-card {
   background: var(--color-background-card);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 16px;
-  padding: var(--space-2xl);
+  border-radius: 8px;
+  padding: 0.875rem;
   box-shadow: var(--shadow-subtle);
   transition: all 0.2s ease;
   overflow: hidden;
@@ -328,6 +341,7 @@ export default {
 .chart-card:hover {
   box-shadow: var(--shadow-md);
   border-color: var(--color-border);
+  transform: translateY(-2px);
 }
 
 .chart-header {
@@ -340,18 +354,18 @@ export default {
 }
 
 .chart-title {
-  font-size: 1.125rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-heading);
   margin: 0;
 }
 
 .chart-code {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--color-text-secondary);
   background: var(--color-surface-variant);
-  padding: 0.25rem 0.625rem;
+  padding: 0.125rem 0.5rem;
   border-radius: 4px;
   font-family: 'Courier New', monospace;
 }

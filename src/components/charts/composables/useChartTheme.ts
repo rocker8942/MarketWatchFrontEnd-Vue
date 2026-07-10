@@ -4,11 +4,35 @@ const chartTooltipNumberFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 });
 
-function formatChartDateLabel(value: unknown): string {
+function parseChartDate(value: unknown): Date | null {
   // ECharts category axis can provide Date objects (from our API DTOs) or strings.
   const date = value instanceof Date ? value : new Date(value as any);
-  if (!Number.isFinite(date.getTime())) {
+  return Number.isFinite(date.getTime()) ? date : null;
+}
+
+export function isMultiYearSeries(values: unknown[]): boolean {
+  const dates = values
+    .map(parseChartDate)
+    .filter((date): date is Date => date !== null);
+
+  if (dates.length < 2) {
+    return false;
+  }
+
+  const spanYears = dates[dates.length - 1].getFullYear() - dates[0].getFullYear();
+  return spanYears >= 2;
+}
+
+export function formatChartAxisDateLabel(value: unknown, showYearOnly = false): string {
+  const date = parseChartDate(value);
+  if (!date) {
     return String(value ?? '');
+  }
+
+  if (showYearOnly) {
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+    }).format(date);
   }
 
   const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0 || date.getSeconds() !== 0;
@@ -20,9 +44,24 @@ function formatChartDateLabel(value: unknown): string {
   }).format(date);
 }
 
+export function shouldShowYearTick(values: unknown[], index: number): boolean {
+  if (index <= 0) {
+    return true;
+  }
+
+  const currentDate = parseChartDate(values[index]);
+  const previousDate = parseChartDate(values[index - 1]);
+
+  if (!currentDate || !previousDate) {
+    return true;
+  }
+
+  return currentDate.getFullYear() !== previousDate.getFullYear();
+}
+
 function formatChartTooltipDateLabel(value: unknown): string {
-  const date = value instanceof Date ? value : new Date(value as any);
-  if (!Number.isFinite(date.getTime())) {
+  const date = parseChartDate(value);
+  if (!date) {
     return String(value ?? '');
   }
 
@@ -110,7 +149,7 @@ export function useChartTheme() {
       axisLabel: {
         color: colors.textSecondary,
         fontSize: 12,
-        formatter: (value: unknown) => formatChartDateLabel(value),
+        formatter: (value: unknown) => formatChartAxisDateLabel(value),
       },
       splitLine: {
         show: false,
