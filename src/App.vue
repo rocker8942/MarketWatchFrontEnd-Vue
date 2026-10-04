@@ -4,14 +4,10 @@ import Header from "./components/HeaderComponent.vue";
 import { ArrowDown, TrendCharts } from "@element-plus/icons-vue";
 import { ref, onMounted, onUnmounted } from "vue";
 
-// Market status indicator
 const currentTime = ref(new Date());
-const isMarketOpen = ref(false);
 
 const updateTime = () => {
   currentTime.value = new Date();
-  const hours = currentTime.value.getHours();
-  const day = currentTime.value.getDay();
 };
 
 let timeInterval: number;
@@ -27,23 +23,6 @@ onUnmounted(() => {
 
 <template>
   <div class="app-layout">
-    <!-- Market Status Banner -->
-    <div class="market-status-banner">
-      <div class="banner-container">
-        <div class="market-time">
-          {{
-            currentTime.toLocaleString("en-US", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          }}
-        </div>
-      </div>
-    </div>
-
     <!-- Top Navigation Bar -->
     <header class="top-nav">
       <div class="nav-container">
@@ -156,6 +135,15 @@ onUnmounted(() => {
         </nav>
 
         <div class="nav-actions">
+          <span class="nav-time">{{
+            currentTime.toLocaleString("en-US", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          }}</span>
           <button
             v-if="$oidc.isAuthenticated"
             @click="$oidc.signOut"
@@ -235,77 +223,26 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
-/* Market Status Banner - Minimalist */
-.market-status-banner {
-  background: var(--finance-navy);
-  border-bottom: 1px solid var(--color-border-subtle);
-  padding: 0.5rem 0;
-}
-
-.banner-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.market-status {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-
-.status-dot.open {
-  background: var(--finance-green-light);
-  box-shadow: 0 0 8px var(--finance-green-light);
-}
-
-.status-dot.closed {
-  background: var(--finance-gray-400);
-  animation: none;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
-
-.status-text {
-  color: var(--color-white);
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.market-time {
-  color: var(--finance-gray-200);
-  font-size: 0.875rem;
-}
-
-/* Top Navigation - Minimalist */
+/* Top Navigation */
 .top-nav {
   background: var(--color-background-card);
-  border-bottom: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
   z-index: 100;
   backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+.top-nav::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gradient-accent);
+  opacity: 0.7;
 }
 
 .nav-container {
@@ -315,12 +252,12 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 68px;
+  height: 52px;
 }
 
 .brand {
   flex-shrink: 0;
-  margin-right: 3rem;
+  margin-right: 1.5rem;
 }
 
 /* Main Navigation */
@@ -335,12 +272,12 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.125rem;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
   color: var(--color-text-secondary);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 6px;
   transition: all 0.2s ease;
 }
 
@@ -355,8 +292,9 @@ onUnmounted(() => {
 
 .nav-link.router-link-active {
   color: var(--color-primary);
-  background: rgba(25, 118, 210, 0.08);
+  background: rgba(25, 118, 210, 0.07);
   font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--color-primary);
 }
 
 /* Dropdown Menu */
@@ -406,14 +344,23 @@ onUnmounted(() => {
   margin-left: 1rem;
 }
 
+.nav-time {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  padding-right: 0.5rem;
+  border-right: 1px solid var(--color-border);
+}
+
 .signout-btn {
-  padding: 0.625rem 1.5rem;
+  padding: 0.3125rem 0.875rem;
   background: transparent;
-  border: 1.5px solid var(--color-border);
+  border: 1px solid var(--color-border);
   color: var(--color-text);
-  font-size: 0.875rem;
-  font-weight: 600;
-  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -512,14 +459,8 @@ onUnmounted(() => {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .banner-container {
-    flex-direction: column;
-    gap: 0.25rem;
-    padding: 0.5rem 1rem;
-  }
-
-  .market-time {
-    font-size: 0.75rem;
+  .nav-time {
+    display: none;
   }
 
   .nav-container {

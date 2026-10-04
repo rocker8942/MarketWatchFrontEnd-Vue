@@ -1,9 +1,6 @@
 <template>
   <div class="movers-page">
-    <div class="page-header">
-      <h1>Market Movers</h1>
-      <p class="subtitle">Top gainers and losers by price change</p>
-    </div>
+    <PageHeader title="Market Movers" subtitle="Top gainers and losers by price change" />
 
     <div class="content-wrapper">
       <!-- Filters -->
@@ -178,6 +175,7 @@
 import { defineComponent, ref } from "vue";
 import { Top, Bottom, Warning } from "@element-plus/icons-vue";
 import ApiService from "@/core/services/apiService";
+import PageHeader from "@/components/PageHeader.vue";
 
 interface MoverEntry {
   code: string;
@@ -192,6 +190,7 @@ export default defineComponent({
     Top,
     Bottom,
     Warning,
+    PageHeader,
   },
 
   data() {
@@ -210,10 +209,10 @@ export default defineComponent({
         background: '#fafafa',
         color: 'var(--color-text-secondary)',
         fontWeight: '600',
-        fontSize: '0.8125rem',
+        fontSize: '0.75rem',
         textTransform: 'uppercase',
-        letterSpacing: '0.03em',
-        padding: '0.875rem 1rem',
+        letterSpacing: '0.04em',
+        padding: '0.4375rem 0.875rem',
         borderBottom: '1px solid #f0f0f0'
       };
     },
@@ -221,8 +220,8 @@ export default defineComponent({
     cellStyle() {
       return {
         borderBottom: '1px solid #f5f5f5',
-        padding: '14px',
-        fontSize: '0.9375rem'
+        padding: '0.4375rem 0.875rem',
+        fontSize: '0.8125rem'
       };
     }
   },
@@ -324,18 +323,6 @@ export default defineComponent({
   margin: 0 auto;
 }
 
-.page-header {
-  margin-bottom: 2rem;
-}
-
-.page-header h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--color-heading);
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.02em;
-}
-
 .subtitle {
   font-size: 1.0625rem;
   color: var(--color-text-secondary);
@@ -346,8 +333,8 @@ export default defineComponent({
 .content-wrapper {
   background: var(--color-background-card);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 16px;
-  padding: var(--space-3xl);
+  border-radius: 8px;
+  padding: var(--space-2xl);
   box-shadow: var(--shadow-subtle);
 }
 
@@ -355,8 +342,8 @@ export default defineComponent({
 .filter-section {
   display: flex;
   flex-direction: row;
-  gap: 2rem;
-  margin-bottom: 2rem;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
   flex-wrap: wrap;
 }
 
@@ -377,13 +364,13 @@ export default defineComponent({
 .movers-grid {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .movers-card {
   background: var(--color-background);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -391,7 +378,7 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem;
+  padding: 0.625rem 1rem;
   border-bottom: 1px solid var(--color-border-subtle);
 }
 

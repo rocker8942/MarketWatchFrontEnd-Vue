@@ -91,7 +91,7 @@ export default defineComponent({
 
 <style scoped>
 .page-header-wrapper {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .page-header-content {
@@ -106,15 +106,15 @@ export default defineComponent({
 }
 
 .page-header-left h1 {
-  font-size: 2rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: var(--color-heading);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   letter-spacing: -0.02em;
 }
 
 .page-subtitle {
-  font-size: 1rem;
+  font-size: 0.8125rem;
   color: var(--color-text-secondary);
   margin: 0;
 }

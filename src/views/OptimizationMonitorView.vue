@@ -518,10 +518,10 @@ export default defineComponent({
 
 <style scoped>
 .page-container {
-  padding: 2rem 3rem;
-  max-width: 100%;
+  padding: var(--space-4xl) var(--space-xl);
+  max-width: 1400px;
+  margin: 0 auto;
   background: var(--color-background);
-  min-height: 100vh;
 }
 
 .content-wrapper {

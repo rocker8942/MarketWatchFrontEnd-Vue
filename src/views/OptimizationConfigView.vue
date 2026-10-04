@@ -461,10 +461,13 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
 import PageHeader from "@/components/PageHeader.vue";
 import { VideoPlay } from "@element-plus/icons-vue";
 import ApiService from "@/core/services/apiService";
+import {
+  SimulationProxyClient,
+  OptimizationJobClient,
+} from "@/core/services/marketWatchClient";
 
 interface Strategy {
   type: number;
@@ -492,7 +495,6 @@ export default defineComponent({
     return {
       strategies: [] as Strategy[],
       countries: [] as Country[],
-      simulationApiUrl: "http://localhost:52335",
       indicatorOptions: [
         {
           label: "RSI (Relative Strength Index)",
@@ -704,6 +706,7 @@ export default defineComponent({
       rangeStr: string,
       parseFunc: (value: string) => number
     ): number[] {
+      if (!rangeStr) return [];
       return rangeStr
         .split(",")
         .map((v) => v.trim())
@@ -787,73 +790,75 @@ export default defineComponent({
 
         const parameterRanges = this.isIndicatorMode
           ? {
-              primaryIndicator: this.formData.primaryIndicator,
-              indicatorPeriod: this.parseRangeArray(
+              PrimaryIndicator: this.formData.primaryIndicator,
+              IndicatorPeriod: this.parseRangeArray(
                 this.paramRanges.indicatorPeriod,
                 parseInt
               ),
-              analysisPeriod: this.parseRangeArray(
+              AnalysisPeriod: this.parseRangeArray(
                 this.paramRanges.indicatorPeriod,
                 parseInt
               ),
-              coefficientAllowed: [0],
-              investTriggerRate: this.parseRangeArray(
+              CoefficientAllowed: [0],
+              InvestTriggerRate: this.parseRangeArray(
                 this.paramRanges.indicatorThreshold,
                 parseFloat
               ),
-              lossCutRate: this.parseRangeArray(
+              LossCutRate: this.parseRangeArray(
                 this.paramRanges.lossCutRate,
                 parseFloat
               ),
-              portfolioNumber: this.parseRangeArray(
+              PortfolioNumber: this.parseRangeArray(
                 this.paramRanges.portfolioNumber,
                 parseInt
               ),
-              tradeFee: this.parseRangeArray(
+              TradeFee: this.parseRangeArray(
                 this.paramRanges.tradeFee,
                 parseFloat
               ),
-              slippage: this.parseRangeArray(
+              Slippage: this.parseRangeArray(
                 this.paramRanges.slippage,
                 parseFloat
               ),
-              useTrendFilter: [false],
-              trendFilterThreshold: [0],
+              UseTrendFilter: [false],
+              TrendFilterThreshold: [0],
             }
           : {
-              analysisPeriod: this.parseRangeArray(
+              PrimaryIndicator: null,
+              IndicatorPeriod: null,
+              AnalysisPeriod: this.parseRangeArray(
                 this.paramRanges.analysisPeriod,
                 parseInt
               ),
-              coefficientAllowed: this.parseRangeArray(
+              CoefficientAllowed: this.parseRangeArray(
                 this.paramRanges.coefficientAllowed,
                 parseFloat
               ),
-              investTriggerRate: this.parseRangeArray(
+              InvestTriggerRate: this.parseRangeArray(
                 this.paramRanges.investTriggerRate,
                 parseFloat
               ),
-              lossCutRate: this.parseRangeArray(
+              LossCutRate: this.parseRangeArray(
                 this.paramRanges.lossCutRate,
                 parseFloat
               ),
-              portfolioNumber: this.parseRangeArray(
+              PortfolioNumber: this.parseRangeArray(
                 this.paramRanges.portfolioNumber,
                 parseInt
               ),
-              tradeFee: this.parseRangeArray(
+              TradeFee: this.parseRangeArray(
                 this.paramRanges.tradeFee,
                 parseFloat
               ),
-              slippage: this.parseRangeArray(
+              Slippage: this.parseRangeArray(
                 this.paramRanges.slippage,
                 parseFloat
               ),
-              useTrendFilter: this.parseRangeArray(
+              UseTrendFilter: this.parseRangeArray(
                 this.paramRanges.useTrendFilter,
                 (v: string) => v === "true"
               ),
-              trendFilterThreshold: this.parseRangeArray(
+              TrendFilterThreshold: this.parseRangeArray(
                 this.paramRanges.trendFilterThreshold,
                 parseFloat
               ),
@@ -862,8 +867,8 @@ export default defineComponent({
         const payload = {
           strategyType: this.formData.strategyType,
           country: countryName,
-          startDate: this.formData.startDate.toISOString(),
-          endDate: this.formData.endDate.toISOString(),
+          startDate: this.formData.startDate,
+          endDate: this.formData.endDate,
           optimizationMethod: this.formData.optimizationMethod,
           parameterRanges,
           walkForwardConfig:
@@ -873,15 +878,16 @@ export default defineComponent({
           configurationOptions: this.configOptions,
         };
 
-        // Call ABP backend API to create optimization job
+        // Call ABP backend API to create optimization job using generated client
         console.log("Creating optimization job:", payload);
 
-        const response = await ApiService.vueInstance.axios.post(
-          "/api/app/optimization-job",
-          payload
+        const client = new OptimizationJobClient(
+          undefined,
+          ApiService.vueInstance.axios
         );
+        const response = await client.optimizationJobCreate(payload);
 
-        const jobId = response.data.id;
+        const jobId = response.id;
         this.$message.success(
           `Optimization job created successfully! Job ID: ${jobId}`
         );
@@ -948,15 +954,17 @@ export default defineComponent({
 
     async loadStrategiesAndCountries() {
       try {
-        const response = await axios.get(
-          `${this.simulationApiUrl}/api/Simulation/strategies`
+        const client = new SimulationProxyClient(
+          undefined,
+          ApiService.vueInstance.axios
         );
-        this.strategies = response.data.strategies || [];
-        this.countries = response.data.countries || [];
+        const response = await client.simulationProxyGetStrategies();
+        this.strategies = (response.strategies || []) as Strategy[];
+        this.countries = (response.countries || []) as Country[];
 
         // Set first strategy as default if available
         if (this.strategies.length > 0) {
-          this.formData.strategyType = this.strategies[0].type;
+          this.formData.strategyType = this.strategies[0].type!;
         }
       } catch (error) {
         console.error("Failed to load strategies and countries", error);
@@ -973,10 +981,10 @@ export default defineComponent({
 
 <style scoped>
 .page-container {
-  padding: 2rem 3rem;
-  max-width: 100%;
+  padding: var(--space-4xl) var(--space-xl);
+  max-width: 1400px;
+  margin: 0 auto;
   background: var(--color-background);
-  min-height: 100vh;
 }
 
 .content-wrapper {

@@ -1,9 +1,6 @@
 <template>
     <div class="stock-price-page">
-        <div class="page-header">
-            <h1>Stock Prices</h1>
-            <p class="subtitle">Browse and search stock prices with real-time data</p>
-        </div>
+        <PageHeader title="Stock Prices" subtitle="Browse and search stock prices with real-time data" />
 
         <div class="content-wrapper">
             <!-- Search Bar -->
@@ -41,7 +38,7 @@
                     @sort-change="handleSortChange"
                     class="professional-table"
                     stripe
-                    :header-cell-style="{ background: 'var(--color-surface-variant)', color: 'var(--color-heading)', fontWeight: '600' }">
+                    :header-cell-style="{ background: 'var(--color-surface-variant)', color: 'var(--color-heading)', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '0.4375rem 0.875rem' }">
                     <el-table-column prop="code" label="Code" width="120" fixed></el-table-column>
                     <el-table-column prop="name" label="Name" min-width="300" sortable="custom"></el-table-column>
                     <el-table-column prop="currentPrice" label="Price" width="140" align="right"></el-table-column>
@@ -67,6 +64,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { Search } from '@element-plus/icons-vue';
+import PageHeader from "@/components/PageHeader.vue";
 // import DataTable from 'datatables.net-vue3';
 // import DataTablesLib from 'datatables.net';
 import ApiService from "@/core/services/apiService";
@@ -80,7 +78,8 @@ const stockInfoClient = new StockInfoClient(ApiService.baseUrl, ApiService.vueIn
 
 export default defineComponent({
     components: {
-        Search
+        Search,
+        PageHeader,
     },
 
     data() {
@@ -212,30 +211,12 @@ export default defineComponent({
     margin: 0 auto;
 }
 
-.page-header {
-    margin-bottom: 2rem;
-}
-
-.page-header h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--color-heading);
-    margin-bottom: 0.5rem;
-    letter-spacing: -0.02em;
-}
-
-.subtitle {
-    font-size: 1.0625rem;
-    color: var(--color-text-secondary);
-    margin: 0;
-    line-height: 1.5;
-}
 
 .content-wrapper {
     background: var(--color-background-card);
     border: 1px solid var(--color-border-subtle);
-    border-radius: 16px;
-    padding: var(--space-3xl);
+    border-radius: 8px;
+    padding: var(--space-2xl);
     box-shadow: var(--shadow-subtle);
     transition: box-shadow 0.2s ease;
 }
@@ -244,7 +225,7 @@ export default defineComponent({
 .search-section {
     display: flex;
     gap: var(--space-md);
-    margin-bottom: var(--space-2xl);
+    margin-bottom: var(--space-lg);
 }
 
 .search-input {

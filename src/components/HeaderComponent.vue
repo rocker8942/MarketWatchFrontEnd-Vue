@@ -28,7 +28,7 @@ defineProps<{
 .brand-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .brand-logo {
@@ -41,7 +41,7 @@ defineProps<{
 }
 
 .brand-name {
-  font-size: 1.5rem;
+  font-size: 1.125rem;
   font-weight: 700;
   color: var(--color-heading);
   letter-spacing: -0.02em;
