@@ -8,6 +8,9 @@ const router = createRouter({
     {
       path: "/",
       name: "home",
+      meta: {
+        authName: idsrvAuth.authName,
+      },
       component: HomeView,
     },
     {
