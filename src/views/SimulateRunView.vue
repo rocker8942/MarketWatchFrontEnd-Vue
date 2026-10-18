@@ -632,7 +632,12 @@
 import { defineComponent } from "vue";
 import PageHeader from "@/components/PageHeader.vue";
 import { VideoPlay } from "@element-plus/icons-vue";
-import { StockInfoClient } from "@/core/services/marketWatchClient";
+import {
+  SimulationProxyClient,
+  StockInfoClient,
+  type SimulationCountryDto,
+  type SimulationStrategyDto,
+} from "@/core/services/marketWatchClient";
 import ApiService from "@/core/services/apiService";
 
 enum AnalysisMethod {
@@ -699,6 +704,54 @@ interface SimulationResult {
   completedAt: string | null;
 }
 
+function mapStrategyFromBackend(
+  raw: SimulationStrategyDto | null | undefined
+): Strategy | null {
+  const type = raw?.type;
+  const name = raw?.name?.trim();
+  const description = raw?.description?.trim();
+  const recommendedParameters = raw?.recommendedParameters;
+
+  if (
+    type === undefined ||
+    type === null ||
+    !name ||
+    !description ||
+    !recommendedParameters ||
+    recommendedParameters.analysisPeriod === undefined ||
+    recommendedParameters.coefficientAllowed === undefined ||
+    recommendedParameters.investTriggerRate === undefined ||
+    recommendedParameters.lossCutRate === undefined
+  ) {
+    return null;
+  }
+
+  return {
+    type,
+    name,
+    description,
+    recommendedParameters: {
+      analysisPeriod: recommendedParameters.analysisPeriod,
+      coefficientAllowed: recommendedParameters.coefficientAllowed,
+      investTriggerRate: recommendedParameters.investTriggerRate,
+      lossCutRate: recommendedParameters.lossCutRate,
+    },
+  };
+}
+
+function mapCountryFromBackend(
+  raw: SimulationCountryDto | null | undefined
+): Country | null {
+  const value = raw?.value;
+  const name = raw?.name?.trim();
+
+  if (value === undefined || value === null || !name) {
+    return null;
+  }
+
+  return { value, name };
+}
+
 export default defineComponent({
   components: {
     PageHeader,
@@ -744,7 +797,7 @@ export default defineComponent({
         analysisPeriod: 60,
         coefficientAllowed: 0.85,
         investTriggerRate: 0.02,
-        lossCutRate: -0.01,
+        lossCutRate: -0.05,
         portfolioNumber: 10,
         tradeFee: 0.001,
         slippage: 0.001,
@@ -913,29 +966,50 @@ export default defineComponent({
   methods: {
     async loadStrategiesAndCountries() {
       try {
-        // Call secured ABP endpoint - ApiService automatically includes Bearer token
-        const response = await ApiService.vueInstance.axios.get(
-          "/api/app/simulation-proxy/strategies"
+        const client = new SimulationProxyClient(
+          undefined,
+          ApiService.vueInstance.axios
         );
-        this.strategies = response.data.strategies || [];
-        this.countries = response.data.countries || [];
+        const response = await client.simulationProxyGetStrategies();
+        const mappedStrategies = (response.strategies || [])
+          .map((item) => mapStrategyFromBackend(item))
+          .filter((item): item is Strategy => item !== null);
+        const mappedCountries = (response.countries || [])
+          .map((item) => mapCountryFromBackend(item))
+          .filter((item): item is Country => item !== null);
 
-        // Check if we have route parameters to load
-        const hasRouteParams = this.$route.query.strategyType !== undefined;
+        this.strategies = mappedStrategies;
+        this.countries = mappedCountries;
 
-        if (hasRouteParams) {
-          // Wait for Vue to update the DOM with the new options
-          await this.$nextTick();
-          // Load parameters from route after strategies and countries are loaded
-          this.loadParametersFromRoute();
-        } else if (this.strategies.length > 0) {
-          // Default behavior: set first strategy and load recommended parameters
-          this.formData.strategyType = this.strategies[0].type;
-          this.onStrategyChanged();
+        if (this.strategies.length === 0 || this.countries.length === 0) {
+          this.$message.error(
+            "Simulation configuration options were not returned by the backend."
+          );
         }
       } catch (error) {
-        console.error("Failed to load strategies and countries", error);
-        this.$message.error("Failed to load simulation configuration");
+        console.error("Failed to load simulation configuration options", error);
+        this.strategies = [];
+        this.countries = [];
+        this.$message.error(
+          "Failed to load simulation configuration options from the backend."
+        );
+      }
+
+      // Check if we have route parameters to load
+      const hasRouteParams = this.$route.query.strategyType !== undefined;
+
+      if (hasRouteParams) {
+        // Wait for Vue to update the DOM with the new options
+        await this.$nextTick();
+        // Load parameters from route after strategies and countries are loaded
+        this.loadParametersFromRoute();
+      } else if (this.strategies.length > 0) {
+        // Default behavior: set first strategy and load recommended parameters
+        const firstStrategy = this.strategies[0];
+        if (firstStrategy.type !== undefined) {
+          this.formData.strategyType = firstStrategy.type;
+          this.onStrategyChanged();
+        }
       }
     },
 
@@ -971,15 +1045,21 @@ export default defineComponent({
         // Set analysis period to 90 for MeanReversion strategy, otherwise use recommended value
         if (strategy.name === "MeanReversion") {
           this.formData.analysisPeriod = 90;
+          this.formData.analysisMethod = AnalysisMethod.Cointegration;
+          this.formData.coefficientAllowed = 0.05;
+          this.formData.investTriggerRate = 2.0;
+          this.formData.portfolioNumber = 1;
         } else {
+          this.formData.portfolioNumber = 10;
           this.formData.analysisPeriod =
             strategy.recommendedParameters.analysisPeriod;
+          this.formData.coefficientAllowed =
+            strategy.recommendedParameters.coefficientAllowed;
+          this.formData.investTriggerRate =
+            strategy.recommendedParameters.investTriggerRate;
         }
-        this.formData.coefficientAllowed =
-          strategy.recommendedParameters.coefficientAllowed;
-        this.formData.investTriggerRate =
-          strategy.recommendedParameters.investTriggerRate;
-        this.formData.lossCutRate = -0.01; // Default stoploss for all strategies
+        this.formData.lossCutRate =
+          strategy.recommendedParameters.lossCutRate;
       }
 
       // Set indicator defaults when switching to IndicatorBased strategy
@@ -1210,7 +1290,7 @@ export default defineComponent({
         analysisPeriod: 60,
         coefficientAllowed: 0.85,
         investTriggerRate: 0.02,
-        lossCutRate: -0.01,
+        lossCutRate: -0.05,
         portfolioNumber: 10,
         tradeFee: 0.001,
         slippage: 0.001,

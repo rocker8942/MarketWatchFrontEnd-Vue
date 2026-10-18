@@ -40,9 +40,9 @@
         @selection-change="handleSelectionChange"
         @sort-change="handleSortChange">
 
-        <el-table-column type="selection" width="48" />
+        <el-table-column type="selection" width="44" />
 
-        <el-table-column label="Name" min-width="200" sortable>
+        <el-table-column label="Name" min-width="140" sortable>
           <template #default="scope">
             <div class="name-cell">
               {{ getStrategyTypeName(scope.row.strategyType) }}
@@ -50,37 +50,37 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="Country" width="150" sortable prop="countryToInvest" />
+        <el-table-column label="Country" width="105" sortable prop="countryToInvest" />
 
-        <el-table-column label="Annual Return" width="150" sortable prop="ratePerYear">
+        <el-table-column label="Annual Return" width="120" sortable prop="ratePerYear">
           <template #default="scope">
             {{ formatRate(scope.row.ratePerYear) }}%
           </template>
         </el-table-column>
 
-        <el-table-column label="Entry Trigger" width="130" sortable prop="investTriggerRate">
+        <el-table-column label="Entry Trigger" width="115" sortable prop="investTriggerRate">
           <template #default="scope">
             {{ formatRate(scope.row.investTriggerRate) }}%
           </template>
         </el-table-column>
 
-        <el-table-column label="Stop Loss Rate" width="150" sortable>
+        <el-table-column label="Stop Loss Rate" width="125" sortable>
           <template #default="scope">
             {{ formatRate(scope.row.lossCutRate) }}%
           </template>
         </el-table-column>
 
-        <el-table-column label="Days to Test" width="130" align="right" prop="daysToTest" />
+        <el-table-column label="Days to Test" width="105" align="right" prop="daysToTest" />
 
-        <el-table-column label="Analysis Period" width="150" align="right" prop="analysisPeriod" />
+        <el-table-column label="Analysis Period" width="125" align="right" prop="analysisPeriod" />
 
-        <el-table-column label="Analysis Method" width="150" sortable prop="analysisMethod">
+        <el-table-column label="Analysis Method" width="135" sortable prop="analysisMethod">
           <template #default="scope">
             {{ getAnalysisMethodName(scope.row.analysisMethod) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="Actions" width="180" align="center" fixed="right">
+        <el-table-column label="Actions" width="150" align="center" fixed="right">
           <template #default="scope">
             <div class="action-buttons">
               <button class="action-icon-btn primary" @click="runSimulation(scope.row)" title="Run Simulation">
