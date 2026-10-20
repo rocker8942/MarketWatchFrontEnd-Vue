@@ -959,7 +959,10 @@ export default defineComponent({
           ApiService.vueInstance.axios
         );
         const response = await client.simulationProxyGetStrategies();
-        this.strategies = (response.strategies || []) as Strategy[];
+        // The optimization queue does not model TSMOM's lookback parameter yet.
+        this.strategies = (response.strategies || []).filter(
+          (strategy) => strategy.type !== 6
+        ) as Strategy[];
         this.countries = (response.countries || []) as Country[];
 
         // Set first strategy as default if available

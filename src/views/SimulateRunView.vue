@@ -62,13 +62,27 @@
             <!-- Section: Strategy-Specific Settings -->
             <el-col
               :span="24"
-              v-if="isMeanReversionStrategy || isIndicatorMode"
+              v-if="isMeanReversionStrategy || isIndicatorMode || isTimeSeriesMomentumStrategy"
             >
               <div class="form-section-divider">
                 <span class="form-section-label"
                   >Strategy-Specific Settings</span
                 >
               </div>
+            </el-col>
+
+            <el-col :span="12" v-if="isTimeSeriesMomentumStrategy">
+              <el-form-item label="Momentum Lookback (sessions)" required>
+                <el-input-number
+                  v-model="formData.timeSeriesMomentumLookbackSessions"
+                  :min="1"
+                  :max="1000"
+                  style="width: 100%"
+                />
+                <span class="form-hint" style="display: block; margin-top: 0.5rem">
+                  Trailing sessions used to measure each stock’s own trend. The default is 252.
+                </span>
+              </el-form-item>
             </el-col>
 
             <!-- Strategy Configuration Type - Pair-Trading sub-options (MeanReversion only) -->
@@ -192,7 +206,7 @@
             </el-col>
 
             <!-- Analysis Period -->
-            <el-col :span="8">
+            <el-col :span="8" v-if="!isTimeSeriesMomentumStrategy">
               <el-form-item label="Analysis Period (days)" required>
                 <el-input-number
                   v-model="formData.analysisPeriod"
@@ -229,14 +243,14 @@
                 <el-input-number
                   v-model="formData.portfolioNumber"
                   :min="1"
-                  :max="100"
+                  :max="isTimeSeriesMomentumStrategy ? 10 : 100"
                   style="width: 100%"
                 />
               </el-form-item>
             </el-col>
 
             <!-- Invest Trigger Rate / Indicator Threshold -->
-            <el-col :span="8">
+            <el-col :span="8" v-if="!isTimeSeriesMomentumStrategy">
               <el-form-item :label="investTriggerRateLabel" required>
                 <el-input-number
                   v-model="formData.investTriggerRate"
@@ -256,7 +270,7 @@
             </el-col>
 
             <!-- Loss Cut Rate -->
-            <el-col :span="8">
+            <el-col :span="8" v-if="!isTimeSeriesMomentumStrategy">
               <el-form-item label="Stop Loss (%)" required>
                 <el-input-number
                   v-model="formData.lossCutRate"
@@ -298,7 +312,7 @@
             </el-col>
 
             <!-- Trend Filter -->
-            <el-col :span="8">
+            <el-col :span="8" v-if="!isTimeSeriesMomentumStrategy">
               <el-form-item label="Use Trend Filter">
                 <el-switch v-model="formData.useTrendFilter" />
                 <span
@@ -311,7 +325,7 @@
             </el-col>
 
             <!-- Trend Filter Threshold -->
-            <el-col :span="8">
+            <el-col :span="8" v-if="!isTimeSeriesMomentumStrategy">
               <el-form-item label="Trend Filter Threshold" required>
                 <el-input-number
                   v-model="formData.trendFilterThreshold"
@@ -633,7 +647,6 @@ import { defineComponent } from "vue";
 import PageHeader from "@/components/PageHeader.vue";
 import { VideoPlay } from "@element-plus/icons-vue";
 import {
-  SimulationProxyClient,
   StockInfoClient,
   type SimulationCountryDto,
   type SimulationStrategyDto,
@@ -663,6 +676,8 @@ interface Strategy {
     coefficientAllowed: number;
     investTriggerRate: number;
     lossCutRate: number;
+    timeSeriesMomentumLookbackSessions?: number;
+    portfolioNumber?: number;
   };
 }
 
@@ -710,7 +725,14 @@ function mapStrategyFromBackend(
   const type = raw?.type;
   const name = raw?.name?.trim();
   const description = raw?.description?.trim();
-  const recommendedParameters = raw?.recommendedParameters;
+  const recommendedParameters = raw?.recommendedParameters as
+    | (Record<string, number | undefined> & {
+        analysisPeriod?: number;
+        coefficientAllowed?: number;
+        investTriggerRate?: number;
+        lossCutRate?: number;
+      })
+    | undefined;
 
   if (
     type === undefined ||
@@ -735,6 +757,9 @@ function mapStrategyFromBackend(
       coefficientAllowed: recommendedParameters.coefficientAllowed,
       investTriggerRate: recommendedParameters.investTriggerRate,
       lossCutRate: recommendedParameters.lossCutRate,
+      timeSeriesMomentumLookbackSessions:
+        recommendedParameters.timeSeriesMomentumLookbackSessions ?? 252,
+      portfolioNumber: recommendedParameters.portfolioNumber ?? 1,
     },
   };
 }
@@ -795,6 +820,7 @@ export default defineComponent({
         ),
         endDate: new Date(),
         analysisPeriod: 60,
+        timeSeriesMomentumLookbackSessions: 252,
         coefficientAllowed: 0.85,
         investTriggerRate: 0.02,
         lossCutRate: -0.05,
@@ -874,6 +900,10 @@ export default defineComponent({
         (s) => s.type === this.formData.strategyType
       );
       return strategy?.name === "IndicatorBased";
+    },
+
+    isTimeSeriesMomentumStrategy(): boolean {
+      return this.formData.strategyType === 6;
     },
 
     isCointegrationMode(): boolean {
@@ -966,15 +996,13 @@ export default defineComponent({
   methods: {
     async loadStrategiesAndCountries() {
       try {
-        const client = new SimulationProxyClient(
-          undefined,
-          ApiService.vueInstance.axios
+        const response = await ApiService.vueInstance.axios.get(
+          "/api/app/simulation-proxy/strategies"
         );
-        const response = await client.simulationProxyGetStrategies();
-        const mappedStrategies = (response.strategies || [])
+        const mappedStrategies = (response.data.strategies || [])
           .map((item) => mapStrategyFromBackend(item))
           .filter((item): item is Strategy => item !== null);
-        const mappedCountries = (response.countries || [])
+        const mappedCountries = (response.data.countries || [])
           .map((item) => mapCountryFromBackend(item))
           .filter((item): item is Country => item !== null);
 
@@ -1049,6 +1077,13 @@ export default defineComponent({
           this.formData.coefficientAllowed = 0.05;
           this.formData.investTriggerRate = 2.0;
           this.formData.portfolioNumber = 1;
+        } else if (strategy.name === "TimeSeriesMomentum") {
+          this.formData.timeSeriesMomentumLookbackSessions =
+            strategy.recommendedParameters.timeSeriesMomentumLookbackSessions || 252;
+          this.formData.portfolioNumber =
+            strategy.recommendedParameters.portfolioNumber || 1;
+          this.formData.analysisPeriod = 60;
+          this.formData.lossCutRate = -0.05;
         } else {
           this.formData.portfolioNumber = 10;
           this.formData.analysisPeriod =
@@ -1058,8 +1093,10 @@ export default defineComponent({
           this.formData.investTriggerRate =
             strategy.recommendedParameters.investTriggerRate;
         }
-        this.formData.lossCutRate =
-          strategy.recommendedParameters.lossCutRate;
+        if (strategy.name !== "TimeSeriesMomentum") {
+          this.formData.lossCutRate =
+            strategy.recommendedParameters.lossCutRate;
+        }
       }
 
       // Set indicator defaults when switching to IndicatorBased strategy
@@ -1173,6 +1210,11 @@ export default defineComponent({
           cointegrationMethod: this.formData.cointegrationMethod,
           correlationMethod: this.formData.correlationMethod,
         };
+
+        if (this.isTimeSeriesMomentumStrategy) {
+          requestPayload.timeSeriesMomentumLookbackSessions =
+            this.formData.timeSeriesMomentumLookbackSessions;
+        }
 
         // Only include indicator fields if they're set (indicator-based strategy)
         if (this.formData.primaryIndicator !== null) {
@@ -1288,6 +1330,7 @@ export default defineComponent({
         ),
         endDate: new Date(),
         analysisPeriod: 60,
+        timeSeriesMomentumLookbackSessions: 252,
         coefficientAllowed: 0.85,
         investTriggerRate: 0.02,
         lossCutRate: -0.05,

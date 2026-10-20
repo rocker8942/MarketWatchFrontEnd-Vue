@@ -340,6 +340,9 @@ export default defineComponent({
             }
           }
         }
+        if (!this.strategyTypeMap.has("6")) {
+          this.strategyTypeMap.set("6", "TimeSeriesMomentum");
+        }
       } catch (e) {
         console.error("Failed to load strategy types", e);
       }

@@ -104,7 +104,7 @@ export default defineComponent({
       rows: [] as AnyRow[],
       loading: false,
       selectedStrategyId: "" as number | "",
-      strategies: [] as Array<{ id: number; name: string }>,
+      strategies: [] as Array<{ id: number; name: string; ratePerYear?: number | null }>,
       strategyTypeMap: new Map<string, string>(),
       chartData: [] as any[],
       totalTrades: 0,
@@ -172,7 +172,8 @@ export default defineComponent({
               let displayName = `${strategyId}`;
 
               if (strategyType !== undefined && strategyType !== null) {
-                const typeName = this.strategyTypeMap.get(String(strategyType));
+                const typeName = this.strategyTypeMap.get(String(strategyType))
+                  ?? (Number(strategyType) === 6 ? "TimeSeriesMomentum" : undefined);
                 if (typeName) {
                   displayName += ` - ${typeName}`;
                 }
@@ -187,7 +188,7 @@ export default defineComponent({
                 displayName += ` - Days to Test: ${daysToTest}`;
               }
 
-              this.strategies.push({ id: strategyId, name: displayName });
+              this.strategies.push({ id: strategyId, name: displayName, ratePerYear });
             }
           }
         }
@@ -274,44 +275,69 @@ export default defineComponent({
         return;
       }
 
-      // Find the date and rate of return keys
+      // Find the history fields used to build the portfolio NAV chart.
       const sampleRow = this.rows[0];
       const keys = Object.keys(sampleRow || {});
-      const dateKey = keys.find((k) => k.toLowerCase() === "tradedate") || keys.find((k) => k.toLowerCase().includes("date")) || "";
+      const tradeDateKey = keys.find((k) => k.toLowerCase() === "tradedate") || "";
+      const sellDateKey = keys.find((k) => k.toLowerCase() === "selldate") || "";
+      const navKey = keys.find((k) => k.toLowerCase() === "nav") || "";
+      const idKey = keys.find((k) => k.toLowerCase() === "id") || "";
       const rateOfReturnKey = keys.find((k) => k.toLowerCase() === "rateofreturn" || k.toLowerCase() === "rateorreturn") || "";
+      const dateKey = sellDateKey || tradeDateKey || keys.find((k) => k.toLowerCase().includes("date")) || "";
+      const hasStoredNav = !!navKey && this.rows.every((row) =>
+        row[navKey] !== null && row[navKey] !== undefined && Number.isFinite(Number(row[navKey]))
+      );
 
-      if (!dateKey || !rateOfReturnKey) {
+      if (!dateKey || (!hasStoredNav && !rateOfReturnKey)) {
         console.warn("Missing required fields for chart");
         this.chartData = [];
         return;
       }
 
-      // Sort rows by date
+      // Trade IDs preserve the order of NAV snapshots when several positions
+      // exit on the same date. Grouping below keeps the final snapshot per day.
       const sortedRows = [...this.rows].sort((a, b) => {
-        const aDate = new Date(a[dateKey]).getTime();
-        const bDate = new Date(b[dateKey]).getTime();
-        return aDate - bDate;
+        const aDate = new Date(a[dateKey] ?? a[tradeDateKey]).getTime();
+        const bDate = new Date(b[dateKey] ?? b[tradeDateKey]).getTime();
+        if (aDate !== bDate) return aDate - bDate;
+        return idKey ? Number(a[idKey]) - Number(b[idKey]) : 0;
       });
 
-      // Calculate cumulative NAV
-      let currentNav = 1.0;
       const navPoints: [string, number][] = [];
+      let currentNav = 1.0;
 
-      // Add starting point
-      if (sortedRows.length > 0) {
-        const firstDate = new Date(sortedRows[0][dateKey]);
+      if (hasStoredNav) {
+        const dailyNav = new Map<number, number>();
+        for (const row of sortedRows) {
+          const date = row[dateKey] ?? row[tradeDateKey];
+          if (date) {
+            dailyNav.set(new Date(date).getTime(), Number(row[navKey]));
+          }
+        }
+
+        const entryDates = tradeDateKey
+          ? sortedRows.map((row) => new Date(row[tradeDateKey]).getTime()).filter(Number.isFinite)
+          : [];
+        const firstEntryDate = entryDates.length > 0
+          ? new Date(Math.min(...entryDates))
+          : new Date(dailyNav.keys().next().value);
+        navPoints.push([firstEntryDate.toLocaleDateString(), 1.0]);
+        for (const [timestamp, nav] of dailyNav) {
+          navPoints.push([new Date(timestamp).toLocaleDateString(), nav]);
+        }
+        const lastNav = Array.from(dailyNav.values()).pop();
+        currentNav = lastNav ?? 1.0;
+      } else {
+        // Fallback for history responses without persisted portfolio NAV.
+        const firstDate = new Date(sortedRows[0][dateKey] ?? sortedRows[0][tradeDateKey]);
         navPoints.push([firstDate.toLocaleDateString(), 1.0]);
-      }
-
-      for (const row of sortedRows) {
-        const date = row[dateKey];
-        const rateOfReturn = row[rateOfReturnKey];
-
-        if (date && rateOfReturn !== null && rateOfReturn !== undefined) {
-          // Calculate new NAV based on rate of return
-          currentNav = currentNav * (1 + rateOfReturn);
-          const formattedDate = new Date(date).toLocaleDateString();
-          navPoints.push([formattedDate, currentNav]);
+        for (const row of sortedRows) {
+          const date = row[dateKey] ?? row[tradeDateKey];
+          const rateOfReturn = Number(row[rateOfReturnKey]);
+          if (date && Number.isFinite(rateOfReturn)) {
+            currentNav *= 1 + rateOfReturn;
+            navPoints.push([new Date(date).toLocaleDateString(), currentNav]);
+          }
         }
       }
 
@@ -325,10 +351,14 @@ export default defineComponent({
       this.finalNav = currentNav;
       this.totalReturn = currentNav - 1.0;
 
-      // Calculate annual return
+      // Estimate annual return only when strategy metadata is unavailable.
       if (sortedRows.length > 0) {
-        const firstDate = new Date(sortedRows[0][dateKey]);
-        const lastDate = new Date(sortedRows[sortedRows.length - 1][dateKey]);
+        const entryDates = tradeDateKey
+          ? sortedRows.map((row) => new Date(row[tradeDateKey]).getTime()).filter(Number.isFinite)
+          : sortedRows.map((row) => new Date(row[dateKey] ?? row[tradeDateKey]).getTime()).filter(Number.isFinite);
+        const firstDate = new Date(Math.min(...entryDates));
+        const lastRow = sortedRows[sortedRows.length - 1];
+        const lastDate = new Date(lastRow[dateKey] ?? lastRow[tradeDateKey]);
         const daysDiff = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
         const years = daysDiff / 365.25;
 
@@ -339,6 +369,15 @@ export default defineComponent({
         }
       } else {
         this.annualReturn = 0;
+      }
+
+      // The strategy's persisted annual return uses its full DaysToTest period.
+      // Trade dates alone can make the plotted history's period look much shorter.
+      const selectedStrategy = this.strategies.find(
+        (strategy) => strategy.id === Number(this.selectedStrategyId)
+      );
+      if (selectedStrategy?.ratePerYear !== undefined && selectedStrategy.ratePerYear !== null) {
+        this.annualReturn = selectedStrategy.ratePerYear;
       }
     },
 

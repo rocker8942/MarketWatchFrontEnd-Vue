@@ -601,7 +601,8 @@ export default defineComponent({
   methods: {
     getStrategyTypeName(typeId: number): string {
       const type = this.refStrategyTypes.find(t => t.id === typeId);
-      return type?.name || `Type ${typeId}`;
+      if (type?.name) return type.name;
+      return typeId === 6 ? 'TimeSeriesMomentum' : `Type ${typeId}`;
     },
 
     getAnalysisMethodName(methodId: number | undefined): string {
