@@ -57,6 +57,33 @@
         </div>
 
         <div class="metric-card">
+          <div class="metric-label">Total Return</div>
+          <div class="metric-value" :class="getReturnClass(summary.totalReturn)">
+            {{ formatPercentage(summary.totalReturn) }}
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Sharpe Ratio</div>
+          <div class="metric-value">{{ formatNumber(summary.sharpeRatio) }}</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Maximum Drawdown</div>
+          <div class="metric-value">{{ formatPercentage(summary.maxDrawdown) }}</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Win Rate</div>
+          <div class="metric-value">{{ formatPercentage(summary.winRate) }}</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">{{ summary.strategyType === 6 ? 'Annualized Volatility' : 'Trade Return Volatility' }}</div>
+          <div class="metric-value">{{ formatPercentage(summary.volatility) }}</div>
+        </div>
+
+        <div class="metric-card">
           <div class="metric-label">Days to Test</div>
           <div class="metric-value">{{ summary.daysToTest ?? '—' }}</div>
         </div>
@@ -265,6 +292,11 @@ export default defineComponent({
         strategyType,
         strategyTypeName: this.strategyTypeMap.get(String(strategyType)),
         ratePerYear,
+        totalReturn: strategy.ratePerInvesmentPeriod ?? strategy.RatePerInvesmentPeriod,
+        sharpeRatio: strategy.sharpeRatio ?? strategy.SharpeRatio,
+        maxDrawdown: strategy.maxDrawdown ?? strategy.MaxDrawdown,
+        winRate: strategy.winRate ?? strategy.WinRate,
+        volatility: strategy.std ?? strategy.Std,
         daysToTest,
         analysisPeriod,
         coefficientAllowed,
@@ -281,6 +313,7 @@ export default defineComponent({
   methods: {
     async reload() {
       this.currentPage = 1;
+      await this.loadSelectedStrategyDetails();
       await this.getList();
     },
 
@@ -422,9 +455,11 @@ export default defineComponent({
       }
 
       try {
-        const client = new StrategyClient(undefined, ApiService.vueInstance.axios);
-        const strategy = await client.strategyGet(this.selectedStrategyId);
-        this.selectedStrategyDetails = strategy;
+        // Read the raw DTO so newly exposed metrics are preserved until client regeneration.
+        const response = await ApiService.vueInstance.axios.get(
+          `/api/app/strategy/${this.selectedStrategyId}`
+        );
+        this.selectedStrategyDetails = response.data?.result ?? response.data;
       } catch (e) {
         console.error("Failed to load strategy details", e);
         this.selectedStrategyDetails = null;
