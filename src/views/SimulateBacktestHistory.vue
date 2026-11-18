@@ -1,9 +1,6 @@
 <template>
-  <div class="analysis-container">
-    <PageHeader
-      title="Simulate - Backtest History"
-      subtitle="Trade history results from simulations"
-    />
+  <div class="data-workspace backtest-workspace">
+    <PageHeader title="Backtest History" />
 
     <div class="filter-bar">
       <div class="filter-bar-left">
@@ -29,148 +26,146 @@
       <div class="flex-1"></div>
 
       <div class="filter-bar-right">
+        <el-button
+          v-if="detailColumns.length"
+          size="small"
+          :aria-pressed="showAllColumns"
+          @click="showAllColumns = !showAllColumns">
+          {{ showAllColumns ? 'Key columns' : 'All columns' }}
+        </el-button>
         <div class="results-count">
           {{ totalCount }} rows
         </div>
       </div>
     </div>
 
-    <!-- Summary Section -->
-    <el-card v-if="summary && selectedStrategyId" class="summary-card">
-      <template #header>
-        <div class="card-header">
-          <span class="card-title">Strategy Summary</span>
-        </div>
-      </template>
-
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-label">Strategy Type</div>
-          <div class="metric-value">{{ summary.strategyTypeName || '—' }}</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Annual Return</div>
-          <div class="metric-value" :class="getReturnClass(summary.ratePerYear)">
-            {{ formatPercentage(summary.ratePerYear) }}
+    <section v-if="summary && selectedStrategyId" class="summary-band" aria-label="Strategy summary">
+      <div class="metric-groups">
+        <div class="metric-group" aria-label="Returns">
+          <div class="metric-card">
+            <div class="metric-label">Strategy Type</div>
+            <div class="metric-value">{{ summary.strategyTypeName || '—' }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Annual Return</div>
+            <div class="metric-value" :class="getReturnClass(summary.ratePerYear)">
+              {{ formatPercentage(summary.ratePerYear, true) }}
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Total Return</div>
+            <div class="metric-value" :class="getReturnClass(summary.totalReturn)">
+              {{ formatPercentage(summary.totalReturn, true) }}
+            </div>
           </div>
         </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Total Return</div>
-          <div class="metric-value" :class="getReturnClass(summary.totalReturn)">
-            {{ formatPercentage(summary.totalReturn) }}
+        <div class="metric-group" aria-label="Risk and activity">
+          <div class="metric-card">
+            <div class="metric-label">Sharpe Ratio</div>
+            <div class="metric-value">{{ formatNumber(summary.sharpeRatio) }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Maximum Drawdown</div>
+            <div class="metric-value">{{ formatPercentage(summary.maxDrawdown) }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Win Rate</div>
+            <div class="metric-value">{{ formatPercentage(summary.winRate) }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">{{ summary.strategyType === 6 ? 'Annualized Volatility' : 'Trade Return Volatility' }}</div>
+            <div class="metric-value">{{ formatPercentage(summary.volatility) }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Total Trades</div>
+            <div class="metric-value">{{ summary.totalTrades }}</div>
           </div>
         </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Sharpe Ratio</div>
-          <div class="metric-value">{{ formatNumber(summary.sharpeRatio) }}</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Maximum Drawdown</div>
-          <div class="metric-value">{{ formatPercentage(summary.maxDrawdown) }}</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Win Rate</div>
-          <div class="metric-value">{{ formatPercentage(summary.winRate) }}</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">{{ summary.strategyType === 6 ? 'Annualized Volatility' : 'Trade Return Volatility' }}</div>
-          <div class="metric-value">{{ formatPercentage(summary.volatility) }}</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Days to Test</div>
-          <div class="metric-value">{{ summary.daysToTest ?? '—' }}</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Analysis Period</div>
-          <div class="metric-value">{{ summary.analysisPeriod ?? '—' }} days</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Correlation Threshold</div>
-          <div class="metric-value">{{ formatNumber(summary.coefficientAllowed) }}</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Entry Trigger</div>
-          <div class="metric-value">{{ formatPercentage(summary.investTriggerRate) }}</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Stop Loss</div>
-          <div class="metric-value negative">{{ formatPercentage(summary.lossCutRate) }}</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Portfolio Size</div>
-          <div class="metric-value">{{ summary.portfolioNumber ?? '—' }}</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Trade Fee</div>
-          <div class="metric-value">{{ formatPercentage(summary.tradeFee) }}</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Slippage</div>
-          <div class="metric-value">{{ formatPercentage(summary.slippage) }}</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Total Trades</div>
-          <div class="metric-value">{{ summary.totalTrades }}</div>
-        </div>
       </div>
-    </el-card>
 
-    <div class="table-section">
-      <div class="table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="paginatedRows"
-          class="professional-table"
-          stripe
-          :default-sort="defaultSort"
-          :header-cell-style="{ background: 'var(--color-surface-variant)', color: 'var(--color-heading)', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '0.4375rem 0.875rem' }"
-          :row-key="getRowKey"
-          @sort-change="handleSortChange">
-          <el-table-column
-            v-for="col in columns"
-            :key="col"
-            :prop="getOriginalColumnName(col)"
-            :label="col"
-            :min-width="getMinWidth(col)"
-            :align="getColumnAlign(col)"
-            :sortable="isSortableColumn(col) ? 'custom' : false">
-            <template #default="scope">
-              <span v-if="isDateColumn(col)">{{ formatDate(scope.row[getOriginalColumnName(col)]) }}</span>
-              <span v-else-if="isRateOfReturnColumn(col)" :class="getRateOfReturnClass(scope.row[getOriginalColumnName(col)])">
-                {{ formatPercentage(scope.row[getOriginalColumnName(col)]) }}
-              </span>
-              <span v-else-if="isLeaderChangeColumn(col)" :class="getRateOfReturnClass(scope.row[getOriginalColumnName(col)])">
-                {{ formatPercentage(scope.row[getOriginalColumnName(col)]) }}
-              </span>
-              <span v-else-if="isPriceColumn(col)">
-                {{ formatPrice(scope.row[getOriginalColumnName(col)]) }}
-              </span>
-              <span v-else-if="isStockColumn(col)" class="stock-link" @click="handleStockClick(scope.row[getOriginalColumnName(col)])">
-                {{ formatValue(scope.row[getOriginalColumnName(col)], col) }}
-              </span>
-              <span v-else>{{ formatValue(scope.row[getOriginalColumnName(col)], col) }}</span>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+      <details class="summary-settings">
+        <summary>Test parameters</summary>
+        <div class="metric-group">
+          <div class="metric-card">
+            <div class="metric-label">Days to Test</div>
+            <div class="metric-value">{{ summary.daysToTest ?? '—' }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Analysis Period</div>
+            <div class="metric-value">{{ summary.analysisPeriod == null ? '—' : summary.analysisPeriod + ' days' }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Correlation Threshold</div>
+            <div class="metric-value">{{ formatNumber(summary.coefficientAllowed) }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Entry Trigger</div>
+            <div class="metric-value">{{ formatPercentage(summary.investTriggerRate) }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Stop Loss</div>
+            <div class="metric-value negative">{{ formatPercentage(summary.lossCutRate) }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Portfolio Size</div>
+            <div class="metric-value">{{ summary.portfolioNumber ?? '—' }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Trade Fee</div>
+            <div class="metric-value">{{ formatPercentage(summary.tradeFee) }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Slippage</div>
+            <div class="metric-value">{{ formatPercentage(summary.slippage) }}</div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <section class="table-section" aria-label="Backtest trades">
+      <el-table
+        v-loading="loading"
+        :data="paginatedRows"
+        class="compact-table"
+        stripe
+        size="small"
+        :default-sort="defaultSort"
+        :row-key="getRowKey"
+        @sort-change="handleSortChange">
+        <el-table-column v-if="detailColumns.length && !showAllColumns" width="42" align="center">
+          <template #default="{ row, $index }">
+            <el-button
+              type="primary"
+              link
+              title="Trade details"
+              :aria-label="'Details for trade ' + ($index + 1)"
+              @click="openTradeDetails(row)">…</el-button>
+          </template>
+        </el-table-column>
+        <el-table-column
+          v-for="col in visibleColumns"
+          :key="col"
+          :prop="getOriginalColumnName(col)"
+          :label="columnLabel(col)"
+          :min-width="getMinWidth(col)"
+          :align="getColumnAlign(col)"
+          :sortable="isSortableColumn(col) ? 'custom' : false"
+          show-overflow-tooltip>
+          <template #default="{ row }">
+            <RouterLink
+              v-if="isStockColumn(col) && getTableCellValue(row, col)"
+              class="stock-link"
+              :to="{ name: 'stockChart', query: { stockCode: String(getTableCellValue(row, col)).trim() } }">
+              {{ formatCell(row, col, getTableCellValue(row, col)) }}
+            </RouterLink>
+            <span v-else :class="cellClass(row, col)">{{ formatCell(row, col, getTableCellValue(row, col)) }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
 
       <div class="pagination-wrapper">
         <el-pagination
+          size="small"
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
           :page-sizes="[25, 50, 100, 200]"
@@ -179,12 +174,31 @@
           @current-change="handlePageChange"
           @size-change="handleSizeChange" />
       </div>
-    </div>
+    </section>
+
+    <el-dialog v-model="detailsVisible" title="Backtest trade details" width="min(580px, calc(100vw - 24px))">
+      <dl v-if="detailTrade" class="trade-details">
+        <div v-for="col in columns" :key="col">
+          <dt>{{ columnLabel(col) }}</dt>
+          <dd>
+            <RouterLink
+              v-if="isStockColumn(col) && detailTrade[getOriginalColumnName(col)]"
+              class="stock-link"
+              :to="{ name: 'stockChart', query: { stockCode: String(detailTrade[getOriginalColumnName(col)]).trim() } }">
+              {{ formatCell(detailTrade, col) }}
+            </RouterLink>
+            <span v-else :class="cellClass(detailTrade, col)">{{ formatCell(detailTrade, col) }}</span>
+          </dd>
+        </div>
+      </dl>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { RouterLink } from "vue-router";
+import { ElDialog } from "element-plus";
 import ApiService from "@/core/services/apiService";
 import { StrategyClient, StockInfoClient, RefStrategyTypeClient } from "@/core/services/marketWatchClient";
 import PageHeader from "@/components/PageHeader.vue";
@@ -193,7 +207,9 @@ type AnyRow = Record<string, any>;
 
 export default defineComponent({
   components: {
-    PageHeader
+    ElDialog,
+    PageHeader,
+    RouterLink,
   },
   data() {
     return {
@@ -213,6 +229,9 @@ export default defineComponent({
       strategyToTypeMap: new Map<string, string>(),
       sellTypeMap: new Map<string, string>(),
       strategies: [] as Array<{ id: number; name: string }>,
+      showAllColumns: false,
+      detailTrade: null as AnyRow | null,
+      detailsVisible: false,
       currentPage: 1,
       pageSize: 50,
       sortProp: "",
@@ -221,6 +240,30 @@ export default defineComponent({
   },
 
   computed: {
+    primaryColumns(): string[] {
+      const normalized = (col: string) => col.toLowerCase().replace(/\s/g, "");
+      const options = [
+        ["tradedate", "entrydate", "investdate"],
+        ["followstock", "stockcode", "symbol", "leaderstock"],
+        ["rateofreturn", "rateorreturn"],
+        ["buyprice", "entryprice"],
+        ["sellprice", "exitprice"],
+        ["selldate", "exitdate"],
+        ["selltype", "exitreason"],
+      ];
+      return options
+        .map(names => names.map(name => this.columns.find(col => normalized(col) === name)).find(Boolean))
+        .filter((col): col is string => !!col);
+    },
+
+    detailColumns(): string[] {
+      return this.columns.filter(col => !this.primaryColumns.includes(col));
+    },
+
+    visibleColumns(): string[] {
+      return this.showAllColumns ? this.columns : this.primaryColumns;
+    },
+
     defaultSort(): any {
       if (!this.dateKey) return undefined;
       return { prop: this.dateKey, order: "descending" };
@@ -663,7 +706,7 @@ export default defineComponent({
 
     isStockColumn(col: string): boolean {
       const lc = (col || "").toLowerCase();
-      return lc === "leader stock" || lc === "follow stock";
+      return ["leader stock", "follow stock", "stockcode", "symbol"].includes(lc);
     },
 
     isLeaderChangeColumn(col: string): boolean {
@@ -673,26 +716,58 @@ export default defineComponent({
 
     isPriceColumn(col: string): boolean {
       const lc = (col || "").toLowerCase();
-      return lc === "buyprice" || lc === "buy price" || lc === "sellprice" || lc === "sell price";
+      return /^(buy|entry|sell|exit) ?price$/.test(lc);
     },
 
-    handleStockClick(stockCode: string) {
-      if (!stockCode) return;
-      const code = String(stockCode).trim();
-      this.$router.push({ name: "stockChart", query: { stockCode: code } });
+    openTradeDetails(row: AnyRow) {
+      this.detailTrade = row;
+      this.detailsVisible = true;
+    },
+
+    columnLabel(col: string): string {
+      if (col === "Follow Stock") return "Instrument";
+      if (col === "Rate Of Return") return "Return";
+      if (col === "Sell Type") return "Exit reason";
+      if (/^(buy|entry) ?price$/i.test(col)) return "Entry price";
+      if (/^(sell|exit) ?price$/i.test(col)) return "Exit price";
+      return col.replace(/([a-z])([A-Z])/g, "$1 $2");
+    },
+
+    getTableCellValue(row: AnyRow, col: string): any {
+      const value = row[this.getOriginalColumnName(col)];
+      if (!this.showAllColumns && col === "Follow Stock" && !value) {
+        return row[this.getOriginalColumnName("Leader Stock")];
+      }
+      return value;
+    },
+
+    formatCell(row: AnyRow, col: string, value = row[this.getOriginalColumnName(col)]): string {
+      if (this.isDateColumn(col)) return this.formatDate(value);
+      if (this.isRateOfReturnColumn(col) || this.isLeaderChangeColumn(col)) {
+        return this.formatPercentage(value, true);
+      }
+      if (this.isPriceColumn(col)) return this.formatPrice(value);
+      return this.formatValue(value, col);
+    },
+
+    cellClass(row: AnyRow, col: string): string {
+      if (!this.isRateOfReturnColumn(col) && !this.isLeaderChangeColumn(col)) return "";
+      return this.getRateOfReturnClass(row[this.getOriginalColumnName(col)]);
     },
 
     formatDate(value: any): string {
       if (!value) return "—";
+      if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
       const d = value instanceof Date ? value : new Date(value);
       if (Number.isNaN(d.getTime())) return String(value);
       return d.toLocaleDateString();
     },
 
-    formatPercentage(value: any): string {
+    formatPercentage(value: any, signed = false): string {
       if (value === null || value === undefined || value === "") return "—";
       if (typeof value !== "number") return String(value);
-      return (value * 100).toFixed(2) + "%";
+      if (!Number.isFinite(value)) return "—";
+      return (signed && value > 0 ? "+" : "") + (value * 100).toFixed(2) + "%";
     },
 
     formatNumber(value: any): string {
@@ -732,9 +807,10 @@ export default defineComponent({
       }
 
       // Transform stock codes to stock names
-      if (lc === "leader stock" || lc === "follow stock") {
+      if (this.isStockColumn(col)) {
         const stockCode = String(value).trim();
-        return this.stockMap.get(stockCode) || stockCode;
+        const stockName = this.stockMap.get(stockCode);
+        return stockName ? stockCode + " · " + stockName : stockCode;
       }
 
       // Transform sellType ID to sellType name
@@ -753,19 +829,19 @@ export default defineComponent({
       const lc = col.toLowerCase();
 
       // Date columns
-      if (this.isDateColumn(col)) return 120;
+      if (this.isDateColumn(col)) return 100;
 
       // Rate of return
-      if (this.isRateOfReturnColumn(col)) return 110;
+      if (this.isRateOfReturnColumn(col)) return 90;
 
       // Leader change
       if (this.isLeaderChangeColumn(col)) return 120;
 
       // Price columns
-      if (this.isPriceColumn(col)) return 130;
+      if (this.isPriceColumn(col)) return 100;
 
       // Stock columns
-      if (this.isStockColumn(col)) return 140;
+      if (this.isStockColumn(col)) return 116;
 
       // Sell type
       if (lc === "sell type") return 150;
@@ -831,22 +907,26 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.analysis-container {
-  padding: var(--space-4xl) var(--space-xl);
-  max-width: 1400px;
-  margin: 0 auto;
+.backtest-workspace {
+  min-width: 0;
 }
 
-/* Filter Bar */
-.filter-bar-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.backtest-workspace .filter-bar {
+  padding: 0;
+  gap: 8px;
+  margin: 0 0 8px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  flex-wrap: wrap;
 }
 
+.filter-bar-left,
 .filter-bar-right {
   display: flex;
   align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .flex-1 {
@@ -854,118 +934,128 @@ export default defineComponent({
 }
 
 .strategy-select {
-  min-width: 350px;
+  width: min(280px, 56vw);
+  min-width: 0;
 }
 
-.results-count {
-  font-size: 0.875rem;
+.results-count,
+.metric-label,
+.trade-details dt {
   color: var(--color-text-secondary);
+  font-size: 12px;
 }
 
-.table-section {
-  background: var(--color-background-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 16px;
-  padding: var(--space-3xl);
-  box-shadow: var(--shadow-subtle);
-  margin-bottom: var(--space-xl);
+.summary-band {
+  margin-bottom: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface-variant);
 }
 
-.table-wrapper {
-  overflow-x: auto;
-}
-
-.professional-table {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.stock-link {
-  color: #409eff;
-  cursor: pointer;
-  text-decoration: underline;
-  transition: color 0.2s;
-}
-
-.stock-link:hover {
-  color: #66b1ff;
-}
-
-.pagination-wrapper {
-  margin-top: var(--space-2xl);
+.metric-groups {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
 }
 
-.rate-positive {
-  color: #27ae60;
-  font-weight: 600;
-}
-
-.rate-negative {
-  color: #e74c3c;
-  font-weight: 600;
-}
-
-/* Summary Card */
-.summary-card {
-  margin-bottom: var(--space-xl);
-  background: var(--color-background-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 16px;
-  box-shadow: var(--shadow-subtle);
-}
-
-.card-header {
+.metric-group {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 6px 16px;
+  padding: 8px 12px;
 }
 
-.card-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--color-heading);
-}
-
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+.metric-group + .metric-group {
+  border-inline-start: 1px solid var(--color-border);
 }
 
 .metric-card {
-  background: var(--color-surface-variant);
-  padding: 1.25rem;
-  border-radius: 8px;
-  border: 1px solid var(--color-border-subtle);
-}
-
-.metric-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
+  min-width: 0;
 }
 
 .metric-value {
-  font-size: 1.5rem;
-  font-weight: 600;
   color: var(--color-heading);
-  word-break: break-word;
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
-.metric-card:first-child .metric-value {
-  font-size: 1.125rem;
+.summary-settings {
+  border-top: 1px solid var(--color-border);
 }
 
+.summary-settings summary {
+  width: fit-content;
+  padding: 4px 12px;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.summary-settings[open] .metric-group {
+  padding-top: 0;
+}
+
+.table-section {
+  min-width: 0;
+}
+
+.stock-link {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.pagination-wrapper {
+  margin-top: 8px;
+}
+
+.pagination-wrapper :deep(.el-pagination) {
+  justify-content: end;
+  flex-wrap: wrap;
+  white-space: normal;
+  row-gap: 6px;
+}
+
+.rate-positive,
 .metric-value.positive {
-  color: #27ae60;
+  color: var(--data-gain, var(--finance-green));
 }
 
+.rate-negative,
 .metric-value.negative {
-  color: #e74c3c;
+  color: var(--data-loss, var(--finance-red));
+}
+
+.trade-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 128px), 1fr));
+  gap: 8px 16px;
+  margin: 0;
+}
+
+.trade-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 680px) {
+  .metric-group {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    flex-basis: 100%;
+    padding: 5px 8px;
+    gap: 4px 8px;
+  }
+
+  .metric-group + .metric-group {
+    border-inline-start: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .pagination-wrapper :deep(.el-pagination) {
+    justify-content: start;
+  }
 }
 </style>

@@ -1,133 +1,80 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from "vue-router";
+import { nextTick, onMounted, onUnmounted, ref } from "vue";
+import { RouterLink, RouterView, useRoute, useRouter } from "vue-router";
+import { ArrowDown } from "@element-plus/icons-vue";
 import Header from "./components/HeaderComponent.vue";
-import { ArrowDown, TrendCharts } from "@element-plus/icons-vue";
-import { ref, onMounted, onUnmounted } from "vue";
 
+const route = useRoute();
+const router = useRouter();
+const mobileMenu = ref<HTMLDetailsElement>();
 const currentTime = ref(new Date());
+let timeInterval: ReturnType<typeof setInterval>;
 
-const updateTime = () => {
-  currentTime.value = new Date();
-};
+const groups = [
+  { label: "Markets", links: [
+    { to: "/stockPrice", label: "Stock Prices" },
+    { to: "/stockChart", label: "Stock Chart" },
+    { to: "/movers", label: "Movers" },
+  ] },
+  { label: "Fund", links: [
+    { to: "/fund", label: "Fund Strategy" },
+    { to: "/strategyHistory", label: "Strategy History" },
+  ] },
+  { label: "Simulate", links: [
+    { to: "/simulate/run", label: "Run Simulation" },
+    { to: "/simulate/strategy", label: "Strategies" },
+    { to: "/simulate/backtest-history", label: "Backtest History" },
+    { to: "/simulate/graph", label: "Strategy Graph" },
+  ] },
+  { label: "Optimize", links: [
+    { to: "/optimization/config", label: "New Optimization" },
+    { to: "/optimization/monitor", label: "Monitor Jobs" },
+  ] },
+];
 
-let timeInterval: number;
+function closeMobileMenu() {
+  if (mobileMenu.value) mobileMenu.value.open = false;
+}
+
+async function onMobileEscape() {
+  closeMobileMenu();
+  await nextTick();
+  mobileMenu.value?.querySelector("summary")?.focus();
+}
+
 onMounted(() => {
-  updateTime();
-  timeInterval = setInterval(updateTime, 60000); // Update every minute
+  timeInterval = setInterval(() => { currentTime.value = new Date(); }, 60000);
 });
-
-onUnmounted(() => {
-  clearInterval(timeInterval);
-});
+onUnmounted(() => clearInterval(timeInterval));
 </script>
 
 <template>
   <div class="app-layout">
-    <!-- Top Navigation Bar -->
     <header class="top-nav">
       <div class="nav-container">
-        <div class="brand">
+        <RouterLink to="/" class="brand" @click="closeMobileMenu">
           <Header msg="MarketWatch" />
-        </div>
+        </RouterLink>
 
-        <nav class="main-nav">
-          <RouterLink to="/" class="nav-link">
-            <el-icon><TrendCharts /></el-icon>
-            <span>Dashboard</span>
-          </RouterLink>
-          <el-dropdown trigger="hover" class="nav-dropdown">
-            <span class="nav-link dropdown-trigger">
-              <span>Markets</span>
-              <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
-            </span>
+        <nav class="desktop-nav" aria-label="Main navigation">
+          <RouterLink to="/" class="nav-link">Dashboard</RouterLink>
+          <el-dropdown v-for="group in groups" :key="group.label" trigger="click" @command="router.push">
+            <button
+              type="button"
+              class="nav-link"
+              :class="{ 'nav-active': group.links.some(link => link.to === route.path) }"
+            >
+              {{ group.label }} <el-icon><ArrowDown /></el-icon>
+            </button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>
-                  <RouterLink to="/stockPrice" class="dropdown-link"
-                    >Price List</RouterLink
-                  >
-                </el-dropdown-item>
-                <el-dropdown-item>
-                  <RouterLink to="/stockChart" class="dropdown-link"
-                    >Stock Chart</RouterLink
-                  >
-                </el-dropdown-item>
-                <el-dropdown-item>
-                  <RouterLink to="/movers" class="dropdown-link"
-                    >Movers</RouterLink
-                  >
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-          <el-dropdown trigger="hover" class="nav-dropdown">
-            <span class="nav-link dropdown-trigger">
-              <span>Fund</span>
-              <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item>
-                  <RouterLink to="/fund" class="dropdown-link"
-                    >Analysis</RouterLink
-                  >
-                </el-dropdown-item>
-                <el-dropdown-item>
-                  <RouterLink to="/strategyHistory" class="dropdown-link"
-                    >Strategy History</RouterLink
-                  >
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-          <el-dropdown trigger="hover" class="nav-dropdown">
-            <span class="nav-link dropdown-trigger">
-              <span>Simulate</span>
-              <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item>
-                  <RouterLink to="/simulate/run" class="dropdown-link"
-                    >Run Simulation</RouterLink
-                  >
-                </el-dropdown-item>
-                <el-dropdown-item>
-                  <RouterLink to="/simulate/strategy" class="dropdown-link"
-                    >Strategies</RouterLink
-                  >
-                </el-dropdown-item>
-                <el-dropdown-item>
-                  <RouterLink
-                    to="/simulate/backtest-history"
-                    class="dropdown-link"
-                    >Backtest History</RouterLink
-                  >
-                </el-dropdown-item>
-                <el-dropdown-item>
-                  <RouterLink to="/simulate/graph" class="dropdown-link"
-                    >Graph</RouterLink
-                  >
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-          <el-dropdown trigger="hover" class="nav-dropdown">
-            <span class="nav-link dropdown-trigger">
-              <span>Optimize</span>
-              <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item>
-                  <RouterLink to="/optimization/config" class="dropdown-link"
-                    >New Optimization</RouterLink
-                  >
-                </el-dropdown-item>
-                <el-dropdown-item>
-                  <RouterLink to="/optimization/monitor" class="dropdown-link"
-                    >Monitor Jobs</RouterLink
-                  >
+                <el-dropdown-item
+                  v-for="link in group.links"
+                  :key="link.to"
+                  :command="link.to"
+                  :class="{ 'nav-active': route.path === link.to }"
+                >
+                  {{ link.label }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -135,82 +82,33 @@ onUnmounted(() => {
         </nav>
 
         <div class="nav-actions">
-          <span class="nav-time">{{
-            currentTime.toLocaleString("en-US", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          }}</span>
-          <button
-            v-if="$oidc.isAuthenticated"
-            @click="$oidc.signOut"
-            class="signout-btn"
-          >
-            Sign Out
+          <time class="nav-time" :datetime="currentTime.toISOString()">
+            {{ currentTime.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) }}
+          </time>
+          <button v-if="$oidc.isAuthenticated" type="button" class="signout-btn" @click="$oidc.signOut">
+            Sign out
           </button>
+          <details ref="mobileMenu" class="mobile-menu" @keydown.esc.stop="onMobileEscape">
+            <summary>Menu <el-icon><ArrowDown /></el-icon></summary>
+            <nav class="mobile-links" aria-label="Main navigation">
+              <RouterLink to="/" class="nav-link" @click="closeMobileMenu">Dashboard</RouterLink>
+              <div v-for="group in groups" :key="group.label" class="mobile-group">
+                <p>{{ group.label }}</p>
+                <RouterLink v-for="link in group.links" :key="link.to" :to="link.to" class="nav-link" @click="closeMobileMenu">
+                  {{ link.label }}
+                </RouterLink>
+              </div>
+            </nav>
+          </details>
         </div>
       </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <RouterView />
-    </main>
+    <main class="main-content"><RouterView /></main>
 
-    <!-- Professional Footer -->
     <footer class="site-footer">
-      <div class="footer-container">
-        <div class="footer-grid">
-          <div class="footer-section">
-            <h4 class="footer-heading">MarketWatch</h4>
-            <p class="footer-description">
-              Professional market intelligence and trading insights for informed
-              investment decisions.
-            </p>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-heading">Markets</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/">Dashboard</RouterLink></li>
-              <li><RouterLink to="/stockPrice">Price List</RouterLink></li>
-              <li><RouterLink to="/stockChart">Charts</RouterLink></li>
-              <li><RouterLink to="/movers">Movers</RouterLink></li>
-            </ul>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-heading">Resources</h4>
-            <ul class="footer-links">
-              <li><RouterLink to="/fund">Analysis</RouterLink></li>
-              <li><RouterLink to="/simulate/run">Simulate</RouterLink></li>
-            </ul>
-          </div>
-
-          <div class="footer-section">
-            <h4 class="footer-heading">Legal</h4>
-            <ul class="footer-links">
-              <li><a href="#">Privacy Policy</a></li>
-              <li><a href="#">Terms of Service</a></li>
-              <li><a href="#">Disclaimer</a></li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="footer-bottom">
-          <p class="copyright">
-            &copy; {{ new Date().getFullYear() }} MarketWatch. All rights
-            reserved.
-          </p>
-          <p class="disclaimer">
-            Investment involves risk. Past performance is not indicative of
-            future results.
-          </p>
-        </div>
-      </div>
+      <span>© {{ new Date().getFullYear() }} MarketWatch</span>
+      <span>Investment involves risk. Past performance is not indicative of future results.</span>
     </footer>
   </div>
 </template>
@@ -218,290 +116,153 @@ onUnmounted(() => {
 <style scoped>
 .app-layout {
   min-height: 100vh;
-  background: var(--color-background);
   display: flex;
   flex-direction: column;
 }
 
-/* Top Navigation */
 .top-nav {
-  background: var(--color-background-card);
-  border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-sm);
-}
-
-.top-nav::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--gradient-accent);
-  opacity: 0.7;
+  background: var(--color-background-card);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .nav-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
+  max-width: 1600px;
+  margin-inline: auto;
+  padding-inline: var(--workspace-gutter);
+  min-height: 51px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: 52px;
+  gap: 16px;
 }
 
 .brand {
   flex-shrink: 0;
-  margin-right: 1.5rem;
 }
 
-/* Main Navigation */
-.main-nav {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  flex: 1;
-}
-
-.nav-link {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.nav-link .el-icon {
-  font-size: 1.125rem;
-}
-
-.nav-link:hover {
-  color: var(--color-text);
-  background: var(--color-surface-variant);
-}
-
-.nav-link.router-link-active {
-  color: var(--color-primary);
-  background: rgba(25, 118, 210, 0.07);
-  font-weight: 600;
-  box-shadow: inset 0 -2px 0 var(--color-primary);
-}
-
-/* Dropdown Menu */
-.nav-dropdown {
-  display: inline-block;
-}
-
-.dropdown-trigger {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  cursor: pointer;
-}
-
-.dropdown-icon {
-  font-size: 0.75rem;
-  transition: transform 0.2s ease;
-}
-
-.nav-dropdown:hover .dropdown-icon {
-  transform: rotate(180deg);
-}
-
-.dropdown-link {
-  display: block;
-  width: 100%;
-  color: #374151;
-  font-size: 0.9375rem;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.dropdown-link:hover {
-  color: var(--color-primary);
-}
-
-.dropdown-link.router-link-active {
-  color: var(--color-primary);
-  font-weight: 600;
-}
-
-/* Navigation Actions */
+.desktop-nav,
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-left: 1rem;
+  gap: 4px;
+}
+
+.nav-actions {
+  margin-left: auto;
+  gap: 8px;
+}
+
+.nav-link,
+.signout-btn,
+.mobile-menu summary {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  border-radius: 5px;
+  color: var(--color-text);
+  background: transparent;
+  border: 0;
+  white-space: nowrap;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.nav-link:hover,
+.nav-link.router-link-exact-active,
+.nav-active,
+.mobile-menu summary:hover {
+  color: var(--color-primary);
+  background: var(--color-surface-variant);
 }
 
 .nav-time {
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
-  padding-right: 0.5rem;
-  border-right: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
 }
 
 .signout-btn {
-  padding: 0.3125rem 0.875rem;
-  background: transparent;
   border: 1px solid var(--color-border);
-  color: var(--color-text);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.signout-btn:hover {
-  background: var(--finance-red);
-  border-color: var(--finance-red);
-  color: white;
-  box-shadow: var(--shadow-sm);
-}
-
-/* Main Content */
 .main-content {
   flex: 1;
+  min-width: 0;
 }
 
-/* Professional Footer */
 .site-footer {
-  background: var(--finance-navy);
-  color: var(--finance-gray-200);
-  margin-top: 4rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.footer-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 3rem 1.5rem 2rem;
-}
-
-.footer-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 2.5rem;
-  margin-bottom: 2.5rem;
-}
-
-.footer-section {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 8px var(--workspace-gutter);
+  margin-top: 16px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 12px;
 }
 
-.footer-heading {
-  color: var(--color-white);
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+.mobile-menu {
+  display: none;
 }
 
-.footer-description {
-  font-size: 0.875rem;
-  line-height: 1.6;
-  color: var(--finance-gray-300);
-}
+@media (max-width: 900px) {
+  .nav-container {
+    gap: 8px;
+  }
 
-.footer-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-}
-
-.footer-links a {
-  color: var(--finance-gray-300);
-  font-size: 0.875rem;
-  transition: color 0.2s ease;
-}
-
-.footer-links a:hover {
-  color: var(--finance-blue-light);
-}
-
-.footer-bottom {
-  padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: center;
-  text-align: center;
-}
-
-.copyright {
-  font-size: 0.875rem;
-  color: var(--finance-gray-300);
-}
-
-.disclaimer {
-  font-size: 0.75rem;
-  color: var(--finance-gray-400);
-  font-style: italic;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
+  .desktop-nav,
   .nav-time {
     display: none;
   }
 
-  .nav-container {
-    flex-wrap: wrap;
-    height: auto;
-    padding: 0.75rem 1rem;
+  .mobile-menu {
+    display: block;
   }
 
-  .brand {
-    margin-right: auto;
-  }
-
-  .main-nav {
-    order: 3;
-    width: 100%;
-    margin-top: 0.75rem;
-    gap: 0.5rem;
-    overflow-x: auto;
-  }
-
-  .nav-link {
-    white-space: nowrap;
-    font-size: 0.875rem;
-    padding: 0.5rem 0.875rem;
-  }
-
-  .nav-link .el-icon {
+  .mobile-menu summary::-webkit-details-marker {
     display: none;
   }
 
-  .nav-actions {
-    margin-left: 0.75rem;
+  .mobile-menu summary,
+  .signout-btn {
+    min-height: 36px;
   }
 
-  .footer-grid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
+  .mobile-links {
+    position: absolute;
+    inset: 100% var(--workspace-gutter) auto auto;
+    z-index: 1;
+    width: min(290px, calc(100vw - 2 * var(--workspace-gutter)));
+    max-height: calc(100dvh - 56px);
+    overflow-y: auto;
+    padding: 6px;
+    background: var(--color-background-card);
+    border: 1px solid var(--color-border);
+    border-radius: 0 0 8px 8px;
+    box-shadow: var(--shadow-md);
   }
 
-  .footer-bottom {
-    flex-direction: column;
+  .mobile-links .nav-link {
+    min-height: 36px;
+  }
+
+  .mobile-group {
+    padding-top: 4px;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .mobile-group p {
+    margin: 0;
+    padding-inline: 9px;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 600;
   }
 }
 </style>

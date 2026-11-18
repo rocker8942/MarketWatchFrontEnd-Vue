@@ -956,6 +956,206 @@ export class AccountClient {
     }
 }
 
+export class AnalysisUpdateClient {
+    protected instance: AxiosInstance;
+    protected baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, instance?: AxiosInstance) {
+
+        this.instance = instance || axios.create();
+
+        this.baseUrl = baseUrl ?? "";
+
+    }
+
+    /**
+     * @return Success
+     */
+    analysisUpdateStart( cancelToken?: CancelToken): Promise<AnalysisUpdateStatusDto> {
+        let url_ = this.baseUrl + "/api/app/analysis-update/start";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "POST",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processAnalysisUpdateStart(_response);
+        });
+    }
+
+    protected processAnalysisUpdateStart(response: AxiosResponse): Promise<AnalysisUpdateStatusDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = AnalysisUpdateStatusDto.fromJS(resultData200);
+            return Promise.resolve<AnalysisUpdateStatusDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<AnalysisUpdateStatusDto>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    analysisUpdateGetStatus( cancelToken?: CancelToken): Promise<AnalysisUpdateStatusDto> {
+        let url_ = this.baseUrl + "/api/app/analysis-update/status";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: AxiosRequestConfig = {
+            method: "GET",
+            url: url_,
+            headers: {
+                "Accept": "text/plain"
+            },
+            cancelToken
+        };
+
+        return this.instance.request(options_).catch((_error: any) => {
+            if (isAxiosError(_error) && _error.response) {
+                return _error.response;
+            } else {
+                throw _error;
+            }
+        }).then((_response: AxiosResponse) => {
+            return this.processAnalysisUpdateGetStatus(_response);
+        });
+    }
+
+    protected processAnalysisUpdateGetStatus(response: AxiosResponse): Promise<AnalysisUpdateStatusDto> {
+        const status = response.status;
+        let _headers: any = {};
+        if (response.headers && typeof response.headers === "object") {
+            for (const k in response.headers) {
+                if (response.headers.hasOwnProperty(k)) {
+                    _headers[k] = response.headers[k];
+                }
+            }
+        }
+        if (status === 200) {
+            const _responseText = response.data;
+            let result200: any = null;
+            let resultData200  = _responseText;
+            result200 = AnalysisUpdateStatusDto.fromJS(resultData200);
+            return Promise.resolve<AnalysisUpdateStatusDto>(result200);
+
+        } else if (status === 403) {
+            const _responseText = response.data;
+            let result403: any = null;
+            let resultData403  = _responseText;
+            result403 = RemoteServiceErrorResponse.fromJS(resultData403);
+            return throwException("Forbidden", status, _responseText, _headers, result403);
+
+        } else if (status === 401) {
+            const _responseText = response.data;
+            let result401: any = null;
+            let resultData401  = _responseText;
+            result401 = RemoteServiceErrorResponse.fromJS(resultData401);
+            return throwException("Unauthorized", status, _responseText, _headers, result401);
+
+        } else if (status === 400) {
+            const _responseText = response.data;
+            let result400: any = null;
+            let resultData400  = _responseText;
+            result400 = RemoteServiceErrorResponse.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+
+        } else if (status === 404) {
+            const _responseText = response.data;
+            let result404: any = null;
+            let resultData404  = _responseText;
+            result404 = RemoteServiceErrorResponse.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+
+        } else if (status === 501) {
+            const _responseText = response.data;
+            let result501: any = null;
+            let resultData501  = _responseText;
+            result501 = RemoteServiceErrorResponse.fromJS(resultData501);
+            return throwException("Server Error", status, _responseText, _headers, result501);
+
+        } else if (status === 500) {
+            const _responseText = response.data;
+            let result500: any = null;
+            let resultData500  = _responseText;
+            result500 = RemoteServiceErrorResponse.fromJS(resultData500);
+            return throwException("Server Error", status, _responseText, _headers, result500);
+
+        } else if (status !== 200 && status !== 204) {
+            const _responseText = response.data;
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+        }
+        return Promise.resolve<AnalysisUpdateStatusDto>(null as any);
+    }
+}
+
 export class BacktestHistoryClient {
     protected instance: AxiosInstance;
     protected baseUrl: string;
@@ -8003,9 +8203,12 @@ export class StockPriceClient {
      * @param stockCode (optional) 
      * @param days (optional) 
      * @param fullHistory (optional) 
+     * @param source (optional) 
+     * @param startDate (optional) 
+     * @param endDate (optional) 
      * @return Success
      */
-    stockPriceRefreshStockPriceFromYahoo(stockCode: string | undefined, days: number | undefined, fullHistory: boolean | undefined, cancelToken?: CancelToken): Promise<RefreshStockPriceResponseDto> {
+    stockPriceRefreshStockPriceFromYahoo(stockCode: string | undefined, days: number | undefined, fullHistory: boolean | undefined, source: string | undefined, startDate: Date | undefined, endDate: Date | undefined, cancelToken?: CancelToken): Promise<RefreshStockPriceResponseDto> {
         let url_ = this.baseUrl + "/api/app/stock-price/refresh-stock-price-from-yahoo?";
         if (stockCode === null)
             throw new Error("The parameter 'stockCode' cannot be null.");
@@ -8019,6 +8222,18 @@ export class StockPriceClient {
             throw new Error("The parameter 'fullHistory' cannot be null.");
         else if (fullHistory !== undefined)
             url_ += "fullHistory=" + encodeURIComponent("" + fullHistory) + "&";
+        if (source === null)
+            throw new Error("The parameter 'source' cannot be null.");
+        else if (source !== undefined)
+            url_ += "source=" + encodeURIComponent("" + source) + "&";
+        if (startDate === null)
+            throw new Error("The parameter 'startDate' cannot be null.");
+        else if (startDate !== undefined)
+            url_ += "startDate=" + encodeURIComponent(startDate ? "" + startDate.toISOString() : "") + "&";
+        if (endDate === null)
+            throw new Error("The parameter 'endDate' cannot be null.");
+        else if (endDate !== undefined)
+            url_ += "endDate=" + encodeURIComponent(endDate ? "" + endDate.toISOString() : "") + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: AxiosRequestConfig = {
@@ -11760,6 +11975,106 @@ export interface IActionApiDescriptionModel {
     implementFrom?: string | undefined;
 }
 
+export class AnalysisRebuildSummaryDto implements IAnalysisRebuildSummaryDto {
+    acceptedDailyRows?: number;
+    skippedDailyRows?: number;
+    skippedRows?: SkippedAnalysisRowDto[] | undefined;
+
+    constructor(data?: IAnalysisRebuildSummaryDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.acceptedDailyRows = _data["acceptedDailyRows"];
+            this.skippedDailyRows = _data["skippedDailyRows"];
+            if (Array.isArray(_data["skippedRows"])) {
+                this.skippedRows = [] as any;
+                for (let item of _data["skippedRows"])
+                    this.skippedRows!.push(SkippedAnalysisRowDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): AnalysisRebuildSummaryDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new AnalysisRebuildSummaryDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["acceptedDailyRows"] = this.acceptedDailyRows;
+        data["skippedDailyRows"] = this.skippedDailyRows;
+        if (Array.isArray(this.skippedRows)) {
+            data["skippedRows"] = [];
+            for (let item of this.skippedRows)
+                data["skippedRows"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IAnalysisRebuildSummaryDto {
+    acceptedDailyRows?: number;
+    skippedDailyRows?: number;
+    skippedRows?: SkippedAnalysisRowDto[] | undefined;
+}
+
+export class AnalysisUpdateStatusDto implements IAnalysisUpdateStatusDto {
+    id?: string | undefined;
+    state?: string | undefined;
+    message?: string | undefined;
+    summary?: AnalysisRebuildSummaryDto;
+
+    constructor(data?: IAnalysisUpdateStatusDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.state = _data["state"];
+            this.message = _data["message"];
+            this.summary = _data["summary"] ? AnalysisRebuildSummaryDto.fromJS(_data["summary"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): AnalysisUpdateStatusDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new AnalysisUpdateStatusDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["state"] = this.state;
+        data["message"] = this.message;
+        data["summary"] = this.summary ? this.summary.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IAnalysisUpdateStatusDto {
+    id?: string | undefined;
+    state?: string | undefined;
+    message?: string | undefined;
+    summary?: AnalysisRebuildSummaryDto;
+}
+
 export class ApplicationApiDescriptionModel implements IApplicationApiDescriptionModel {
     modules?: { [key: string]: ModuleApiDescriptionModel; } | undefined;
     types?: { [key: string]: TypeApiDescriptionModel; } | undefined;
@@ -15321,6 +15636,7 @@ export interface IModuleExtensionDto {
 
 export class MoverEntryDto implements IMoverEntryDto {
     code?: string | undefined;
+    currencyCode?: string | undefined;
     name?: string | undefined;
     currentPrice?: number;
     previousPrice?: number;
@@ -15338,6 +15654,7 @@ export class MoverEntryDto implements IMoverEntryDto {
     init(_data?: any) {
         if (_data) {
             this.code = _data["code"];
+            this.currencyCode = _data["currencyCode"];
             this.name = _data["name"];
             this.currentPrice = _data["currentPrice"];
             this.previousPrice = _data["previousPrice"];
@@ -15355,6 +15672,7 @@ export class MoverEntryDto implements IMoverEntryDto {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["code"] = this.code;
+        data["currencyCode"] = this.currencyCode;
         data["name"] = this.name;
         data["currentPrice"] = this.currentPrice;
         data["previousPrice"] = this.previousPrice;
@@ -15365,6 +15683,7 @@ export class MoverEntryDto implements IMoverEntryDto {
 
 export interface IMoverEntryDto {
     code?: string | undefined;
+    currencyCode?: string | undefined;
     name?: string | undefined;
     currentPrice?: number;
     previousPrice?: number;
@@ -17796,6 +18115,8 @@ export class SimulationRecommendedParametersDto implements ISimulationRecommende
     coefficientAllowed?: number;
     investTriggerRate?: number;
     lossCutRate?: number;
+    timeSeriesMomentumLookbackSessions?: number;
+    portfolioNumber?: number;
 
     constructor(data?: ISimulationRecommendedParametersDto) {
         if (data) {
@@ -17812,6 +18133,8 @@ export class SimulationRecommendedParametersDto implements ISimulationRecommende
             this.coefficientAllowed = _data["coefficientAllowed"];
             this.investTriggerRate = _data["investTriggerRate"];
             this.lossCutRate = _data["lossCutRate"];
+            this.timeSeriesMomentumLookbackSessions = _data["timeSeriesMomentumLookbackSessions"];
+            this.portfolioNumber = _data["portfolioNumber"];
         }
     }
 
@@ -17828,6 +18151,8 @@ export class SimulationRecommendedParametersDto implements ISimulationRecommende
         data["coefficientAllowed"] = this.coefficientAllowed;
         data["investTriggerRate"] = this.investTriggerRate;
         data["lossCutRate"] = this.lossCutRate;
+        data["timeSeriesMomentumLookbackSessions"] = this.timeSeriesMomentumLookbackSessions;
+        data["portfolioNumber"] = this.portfolioNumber;
         return data;
     }
 }
@@ -17837,6 +18162,8 @@ export interface ISimulationRecommendedParametersDto {
     coefficientAllowed?: number;
     investTriggerRate?: number;
     lossCutRate?: number;
+    timeSeriesMomentumLookbackSessions?: number;
+    portfolioNumber?: number;
 }
 
 export class SimulationRequestDto implements ISimulationRequestDto {
@@ -17845,6 +18172,7 @@ export class SimulationRequestDto implements ISimulationRequestDto {
     startDate?: Date;
     endDate?: Date;
     analysisPeriod?: number;
+    timeSeriesMomentumLookbackSessions?: number;
     coefficientAllowed?: number;
     investTriggerRate?: number;
     lossCutRate?: number;
@@ -17877,6 +18205,7 @@ export class SimulationRequestDto implements ISimulationRequestDto {
             this.startDate = _data["startDate"] ? new Date(_data["startDate"].toString()) : <any>undefined;
             this.endDate = _data["endDate"] ? new Date(_data["endDate"].toString()) : <any>undefined;
             this.analysisPeriod = _data["analysisPeriod"];
+            this.timeSeriesMomentumLookbackSessions = _data["timeSeriesMomentumLookbackSessions"];
             this.coefficientAllowed = _data["coefficientAllowed"];
             this.investTriggerRate = _data["investTriggerRate"];
             this.lossCutRate = _data["lossCutRate"];
@@ -17913,6 +18242,7 @@ export class SimulationRequestDto implements ISimulationRequestDto {
         data["startDate"] = this.startDate ? this.startDate.toISOString() : <any>undefined;
         data["endDate"] = this.endDate ? this.endDate.toISOString() : <any>undefined;
         data["analysisPeriod"] = this.analysisPeriod;
+        data["timeSeriesMomentumLookbackSessions"] = this.timeSeriesMomentumLookbackSessions;
         data["coefficientAllowed"] = this.coefficientAllowed;
         data["investTriggerRate"] = this.investTriggerRate;
         data["lossCutRate"] = this.lossCutRate;
@@ -17942,6 +18272,7 @@ export interface ISimulationRequestDto {
     startDate?: Date;
     endDate?: Date;
     analysisPeriod?: number;
+    timeSeriesMomentumLookbackSessions?: number;
     coefficientAllowed?: number;
     investTriggerRate?: number;
     lossCutRate?: number;
@@ -17965,6 +18296,7 @@ export class SimulationResultDto implements ISimulationResultDto {
     strategyId?: number | undefined;
     summary?: SimulationSummaryDto;
     errorMessage?: string | undefined;
+    excludedStocks?: SimulationStockExclusionDto[] | undefined;
     requestedAt?: Date;
     completedAt?: Date | undefined;
 
@@ -17984,6 +18316,11 @@ export class SimulationResultDto implements ISimulationResultDto {
             this.strategyId = _data["strategyId"];
             this.summary = _data["summary"] ? SimulationSummaryDto.fromJS(_data["summary"]) : <any>undefined;
             this.errorMessage = _data["errorMessage"];
+            if (Array.isArray(_data["excludedStocks"])) {
+                this.excludedStocks = [] as any;
+                for (let item of _data["excludedStocks"])
+                    this.excludedStocks!.push(SimulationStockExclusionDto.fromJS(item));
+            }
             this.requestedAt = _data["requestedAt"] ? new Date(_data["requestedAt"].toString()) : <any>undefined;
             this.completedAt = _data["completedAt"] ? new Date(_data["completedAt"].toString()) : <any>undefined;
         }
@@ -18003,6 +18340,11 @@ export class SimulationResultDto implements ISimulationResultDto {
         data["strategyId"] = this.strategyId;
         data["summary"] = this.summary ? this.summary.toJSON() : <any>undefined;
         data["errorMessage"] = this.errorMessage;
+        if (Array.isArray(this.excludedStocks)) {
+            data["excludedStocks"] = [];
+            for (let item of this.excludedStocks)
+                data["excludedStocks"].push(item.toJSON());
+        }
         data["requestedAt"] = this.requestedAt ? this.requestedAt.toISOString() : <any>undefined;
         data["completedAt"] = this.completedAt ? this.completedAt.toISOString() : <any>undefined;
         return data;
@@ -18015,8 +18357,61 @@ export interface ISimulationResultDto {
     strategyId?: number | undefined;
     summary?: SimulationSummaryDto;
     errorMessage?: string | undefined;
+    excludedStocks?: SimulationStockExclusionDto[] | undefined;
     requestedAt?: Date;
     completedAt?: Date | undefined;
+}
+
+export class SimulationStockExclusionDto implements ISimulationStockExclusionDto {
+    stockCode?: string | undefined;
+    tradeDate?: Date;
+    ruleId?: string | undefined;
+    severity?: string | undefined;
+    reason?: string | undefined;
+
+    constructor(data?: ISimulationStockExclusionDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.stockCode = _data["stockCode"];
+            this.tradeDate = _data["tradeDate"] ? new Date(_data["tradeDate"].toString()) : <any>undefined;
+            this.ruleId = _data["ruleId"];
+            this.severity = _data["severity"];
+            this.reason = _data["reason"];
+        }
+    }
+
+    static fromJS(data: any): SimulationStockExclusionDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SimulationStockExclusionDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["stockCode"] = this.stockCode;
+        data["tradeDate"] = this.tradeDate ? this.tradeDate.toISOString() : <any>undefined;
+        data["ruleId"] = this.ruleId;
+        data["severity"] = this.severity;
+        data["reason"] = this.reason;
+        return data;
+    }
+}
+
+export interface ISimulationStockExclusionDto {
+    stockCode?: string | undefined;
+    tradeDate?: Date;
+    ruleId?: string | undefined;
+    severity?: string | undefined;
+    reason?: string | undefined;
 }
 
 export class SimulationStrategyDto implements ISimulationStrategyDto {
@@ -18143,9 +18538,54 @@ export interface ISimulationSummaryDto {
     trades?: TradeDetailDto[] | undefined;
 }
 
+export class SkippedAnalysisRowDto implements ISkippedAnalysisRowDto {
+    stockCode?: string | undefined;
+    tradeDate?: Date;
+    reason?: string | undefined;
+
+    constructor(data?: ISkippedAnalysisRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.stockCode = _data["stockCode"];
+            this.tradeDate = _data["tradeDate"] ? new Date(_data["tradeDate"].toString()) : <any>undefined;
+            this.reason = _data["reason"];
+        }
+    }
+
+    static fromJS(data: any): SkippedAnalysisRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SkippedAnalysisRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["stockCode"] = this.stockCode;
+        data["tradeDate"] = this.tradeDate ? this.tradeDate.toISOString() : <any>undefined;
+        data["reason"] = this.reason;
+        return data;
+    }
+}
+
+export interface ISkippedAnalysisRowDto {
+    stockCode?: string | undefined;
+    tradeDate?: Date;
+    reason?: string | undefined;
+}
+
 export class StockChartDto implements IStockChartDto {
     id?: number;
     name?: string | undefined;
+    currencyCode?: string | undefined;
     date?: Date;
     adjClosePrice?: number;
 
@@ -18162,6 +18602,7 @@ export class StockChartDto implements IStockChartDto {
         if (_data) {
             this.id = _data["id"];
             this.name = _data["name"];
+            this.currencyCode = _data["currencyCode"];
             this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
             this.adjClosePrice = _data["adjClosePrice"];
         }
@@ -18178,6 +18619,7 @@ export class StockChartDto implements IStockChartDto {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["name"] = this.name;
+        data["currencyCode"] = this.currencyCode;
         data["date"] = this.date ? this.date.toISOString() : <any>undefined;
         data["adjClosePrice"] = this.adjClosePrice;
         return data;
@@ -18187,6 +18629,7 @@ export class StockChartDto implements IStockChartDto {
 export interface IStockChartDto {
     id?: number;
     name?: string | undefined;
+    currencyCode?: string | undefined;
     date?: Date;
     adjClosePrice?: number;
 }
@@ -18196,6 +18639,7 @@ export class StockInfoDto implements IStockInfoDto {
     name?: string | undefined;
     dateIncluded?: Date | undefined;
     country?: string | undefined;
+    currencyCode?: string | undefined;
     enabled?: boolean;
     modifiedAt?: Date | undefined;
 
@@ -18214,6 +18658,7 @@ export class StockInfoDto implements IStockInfoDto {
             this.name = _data["name"];
             this.dateIncluded = _data["dateIncluded"] ? new Date(_data["dateIncluded"].toString()) : <any>undefined;
             this.country = _data["country"];
+            this.currencyCode = _data["currencyCode"];
             this.enabled = _data["enabled"];
             this.modifiedAt = _data["modifiedAt"] ? new Date(_data["modifiedAt"].toString()) : <any>undefined;
         }
@@ -18232,6 +18677,7 @@ export class StockInfoDto implements IStockInfoDto {
         data["name"] = this.name;
         data["dateIncluded"] = this.dateIncluded ? this.dateIncluded.toISOString() : <any>undefined;
         data["country"] = this.country;
+        data["currencyCode"] = this.currencyCode;
         data["enabled"] = this.enabled;
         data["modifiedAt"] = this.modifiedAt ? this.modifiedAt.toISOString() : <any>undefined;
         return data;
@@ -18243,6 +18689,7 @@ export interface IStockInfoDto {
     name?: string | undefined;
     dateIncluded?: Date | undefined;
     country?: string | undefined;
+    currencyCode?: string | undefined;
     enabled?: boolean;
     modifiedAt?: Date | undefined;
 }
@@ -18250,6 +18697,7 @@ export interface IStockInfoDto {
 export class StockPriceDto implements IStockPriceDto {
     id?: number;
     code?: string | undefined;
+    currencyCode?: string | undefined;
     name?: string | undefined;
     currentPrice?: number;
     date?: Date;
@@ -18273,6 +18721,7 @@ export class StockPriceDto implements IStockPriceDto {
         if (_data) {
             this.id = _data["id"];
             this.code = _data["code"];
+            this.currencyCode = _data["currencyCode"];
             this.name = _data["name"];
             this.currentPrice = _data["currentPrice"];
             this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
@@ -18296,6 +18745,7 @@ export class StockPriceDto implements IStockPriceDto {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["code"] = this.code;
+        data["currencyCode"] = this.currencyCode;
         data["name"] = this.name;
         data["currentPrice"] = this.currentPrice;
         data["date"] = this.date ? this.date.toISOString() : <any>undefined;
@@ -18312,6 +18762,7 @@ export class StockPriceDto implements IStockPriceDto {
 export interface IStockPriceDto {
     id?: number;
     code?: string | undefined;
+    currencyCode?: string | undefined;
     name?: string | undefined;
     currentPrice?: number;
     date?: Date;

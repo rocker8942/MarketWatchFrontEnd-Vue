@@ -1,22 +1,13 @@
 <template>
-  <div class="page-container">
+  <div class="data-workspace">
     <div class="content-wrapper">
-      <PageHeader
-        title="Run Simulation"
-        subtitle="Execute trading strategy simulations using historical data"
-      />
-      <!-- Configuration Form -->
-      <el-card class="config-card">
-        <template #header>
-          <div class="card-header">
-            <span class="card-title">Simulation Configuration</span>
-          </div>
-        </template>
+      <PageHeader title="Run Simulation" />
 
+      <el-card class="config-card">
         <el-form :model="formData" label-position="top" :disabled="running">
-          <el-row :gutter="24">
+          <el-row :gutter="12">
             <!-- Strategy Type -->
-            <el-col :span="12">
+            <el-col :xs="12" :sm="6">
               <el-form-item label="Strategy Type" required>
                 <el-select
                   v-model="formData.strategyType"
@@ -42,7 +33,7 @@
             </el-col>
 
             <!-- Country -->
-            <el-col :span="12">
+            <el-col :xs="12" :sm="6">
               <el-form-item label="Country" required>
                 <el-select
                   v-model="formData.country"
@@ -59,129 +50,8 @@
               </el-form-item>
             </el-col>
 
-            <!-- Section: Strategy-Specific Settings -->
-            <el-col
-              :span="24"
-              v-if="isMeanReversionStrategy || isIndicatorMode || isTimeSeriesMomentumStrategy"
-            >
-              <div class="form-section-divider">
-                <span class="form-section-label"
-                  >Strategy-Specific Settings</span
-                >
-              </div>
-            </el-col>
-
-            <el-col :span="12" v-if="isTimeSeriesMomentumStrategy">
-              <el-form-item label="Momentum Lookback (sessions)" required>
-                <el-input-number
-                  v-model="formData.timeSeriesMomentumLookbackSessions"
-                  :min="1"
-                  :max="1000"
-                  style="width: 100%"
-                />
-                <span class="form-hint" style="display: block; margin-top: 0.5rem">
-                  Trailing sessions used to measure each stock’s own trend. The default is 252.
-                </span>
-              </el-form-item>
-            </el-col>
-
-            <!-- Strategy Configuration Type - Pair-Trading sub-options (MeanReversion only) -->
-            <el-col :span="24" v-if="isMeanReversionStrategy">
-              <el-form-item label="Analysis Method" required>
-                <el-radio-group
-                  v-model="formData.analysisMethod"
-                  @change="onAnalysisMethodChanged"
-                >
-                  <el-radio :value="0">
-                    <div style="display: inline-block">
-                      <div style="font-weight: 500">Correlation</div>
-                      <div
-                        style="
-                          font-size: 0.75rem;
-                          color: var(--color-text-secondary);
-                        "
-                      >
-                        Measures synchronous co-movement between stocks (-1 to
-                        1)
-                      </div>
-                    </div>
-                  </el-radio>
-                  <el-radio :value="1" style="margin-top: 0.5rem">
-                    <div style="display: inline-block">
-                      <div style="font-weight: 500">Cointegration</div>
-                      <div
-                        style="
-                          font-size: 0.75rem;
-                          color: var(--color-text-secondary);
-                        "
-                      >
-                        Identifies long-term equilibrium relationships
-                        (statistical pairs trading)
-                      </div>
-                    </div>
-                  </el-radio>
-                </el-radio-group>
-              </el-form-item>
-            </el-col>
-
-            <!-- Indicator Configuration (IndicatorBased Strategy Only) -->
-            <el-col :span="12" v-if="isIndicatorMode">
-              <el-form-item label="Primary Indicator" required>
-                <el-select
-                  v-model="formData.primaryIndicator"
-                  placeholder="Select indicator"
-                  style="width: 100%"
-                  @change="onIndicatorChanged"
-                >
-                  <el-option
-                    v-for="indicator in indicatorOptions"
-                    :key="indicator.value"
-                    :label="indicator.label"
-                    :value="indicator.value"
-                  >
-                    <div class="indicator-option">
-                      <span class="indicator-name">{{ indicator.label }}</span>
-                      <span class="indicator-desc">{{
-                        indicator.description
-                      }}</span>
-                    </div>
-                  </el-option>
-                </el-select>
-                <span
-                  class="form-hint"
-                  style="display: block; margin-top: 0.5rem"
-                >
-                  Choose the technical indicator for entry/exit signals
-                </span>
-              </el-form-item>
-            </el-col>
-
-            <el-col :span="12" v-if="isIndicatorMode">
-              <el-form-item label="Indicator Period" required>
-                <el-input-number
-                  v-model="formData.indicatorPeriod"
-                  :min="2"
-                  :max="200"
-                  style="width: 100%"
-                />
-                <span
-                  class="form-hint"
-                  style="display: block; margin-top: 0.5rem"
-                >
-                  Number of periods for indicator calculation
-                </span>
-              </el-form-item>
-            </el-col>
-
-            <!-- Section: Simulation Parameters -->
-            <el-col :span="24">
-              <div class="form-section-divider">
-                <span class="form-section-label">Simulation Parameters</span>
-              </div>
-            </el-col>
-
             <!-- Date Range -->
-            <el-col :span="12">
+            <el-col :xs="12" :sm="6">
               <el-form-item label="Start Date" required>
                 <el-date-picker
                   v-model="formData.startDate"
@@ -193,7 +63,7 @@
               </el-form-item>
             </el-col>
 
-            <el-col :span="12">
+            <el-col :xs="12" :sm="6">
               <el-form-item label="End Date" required>
                 <el-date-picker
                   v-model="formData.endDate"
@@ -204,223 +74,352 @@
                 />
               </el-form-item>
             </el-col>
-
-            <!-- Analysis Period -->
-            <el-col :span="8" v-if="!isTimeSeriesMomentumStrategy">
-              <el-form-item label="Analysis Period (days)" required>
-                <el-input-number
-                  v-model="formData.analysisPeriod"
-                  :min="1"
-                  :max="365"
-                  style="width: 100%"
-                />
-              </el-form-item>
-            </el-col>
-
-            <!-- Coefficient Allowed (Pair-Trading Only) -->
-            <el-col :span="8" v-if="isPairTradingMode">
-              <el-form-item :label="coefficientAllowedLabel" required>
-                <el-input-number
-                  v-model="formData.coefficientAllowed"
-                  :min="coefficientAllowedMin"
-                  :max="coefficientAllowedMax"
-                  :step="coefficientAllowedStep"
-                  :precision="coefficientAllowedPrecision"
-                  style="width: 100%"
-                />
-                <span
-                  class="form-hint"
-                  style="display: block; margin-top: 0.5rem"
-                >
-                  {{ coefficientAllowedHint }}
-                </span>
-              </el-form-item>
-            </el-col>
-
-            <!-- Portfolio Number -->
-            <el-col :span="8">
-              <el-form-item label="Portfolio Size" required>
-                <el-input-number
-                  v-model="formData.portfolioNumber"
-                  :min="1"
-                  :max="isTimeSeriesMomentumStrategy ? 10 : 100"
-                  style="width: 100%"
-                />
-              </el-form-item>
-            </el-col>
-
-            <!-- Invest Trigger Rate / Indicator Threshold -->
-            <el-col :span="8" v-if="!isTimeSeriesMomentumStrategy">
-              <el-form-item :label="investTriggerRateLabel" required>
-                <el-input-number
-                  v-model="formData.investTriggerRate"
-                  :min="investTriggerRateMin"
-                  :max="investTriggerRateMax"
-                  :step="investTriggerRateStep"
-                  :precision="investTriggerRatePrecision"
-                  style="width: 100%"
-                />
-                <span
-                  class="form-hint"
-                  style="display: block; margin-top: 0.5rem"
-                >
-                  {{ investTriggerRateHint }}
-                </span>
-              </el-form-item>
-            </el-col>
-
-            <!-- Loss Cut Rate -->
-            <el-col :span="8" v-if="!isTimeSeriesMomentumStrategy">
-              <el-form-item label="Stop Loss (%)" required>
-                <el-input-number
-                  v-model="formData.lossCutRate"
-                  :min="-1"
-                  :max="0"
-                  :step="0.01"
-                  :precision="2"
-                  style="width: 100%"
-                />
-              </el-form-item>
-            </el-col>
-
-            <!-- Trade Fee -->
-            <el-col :span="8">
-              <el-form-item label="Trade Fee (%)" required>
-                <el-input-number
-                  v-model="formData.tradeFee"
-                  :min="0"
-                  :max="1"
-                  :step="0.001"
-                  :precision="3"
-                  style="width: 100%"
-                />
-              </el-form-item>
-            </el-col>
-
-            <!-- Slippage -->
-            <el-col :span="8">
-              <el-form-item label="Slippage (%)" required>
-                <el-input-number
-                  v-model="formData.slippage"
-                  :min="0"
-                  :max="1"
-                  :step="0.001"
-                  :precision="3"
-                  style="width: 100%"
-                />
-              </el-form-item>
-            </el-col>
-
-            <!-- Trend Filter -->
-            <el-col :span="8" v-if="!isTimeSeriesMomentumStrategy">
-              <el-form-item label="Use Trend Filter">
-                <el-switch v-model="formData.useTrendFilter" />
-                <span
-                  class="form-hint"
-                  style="display: block; margin-top: 0.5rem"
-                >
-                  Filter trades based on market trend direction
-                </span>
-              </el-form-item>
-            </el-col>
-
-            <!-- Trend Filter Threshold -->
-            <el-col :span="8" v-if="!isTimeSeriesMomentumStrategy">
-              <el-form-item label="Trend Filter Threshold" required>
-                <el-input-number
-                  v-model="formData.trendFilterThreshold"
-                  :min="0"
-                  :max="1"
-                  :step="0.01"
-                  :precision="2"
-                  :disabled="!formData.useTrendFilter"
-                  style="width: 100%"
-                />
-                <span
-                  class="form-hint"
-                  style="display: block; margin-top: 0.5rem"
-                >
-                  Threshold for trend strength (0-1)
-                </span>
-              </el-form-item>
-            </el-col>
-
-            <!-- Section: Stock Selection -->
-            <el-col :span="24">
-              <div class="form-section-divider">
-                <span class="form-section-label">Stock Selection</span>
-              </div>
-            </el-col>
-
-            <!-- Stock Codes -->
-            <el-col :span="24">
-              <el-form-item label="Stock Codes">
-                <div class="stock-selection-header">
-                  <el-button size="small" @click="selectTopStocks"
-                    >Select Top 20 Stocks</el-button
-                  >
-                  <el-button size="small" @click="clearStocks"
-                    >Clear Selection</el-button
-                  >
-                </div>
-                <el-select
-                  v-model="formData.stockCodes"
-                  multiple
-                  filterable
-                  allow-create
-                  default-first-option
-                  placeholder="Select stocks or leave empty to use all available stocks"
-                  style="width: 100%; margin-top: 0.5rem"
-                >
-                  <el-option
-                    v-for="stock in filteredStocks"
-                    :key="stock.code"
-                    :label="`${stock.code} - ${stock.name}`"
-                    :value="stock.code"
-                  />
-                </el-select>
-                <div class="form-hint">
-                  Optional: Select specific stocks to test, or leave empty to
-                  use all available stocks in the selected country. Selected:
-                  {{
-                    formData.stockCodes.length > 0
-                      ? formData.stockCodes.length
-                      : "All"
-                  }}
-                  stocks
-                </div>
-              </el-form-item>
-            </el-col>
-
-            <!-- Run Async -->
-            <el-col :span="24">
-              <el-form-item label="Execution Mode">
-                <el-radio-group v-model="formData.runAsync">
-                  <el-radio :value="true"
-                    >Asynchronous (recommended for long simulations)</el-radio
-                  >
-                  <el-radio :value="false"
-                    >Synchronous (wait for completion)</el-radio
-                  >
-                </el-radio-group>
-              </el-form-item>
-            </el-col>
-
-            <!-- Action Buttons -->
-            <el-col :span="24">
-              <div class="action-buttons">
-                <el-button @click="resetForm">Reset</el-button>
-                <el-button
-                  type="primary"
-                  :loading="running"
-                  @click="runSimulation"
-                >
-                  <el-icon v-if="!running"><VideoPlay /></el-icon>
-                  {{ running ? "Running..." : "Run Simulation" }}
-                </el-button>
-              </div>
-            </el-col>
           </el-row>
+
+          <div class="action-buttons">
+            <div class="applied-settings">
+              {{ formData.portfolioNumber }} positions
+              · {{ formData.stockCodes.length ? formData.stockCodes.length + " selected stocks" : "All available stocks" }}
+              · {{ formData.runAsync ? "Asynchronous" : "Synchronous" }}
+            </div>
+            <el-button @click="resetForm">Reset</el-button>
+            <el-button
+              type="primary"
+              :loading="running"
+              :disabled="!strategies.length || !countries.length"
+              @click="runSimulation"
+            >
+              <el-icon v-if="!running"><VideoPlay /></el-icon>
+              {{ running ? "Running..." : "Run Simulation" }}
+            </el-button>
+          </div>
+
+          <details ref="simulationParameters" class="form-details">
+            <summary>Strategy parameters and execution settings</summary>
+            <el-row :gutter="12">
+              <!-- Section: Strategy-Specific Settings -->
+              <el-col
+                :span="24"
+                v-if="isMeanReversionStrategy || isIndicatorMode || isTimeSeriesMomentumStrategy"
+              >
+                <div class="form-section-divider">
+                  <span class="form-section-label"
+                    >Strategy-Specific Settings</span
+                  >
+                </div>
+              </el-col>
+
+              <el-col :xs="24" :sm="12" v-if="isTimeSeriesMomentumStrategy">
+                <el-form-item label="Momentum Lookback (sessions)" required>
+                  <el-input-number
+                    v-model="formData.timeSeriesMomentumLookbackSessions"
+                    :min="1"
+                    :max="1000"
+                    style="width: 100%"
+                  />
+                  <span class="form-hint" style="display: block; margin-top: 0.5rem">
+                    Trailing sessions used to measure each stock’s own trend. The default is 252.
+                  </span>
+                </el-form-item>
+              </el-col>
+
+              <!-- Strategy Configuration Type - Pair-Trading sub-options (MeanReversion only) -->
+              <el-col :span="24" v-if="isMeanReversionStrategy">
+                <el-form-item label="Analysis Method" required>
+                  <el-radio-group
+                    v-model="formData.analysisMethod"
+                    @change="onAnalysisMethodChanged"
+                  >
+                    <el-radio :value="0">
+                      <div style="display: inline-block">
+                        <div style="font-weight: 500">Correlation</div>
+                        <div
+                          style="
+                            font-size: 0.75rem;
+                            color: var(--color-text-secondary);
+                          "
+                        >
+                          Measures synchronous co-movement between stocks (-1 to
+                          1)
+                        </div>
+                      </div>
+                    </el-radio>
+                    <el-radio :value="1" style="margin-top: 0.5rem">
+                      <div style="display: inline-block">
+                        <div style="font-weight: 500">Cointegration</div>
+                        <div
+                          style="
+                            font-size: 0.75rem;
+                            color: var(--color-text-secondary);
+                          "
+                        >
+                          Identifies long-term equilibrium relationships
+                          (statistical pairs trading)
+                        </div>
+                      </div>
+                    </el-radio>
+                  </el-radio-group>
+                </el-form-item>
+              </el-col>
+
+              <!-- Indicator Configuration (IndicatorBased Strategy Only) -->
+              <el-col :xs="24" :sm="12" v-if="isIndicatorMode">
+                <el-form-item label="Primary Indicator" required>
+                  <el-select
+                    v-model="formData.primaryIndicator"
+                    placeholder="Select indicator"
+                    style="width: 100%"
+                    @change="onIndicatorChanged"
+                  >
+                    <el-option
+                      v-for="indicator in indicatorOptions"
+                      :key="indicator.value"
+                      :label="indicator.label"
+                      :value="indicator.value"
+                    >
+                      <div class="indicator-option">
+                        <span class="indicator-name">{{ indicator.label }}</span>
+                        <span class="indicator-desc">{{
+                          indicator.description
+                        }}</span>
+                      </div>
+                    </el-option>
+                  </el-select>
+                  <span
+                    class="form-hint"
+                    style="display: block; margin-top: 0.5rem"
+                  >
+                    Choose the technical indicator for entry/exit signals
+                  </span>
+                </el-form-item>
+              </el-col>
+
+              <el-col :xs="24" :sm="12" v-if="isIndicatorMode">
+                <el-form-item label="Indicator Period" required>
+                  <el-input-number
+                    v-model="formData.indicatorPeriod"
+                    :min="2"
+                    :max="200"
+                    style="width: 100%"
+                  />
+                  <span
+                    class="form-hint"
+                    style="display: block; margin-top: 0.5rem"
+                  >
+                    Number of periods for indicator calculation
+                  </span>
+                </el-form-item>
+              </el-col>
+
+              <!-- Section: Simulation Parameters -->
+              <el-col :span="24">
+                <div class="form-section-divider">
+                  <span class="form-section-label">Simulation Parameters</span>
+                </div>
+              </el-col>
+
+              <!-- Analysis Period -->
+              <el-col :xs="12" :sm="8" :lg="6" v-if="!isTimeSeriesMomentumStrategy">
+                <el-form-item label="Analysis Period (days)" required>
+                  <el-input-number
+                    v-model="formData.analysisPeriod"
+                    :min="1"
+                    :max="365"
+                    style="width: 100%"
+                  />
+                </el-form-item>
+              </el-col>
+
+              <!-- Coefficient Allowed (Pair-Trading Only) -->
+              <el-col :xs="12" :sm="8" :lg="6" v-if="isPairTradingMode">
+                <el-form-item :label="coefficientAllowedLabel" required>
+                  <el-input-number
+                    v-model="formData.coefficientAllowed"
+                    :min="coefficientAllowedMin"
+                    :max="coefficientAllowedMax"
+                    :step="coefficientAllowedStep"
+                    :precision="coefficientAllowedPrecision"
+                    style="width: 100%"
+                  />
+                  <span
+                    class="form-hint"
+                    style="display: block; margin-top: 0.5rem"
+                  >
+                    {{ coefficientAllowedHint }}
+                  </span>
+                </el-form-item>
+              </el-col>
+
+              <!-- Portfolio Number -->
+              <el-col :xs="12" :sm="8" :lg="6">
+                <el-form-item label="Portfolio Size" required>
+                  <el-input-number
+                    v-model="formData.portfolioNumber"
+                    :min="1"
+                    :max="isTimeSeriesMomentumStrategy ? 10 : 100"
+                    style="width: 100%"
+                  />
+                </el-form-item>
+              </el-col>
+
+              <!-- Invest Trigger Rate / Indicator Threshold -->
+              <el-col :xs="12" :sm="8" :lg="6" v-if="!isTimeSeriesMomentumStrategy">
+                <el-form-item :label="investTriggerRateLabel" required>
+                  <el-input-number
+                    v-model="formData.investTriggerRate"
+                    :min="investTriggerRateMin"
+                    :max="investTriggerRateMax"
+                    :step="investTriggerRateStep"
+                    :precision="investTriggerRatePrecision"
+                    style="width: 100%"
+                  />
+                  <span
+                    class="form-hint"
+                    style="display: block; margin-top: 0.5rem"
+                  >
+                    {{ investTriggerRateHint }}
+                  </span>
+                </el-form-item>
+              </el-col>
+
+              <!-- Loss Cut Rate -->
+              <el-col :xs="12" :sm="8" :lg="6" v-if="!isTimeSeriesMomentumStrategy">
+                <el-form-item label="Stop Loss (%)" required>
+                  <el-input-number
+                    v-model="formData.lossCutRate"
+                    :min="-1"
+                    :max="0"
+                    :step="0.01"
+                    :precision="2"
+                    style="width: 100%"
+                  />
+                </el-form-item>
+              </el-col>
+
+              <!-- Trade Fee -->
+              <el-col :xs="12" :sm="8" :lg="6">
+                <el-form-item label="Trade Fee (%)" required>
+                  <el-input-number
+                    v-model="formData.tradeFee"
+                    :min="0"
+                    :max="1"
+                    :step="0.001"
+                    :precision="3"
+                    style="width: 100%"
+                  />
+                </el-form-item>
+              </el-col>
+
+              <!-- Slippage -->
+              <el-col :xs="12" :sm="8" :lg="6">
+                <el-form-item label="Slippage (%)" required>
+                  <el-input-number
+                    v-model="formData.slippage"
+                    :min="0"
+                    :max="1"
+                    :step="0.001"
+                    :precision="3"
+                    style="width: 100%"
+                  />
+                </el-form-item>
+              </el-col>
+
+              <!-- Trend Filter -->
+              <el-col :xs="12" :sm="8" :lg="6" v-if="!isTimeSeriesMomentumStrategy">
+                <el-form-item label="Use Trend Filter">
+                  <el-switch v-model="formData.useTrendFilter" />
+                  <span
+                    class="form-hint"
+                    style="display: block; margin-top: 0.5rem"
+                  >
+                    Filter trades based on market trend direction
+                  </span>
+                </el-form-item>
+              </el-col>
+
+              <!-- Trend Filter Threshold -->
+              <el-col :xs="12" :sm="8" :lg="6" v-if="!isTimeSeriesMomentumStrategy">
+                <el-form-item label="Trend Filter Threshold" required>
+                  <el-input-number
+                    v-model="formData.trendFilterThreshold"
+                    :min="0"
+                    :max="1"
+                    :step="0.01"
+                    :precision="2"
+                    :disabled="!formData.useTrendFilter"
+                    style="width: 100%"
+                  />
+                  <span
+                    class="form-hint"
+                    style="display: block; margin-top: 0.5rem"
+                  >
+                    Threshold for trend strength (0-1)
+                  </span>
+                </el-form-item>
+              </el-col>
+
+              <!-- Section: Stock Selection -->
+              <el-col :span="24">
+                <div class="form-section-divider">
+                  <span class="form-section-label">Stock Selection</span>
+                </div>
+              </el-col>
+
+              <!-- Stock Codes -->
+              <el-col :span="24">
+                <el-form-item label="Stock Codes">
+                  <div class="stock-selection-header">
+                    <el-button size="small" @click="selectTopStocks"
+                      >Select Top 20 Stocks</el-button
+                    >
+                    <el-button size="small" @click="clearStocks"
+                      >Clear Selection</el-button
+                    >
+                  </div>
+                  <el-select
+                    v-model="formData.stockCodes"
+                    multiple
+                    filterable
+                    allow-create
+                    default-first-option
+                    placeholder="Select stocks or leave empty to use all available stocks"
+                    style="width: 100%; margin-top: 0.5rem"
+                  >
+                    <el-option
+                      v-for="stock in filteredStocks"
+                      :key="stock.code"
+                      :label="`${stock.code} - ${stock.name}`"
+                      :value="stock.code"
+                    />
+                  </el-select>
+                  <div class="form-hint">
+                    Optional: Select specific stocks to test, or leave empty to
+                    use all available stocks in the selected country. Selected:
+                    {{
+                      formData.stockCodes.length > 0
+                        ? formData.stockCodes.length
+                        : "All"
+                    }}
+                    stocks
+                  </div>
+                </el-form-item>
+              </el-col>
+
+              <!-- Run Async -->
+              <el-col :span="24">
+                <el-form-item label="Execution Mode">
+                  <el-radio-group v-model="formData.runAsync">
+                    <el-radio :value="true"
+                      >Asynchronous (recommended for long simulations)</el-radio
+                    >
+                    <el-radio :value="false"
+                      >Synchronous (wait for completion)</el-radio
+                    >
+                  </el-radio-group>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </details>
         </el-form>
       </el-card>
 
@@ -444,43 +443,13 @@
           </div>
         </template>
 
-        <!-- Simulation Info -->
-        <div class="result-section">
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="info-label">Simulation ID:</span>
-              <span class="info-value">{{
-                simulationResult.simulationId
-              }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Strategy ID:</span>
-              <span class="info-value">{{ simulationResult.strategyId }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Requested At:</span>
-              <span class="info-value">{{
-                formatDateTime(simulationResult.requestedAt)
-              }}</span>
-            </div>
-            <div class="info-item" v-if="simulationResult.completedAt">
-              <span class="info-label">Completed At:</span>
-              <span class="info-value">{{
-                formatDateTime(simulationResult.completedAt)
-              }}</span>
-            </div>
-          </div>
+        <el-alert
+          v-if="simulationResult.errorMessage"
+          type="error"
+          :title="simulationResult.errorMessage"
+          :closable="false"
+        />
 
-          <el-alert
-            v-if="simulationResult.errorMessage"
-            type="error"
-            :title="simulationResult.errorMessage"
-            :closable="false"
-            style="margin-top: 1rem"
-          />
-        </div>
-
-        <!-- Performance Summary -->
         <div v-if="simulationResult.summary" class="result-section">
           <h3 class="section-title">Performance Metrics</h3>
 
@@ -491,7 +460,7 @@
                 class="metric-value"
                 :class="getReturnClass(simulationResult.summary.totalReturn)"
               >
-                {{ formatPercentage(simulationResult.summary.totalReturn) }}
+                {{ formatPercentage(simulationResult.summary.totalReturn, true) }}
               </div>
             </div>
 
@@ -504,7 +473,7 @@
                 "
               >
                 {{
-                  formatPercentage(simulationResult.summary.annualizedReturn)
+                  formatPercentage(simulationResult.summary.annualizedReturn, true)
                 }}
               </div>
             </div>
@@ -553,6 +522,11 @@
           </div>
         </div>
 
+        <details v-if="simulationResult.excludedStocks?.length" class="result-details">
+          <summary>Skipped price rows ({{ simulationResult.excludedStocks.length }})</summary>
+          <SimulationExclusions :exclusions="simulationResult.excludedStocks" />
+        </details>
+
         <!-- Trade Details -->
         <div
           v-if="
@@ -561,11 +535,24 @@
           "
           class="result-section"
         >
-          <h3 class="section-title">
-            Trade History ({{ simulationResult.summary.trades.length }} trades)
-          </h3>
+          <h3 class="section-title">Trade History ({{ simulationResult.summary.trades.length }})</h3>
 
-          <el-table :data="paginatedTrades" stripe class="trades-table">
+          <el-table :data="paginatedTrades" stripe class="trades-table compact-table" size="small">
+            <el-table-column v-if="resultIsPairTrading" label="Leader / follower" min-width="160" show-overflow-tooltip>
+              <template #default="{ row }">
+                {{ row.leaderCode || "—" }} / {{ row.followerCode || "—" }}
+              </template>
+            </el-table-column>
+            <el-table-column v-else label="Stock" prop="leaderCode" min-width="100" show-overflow-tooltip />
+
+            <el-table-column label="Return" min-width="100" align="right">
+              <template #default="scope">
+                <span :class="getReturnClass(scope.row.return)">
+                  {{ formatPercentage(scope.row.return, true) }}
+                </span>
+              </template>
+            </el-table-column>
+
             <el-table-column label="Entry Date" min-width="120">
               <template #default="scope">
                 {{ formatDate(scope.row.entryDate) }}
@@ -578,44 +565,15 @@
               </template>
             </el-table-column>
 
-            <!-- Pair-trading: Leader & Follower columns -->
-            <el-table-column
-              v-if="isPairTradingMode"
-              label="Leader"
-              prop="leaderCode"
-              min-width="100"
-            />
-            <el-table-column
-              v-if="isPairTradingMode"
-              label="Follower"
-              prop="followerCode"
-              min-width="100"
-            />
-            <!-- Single-stock strategies: Stock column -->
-            <el-table-column
-              v-if="!isPairTradingMode"
-              label="Stock"
-              prop="leaderCode"
-              min-width="100"
-            />
-
             <el-table-column label="Entry Price" min-width="110" align="right">
               <template #default="scope">
-                ${{ formatNumber(scope.row.entryPrice) }}
+                {{ formatNumber(scope.row.entryPrice) }}
               </template>
             </el-table-column>
 
             <el-table-column label="Exit Price" min-width="110" align="right">
               <template #default="scope">
-                ${{ formatNumber(scope.row.exitPrice) }}
-              </template>
-            </el-table-column>
-
-            <el-table-column label="Return" min-width="100" align="right">
-              <template #default="scope">
-                <span :class="getReturnClass(scope.row.return)">
-                  {{ formatPercentage(scope.row.return) }}
-                </span>
+                {{ formatNumber(scope.row.exitPrice) }}
               </template>
             </el-table-column>
 
@@ -633,10 +591,39 @@
               :page-sizes="[10, 25, 50, 100]"
               :total="simulationResult.summary.trades.length"
               layout="total, sizes, prev, pager, next"
+              :pager-count="5"
               background
             />
           </div>
         </div>
+
+        <details class="result-details">
+          <summary>Run details</summary>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Simulation ID:</span>
+              <span class="info-value">{{
+                simulationResult.simulationId
+              }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Strategy ID:</span>
+              <span class="info-value">{{ simulationResult.strategyId }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Requested At:</span>
+              <span class="info-value">{{
+                formatDateTime(simulationResult.requestedAt)
+              }}</span>
+            </div>
+            <div class="info-item" v-if="simulationResult.completedAt">
+              <span class="info-label">Completed At:</span>
+              <span class="info-value">{{
+                formatDateTime(simulationResult.completedAt)
+              }}</span>
+            </div>
+          </div>
+        </details>
       </el-card>
     </div>
   </div>
@@ -644,6 +631,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import SimulationExclusions from "@/components/SimulationExclusions.vue";
+import type { SimulationStockExclusion } from "@/components/SimulationExclusions.vue";
 import PageHeader from "@/components/PageHeader.vue";
 import { VideoPlay } from "@element-plus/icons-vue";
 import {
@@ -715,6 +704,7 @@ interface SimulationResult {
   strategyId?: number;
   summary: SimulationSummary | null;
   errorMessage: string | null;
+  excludedStocks?: SimulationStockExclusion[];
   requestedAt: string;
   completedAt: string | null;
 }
@@ -779,6 +769,7 @@ function mapCountryFromBackend(
 
 export default defineComponent({
   components: {
+    SimulationExclusions,
     PageHeader,
     VideoPlay,
   },
@@ -839,6 +830,7 @@ export default defineComponent({
       },
       running: false,
       simulationResult: null as SimulationResult | null,
+      resultIsPairTrading: false,
       tradesCurrentPage: 1,
       tradesPageSize: 25,
       statusPollTimer: null as number | null,
@@ -1185,8 +1177,11 @@ export default defineComponent({
         return;
       }
 
+      this.stopStatusPolling();
       this.running = true;
+      this.resultIsPairTrading = this.isPairTradingMode;
       this.simulationResult = null;
+      this.tradesCurrentPage = 1;
 
       try {
         const requestPayload: any = {
@@ -1231,9 +1226,13 @@ export default defineComponent({
         );
 
         this.simulationResult = response.data;
+        const parameters = this.$refs.simulationParameters as HTMLDetailsElement | undefined;
+        if (parameters) parameters.open = false;
 
         if (this.simulationResult?.status === 2) {
           this.$message.success("Simulation completed successfully!");
+        } else if (this.simulationResult?.status === 3) {
+          this.$message.error(this.simulationResult.errorMessage || "Simulation failed");
         } else if (this.formData.runAsync) {
           this.$message.info(
             `Simulation started. ID: ${this.simulationResult?.simulationId}`
@@ -1276,6 +1275,8 @@ export default defineComponent({
       // Poll every 3 seconds
       this.statusPollTimer = window.setInterval(async () => {
         const status = await this.checkSimulationStatus(simulationId);
+
+        if (this.statusPollTimer === null || this.simulationResult?.simulationId !== simulationId) return;
 
         if (status) {
           this.simulationResult = status;
@@ -1351,9 +1352,14 @@ export default defineComponent({
       this.onStrategyChanged();
     },
 
-    formatPercentage(value: number | null | undefined): string {
-      if (value === null || value === undefined) return "—";
-      return `${(value * 100).toFixed(2)}%`;
+    formatPercentage(value: number | null | undefined, signed = false): string {
+      if (value == null || !Number.isFinite(value)) return "—";
+      return new Intl.NumberFormat("en", {
+        style: "percent",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+        signDisplay: signed ? "exceptZero" : "auto",
+      }).format(value);
     },
 
     formatNumber(value: number | null | undefined): string {
@@ -1372,8 +1378,8 @@ export default defineComponent({
     },
 
     getReturnClass(value: number | null | undefined): string {
-      if (value === null || value === undefined) return "";
-      return value >= 0 ? "positive" : "negative";
+      if (!value) return "";
+      return value > 0 ? "positive" : "negative";
     },
 
     loadParametersFromRoute() {
@@ -1587,21 +1593,17 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.page-container {
-  padding: var(--space-4xl) var(--space-xl);
-  max-width: 1400px;
-  margin: 0 auto;
-  background: var(--color-background);
-}
-
 .content-wrapper {
-  max-width: 1400px;
-  margin: 0 auto;
+  min-width: 0;
 }
 
 .config-card,
 .results-card {
-  margin-bottom: 2rem;
+  margin-bottom: 0.75rem;
+  --el-card-padding: 0.75rem;
+  --el-card-border-color: var(--color-border-subtle);
+  --el-card-bg-color: var(--color-background-card);
+  box-shadow: none;
 }
 
 .card-header {
@@ -1611,7 +1613,7 @@ export default defineComponent({
 }
 
 .card-title {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--color-heading);
 }
@@ -1649,26 +1651,83 @@ export default defineComponent({
 .form-hint {
   font-size: 0.75rem;
   color: var(--color-text-secondary);
-  margin-top: 0.5rem;
+  line-height: 1.4;
+}
+
+.config-card :deep(.el-form-item) {
+  margin-bottom: 0.625rem;
+}
+
+.config-card :deep(.el-form-item__label) {
+  margin-bottom: 0.25rem;
+  color: var(--color-text);
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.form-details :deep(.el-radio-group) {
+  gap: 0.25rem 1rem;
+}
+
+.form-details :deep(.el-radio) {
+  white-space: normal;
+  height: auto;
+  min-height: 32px;
+  margin: 0;
+}
+
+.form-details :deep(.el-radio__label) {
+  line-height: 1.35;
 }
 
 .stock-selection-header {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
 
 .action-buttons {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  gap: 1rem;
-  padding-top: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.action-buttons :deep(.el-button + .el-button),
+.stock-selection-header :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
+.applied-settings {
+  flex: 1 1 20rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.form-details,
+.result-details {
+  margin-top: 0.625rem;
   border-top: 1px solid var(--color-border-subtle);
 }
 
+.form-details > summary,
+.result-details > summary {
+  padding: 0.5rem 0;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.result-details + .result-section {
+  margin-top: 0.5rem;
+}
+
 .form-section-divider {
-  margin: 0.75rem 0 0.5rem;
-  padding-bottom: 0.5rem;
+  margin: 0.5rem 0;
+  padding-bottom: 0.25rem;
   border-bottom: 1px solid var(--color-border-subtle);
 }
 
@@ -1676,12 +1735,10 @@ export default defineComponent({
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .result-section {
-  margin-bottom: 2rem;
+  margin-bottom: 0.75rem;
 }
 
 .result-section:last-child {
@@ -1690,89 +1747,95 @@ export default defineComponent({
 
 .section-title {
   font-size: 1rem;
+  line-height: 1.375;
   font-weight: 600;
   color: var(--color-heading);
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: 0.5rem 1rem;
 }
 
 .info-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
 }
 
 .info-label {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .info-value {
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   color: var(--color-text);
+  overflow-wrap: anywhere;
 }
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.25rem), 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  background: var(--color-border-subtle);
 }
 
 .metric-card {
-  background: var(--color-surface-variant);
-  padding: 1.25rem;
-  border-radius: 8px;
-  border: 1px solid var(--color-border-subtle);
+  background: var(--color-background-card);
+  padding: 0.375rem 0.625rem;
 }
 
 .metric-label {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
 }
 
 .metric-value {
-  font-size: 1.5rem;
+  font-size: 1rem;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: var(--color-heading);
 }
 
-.metric-value.positive {
-  color: #27ae60;
-}
-
-.metric-value.negative {
-  color: #e74c3c;
-}
-
 .trades-table {
-  margin-top: 1rem;
+  width: 100%;
 }
 
 .pagination-wrapper {
   display: flex;
   justify-content: center;
-  margin-top: 1.5rem;
+  margin-top: 0.5rem;
 }
 
-@media (max-width: 768px) {
-  .page-container {
-    padding: 1.5rem 1rem;
+.pagination-wrapper :deep(.el-pagination) {
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 0.375rem;
+}
+
+@media (max-width: 600px) {
+  .applied-settings {
+    flex-basis: 100%;
+  }
+
+  .form-details > summary,
+  .result-details > summary {
+    min-height: 40px;
   }
 
   .metrics-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(6.25rem, 1fr));
+  }
+
+  .metric-card {
+    padding-inline: 0.375rem;
   }
 }
 </style>
