@@ -1,32 +1,37 @@
 <template>
-  <div class="page-container">
-    <!-- Header -->
-    <div class="page-header">
-      <div class="header-left">
-        <h1 class="page-title">Strategies</h1>
-      </div>
-      <div class="header-right">
-        <el-input
-          v-model="searchQuery"
-          placeholder="Search"
-          class="search-input"
-          clearable>
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-      </div>
-    </div>
+  <div class="data-workspace">
+    <PageHeader title="Simulation Strategies" />
 
-    <!-- Filter Bar -->
-    <div class="filter-toolbar">
-      <div class="toolbar-right">
-        <button class="toolbar-btn" @click="showFilterDialog = true">
-          <el-icon><FilterIcon /></el-icon>
-          Filter
-        </button>
-        <span class="result-count">{{ sortedStrategies.length }} strategies</span>
+    <div class="filter-toolbar" aria-label="Strategy filters" role="group">
+      <el-input
+        v-model="searchQuery"
+        aria-label="Search strategies"
+        placeholder="Search strategies"
+        class="search-input"
+        clearable>
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+      <el-select v-model="selectedCountry" aria-label="Country" placeholder="All countries" clearable filterable>
+        <el-option v-for="country in countries" :key="country" :label="country" :value="country" />
+      </el-select>
+      <el-select v-model="selectedStrategyType" aria-label="Strategy type" placeholder="All strategy types" clearable filterable>
+        <el-option v-for="type in strategyTypes" :key="type.id" :label="type.name" :value="type.id" />
+      </el-select>
+      <div class="range-filter" role="group" aria-label="Annual return range">
+        <el-input v-model="minAnnualReturn" aria-label="Minimum annual return percent" placeholder="Min return %" type="number" />
+        <el-input v-model="maxAnnualReturn" aria-label="Maximum annual return percent" placeholder="Max return %" type="number" />
       </div>
+      <div class="range-filter" role="group" aria-label="Test period range">
+        <el-input v-model="minDaysToTest" aria-label="Minimum days to test" placeholder="Min days" type="number" />
+        <el-input v-model="maxDaysToTest" aria-label="Maximum days to test" placeholder="Max days" type="number" />
+      </div>
+      <el-button text @click="clearFilters">Clear filters</el-button>
+      <span class="result-count">
+        {{ sortedStrategies.length }} strategies<span v-if="selectedRows.length"> · {{ selectedRows.length }} selected</span>
+      </span>
+      <el-button v-if="selectedRows.length === 1" @click="viewGraph(selectedRows[0])">View selected NAV</el-button>
     </div>
 
     <!-- Table -->
@@ -34,64 +39,75 @@
       <el-table
         v-loading="loading"
         :data="paginatedStrategies"
-        class="clean-table"
-        :header-cell-style="headerCellStyle"
-        :cell-style="cellStyle"
+        class="compact-table"
+        row-key="id"
+        size="small"
         @selection-change="handleSelectionChange"
         @sort-change="handleSortChange">
 
         <el-table-column type="selection" width="44" />
 
-        <el-table-column label="Name" min-width="140" sortable>
+        <el-table-column label="Strategy" min-width="120" prop="strategyType" sortable="custom" show-overflow-tooltip>
           <template #default="scope">
-            <div class="name-cell">
+            <div class="name-cell" :title="getStrategyTypeName(scope.row.strategyType)">
               {{ getStrategyTypeName(scope.row.strategyType) }}
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column label="Country" width="105" sortable prop="countryToInvest" />
+        <el-table-column label="Market" width="84" sortable="custom" prop="countryToInvest" />
 
-        <el-table-column label="Annual Return" width="120" sortable prop="ratePerYear">
+        <el-table-column label="Annual return" width="116" align="right" sortable="custom" prop="ratePerYear">
           <template #default="scope">
-            {{ formatRate(scope.row.ratePerYear) }}%
+            <span :class="getRateClass(scope.row.ratePerYear)">{{ formatRate(scope.row.ratePerYear, true) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Entry Trigger" width="115" sortable prop="investTriggerRate">
+        <el-table-column label="Entry trigger" width="112" align="right" sortable="custom" prop="investTriggerRate">
           <template #default="scope">
-            {{ formatRate(scope.row.investTriggerRate) }}%
+            {{ formatRate(scope.row.investTriggerRate) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="Stop Loss Rate" width="125" sortable>
+        <el-table-column label="Stop loss" width="99" align="right" prop="lossCutRate" sortable="custom">
           <template #default="scope">
-            {{ formatRate(scope.row.lossCutRate) }}%
+            {{ formatRate(scope.row.lossCutRate) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="Days to Test" width="105" align="right" prop="daysToTest" />
+        <el-table-column label="Test days" width="95" align="right" prop="daysToTest" sortable="custom" />
 
-        <el-table-column label="Analysis Period" width="125" align="right" prop="analysisPeriod" />
+        <el-table-column label="Analysis days" width="115" align="right" prop="analysisPeriod" sortable="custom" />
 
-        <el-table-column label="Analysis Method" width="135" sortable prop="analysisMethod">
+        <el-table-column label="Method" width="130" sortable="custom" prop="analysisMethod">
           <template #default="scope">
             {{ getAnalysisMethodName(scope.row.analysisMethod) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="Actions" width="150" align="center" fixed="right">
+        <el-table-column label="Actions" width="144" align="center">
           <template #default="scope">
             <div class="action-buttons">
-              <button class="action-icon-btn primary" @click="runSimulation(scope.row)" title="Run Simulation">
-                <el-icon><VideoPlay /></el-icon>
-              </button>
-              <button class="action-icon-btn" @click="viewBacktest(scope.row)" title="View History">
-                <el-icon><Right /></el-icon>
-              </button>
-              <button class="action-icon-btn danger" @click="confirmDelete(scope.row)" title="Delete">
-                <el-icon><Delete /></el-icon>
-              </button>
+              <el-tooltip content="Run Simulation" placement="top" :trigger="['hover', 'focus']">
+                <button class="action-icon-btn primary" @click="runSimulation(scope.row)" aria-label="Run Simulation">
+                  <el-icon><VideoPlay /></el-icon>
+                </button>
+              </el-tooltip>
+              <el-tooltip content="View History" placement="top" :trigger="['hover', 'focus']">
+                <button class="action-icon-btn" @click="viewBacktest(scope.row)" aria-label="View History">
+                  <el-icon><Right /></el-icon>
+                </button>
+              </el-tooltip>
+              <el-tooltip content="View NAV graph" placement="top" :trigger="['hover', 'focus']">
+                <button class="action-icon-btn" @click="viewGraph(scope.row)" aria-label="View NAV graph">
+                  <el-icon><TrendCharts /></el-icon>
+                </button>
+              </el-tooltip>
+              <el-tooltip content="Delete Strategy" placement="top" :trigger="['hover', 'focus']">
+                <button class="action-icon-btn danger" @click="confirmDelete(scope.row)" aria-label="Delete Strategy">
+                  <el-icon><Delete /></el-icon>
+                </button>
+              </el-tooltip>
             </div>
           </template>
         </el-table-column>
@@ -105,264 +121,80 @@
           :page-sizes="[10, 25, 50, 100]"
           :total="sortedStrategies.length"
           layout="total, sizes, prev, pager, next"
+          :pager-count="5"
           background
         />
       </div>
     </div>
 
-    <!-- Filter Dialog -->
-    <el-dialog v-model="showFilterDialog" title="Filter Strategies" width="500px">
-      <el-form label-position="top">
-        <el-form-item label="Country">
-          <el-select
-            v-model="selectedCountry"
-            clearable
-            filterable
-            placeholder="Select country"
-            style="width: 100%">
-            <el-option
-              v-for="country in countries"
-              :key="country"
-              :label="country"
-              :value="country" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="Strategy Type">
-          <el-select
-            v-model="selectedStrategyType"
-            clearable
-            filterable
-            placeholder="Select strategy type"
-            style="width: 100%">
-            <el-option
-              v-for="type in strategyTypes"
-              :key="type.id"
-              :label="type.name"
-              :value="type.id" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="Annual Return Range">
-          <div style="display: flex; gap: 12px;">
-            <el-input
-              v-model.number="minAnnualReturn"
-              placeholder="Min %"
-              type="number">
-              <template #suffix>%</template>
-            </el-input>
-            <el-input
-              v-model.number="maxAnnualReturn"
-              placeholder="Max %"
-              type="number">
-              <template #suffix>%</template>
-            </el-input>
-          </div>
-        </el-form-item>
-
-        <el-form-item label="Days To Test Range">
-          <div style="display: flex; gap: 12px;">
-            <el-input
-              v-model.number="minDaysToTest"
-              placeholder="Min days"
-              type="number">
-              <template #suffix>days</template>
-            </el-input>
-            <el-input
-              v-model.number="maxDaysToTest"
-              placeholder="Max days"
-              type="number">
-              <template #suffix>days</template>
-            </el-input>
-          </div>
-        </el-form-item>
-      </el-form>
-
-      <template #footer>
-        <el-button @click="clearFilters">Clear</el-button>
-        <el-button type="primary" @click="applyFilters">Apply Filters</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <style scoped>
-/* Page Container */
-.page-container {
-  padding: var(--space-4xl) var(--space-xl);
-  max-width: 1400px;
-  margin: 0 auto;
-  background: var(--color-background);
-}
-
-/* Header */
-.page-header {
+.filter-toolbar,
+.range-filter {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
-.header-left {
-  flex: 1;
+.filter-toolbar {
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
 }
 
-.page-title {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--color-heading);
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.filter-toolbar > .el-select {
+  width: 10rem;
+  max-width: 100%;
 }
 
 .search-input {
-  width: 280px;
+  width: 12rem;
+  max-width: 100%;
 }
 
-.search-input :deep(.el-input__wrapper) {
-  background: var(--color-background-card);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  box-shadow: none;
-  padding: 0.5rem 0.75rem;
-}
-
-/* Filter Toolbar */
-.filter-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 1rem 1.5rem;
-  background: var(--color-background-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.toolbar-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.toolbar-btn:hover {
-  border-color: var(--color-border-strong);
-  background: var(--color-surface-variant);
+.range-filter .el-input {
+  width: 7.5rem;
 }
 
 .result-count {
-  font-size: 0.875rem;
   color: var(--color-text-secondary);
+  font-size: 0.8125rem;
 }
 
-/* Table Container */
 .table-container {
-  background: var(--color-background-card);
+  min-width: 0;
   border: 1px solid var(--color-border-subtle);
   border-radius: 8px;
   overflow: hidden;
 }
 
-/* Clean Table Styling */
-.clean-table {
-  width: 100%;
-}
-
-.clean-table :deep(.el-table__header-wrapper) {
-  background: #fafafa;
-}
-
-.clean-table :deep(.el-table__header th) {
-  background: #fafafa !important;
-  border-bottom: 1px solid #f0f0f0;
-  font-weight: 600;
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 0.875rem 1rem;
-}
-
-.clean-table :deep(.el-table__body td) {
-  border-bottom: 1px solid #f5f5f5;
-  padding: 1rem;
-  font-size: 0.9375rem;
-}
-
-.clean-table :deep(.el-table__row) {
-  transition: background-color 0.15s ease;
-}
-
-.clean-table :deep(.el-table__row:hover) {
-  background: #fafafa !important;
-}
-
-.clean-table :deep(.el-table__body .el-table__row:last-child td) {
-  border-bottom: none;
-}
-
-/* Remove table borders */
-.clean-table :deep(.el-table--border) {
-  border: none;
-}
-
-.clean-table :deep(.el-table--border::after),
-.clean-table :deep(.el-table--group::after),
-.clean-table :deep(.el-table::before) {
-  display: none;
-}
-
-.clean-table :deep(th.el-table__cell),
-.clean-table :deep(td.el-table__cell) {
-  border-right: none;
-}
-
-/* Name Cell */
 .name-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 500;
 }
 
-/* Action Buttons */
 .action-buttons {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.15rem;
 }
 
 .action-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 24px;
   border: none;
   background: transparent;
-  border-radius: 6px;
+  border-radius: 4px;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
 }
 
 .action-icon-btn:hover {
@@ -371,59 +203,49 @@
 }
 
 .action-icon-btn.primary {
-  color: var(--el-color-primary);
-}
-
-.action-icon-btn.primary:hover {
-  background: rgba(64, 158, 255, 0.1);
-  color: var(--el-color-primary-light-3);
+  color: var(--color-primary);
 }
 
 .action-icon-btn.danger:hover {
-  background: rgba(239, 83, 80, 0.08);
-  color: var(--finance-red-light);
+  color: var(--color-market-loss, #b42318);
 }
 
-/* Pagination */
 .pagination-container {
   display: flex;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 0.5rem;
   border-top: 1px solid var(--color-border-subtle);
 }
 
 .pagination-container :deep(.el-pagination) {
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 0.375rem;
 }
 
-@media (max-width: 768px) {
-  .page-container {
-    padding: 1.5rem 1rem;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .header-right {
-    width: 100%;
-  }
-
+@media (max-width: 560px) {
   .search-input {
     width: 100%;
   }
 
-  .filter-toolbar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+  .filter-toolbar > .el-select {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: 0;
   }
 
-  .toolbar-right {
+  .range-filter {
     width: 100%;
-    justify-content: space-between;
+  }
+
+  .range-filter .el-input {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+
+  .action-icon-btn {
+    width: 30px;
+    height: 36px;
   }
 }
 </style>
@@ -431,14 +253,16 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
+import PageHeader from "@/components/PageHeader.vue";
 import ApiService from "@/core/services/apiService";
 import { StrategyClient, type StrategyDto, RefStrategyTypeClient, type RefStrategyTypeDto } from "@/core/services/marketWatchClient";
-import { Search, Filter as FilterIcon, Right, Delete, VideoPlay } from '@element-plus/icons-vue';
+import { Search, Right, Delete, VideoPlay, TrendCharts } from '@element-plus/icons-vue';
 
 export default defineComponent({
   components: {
+    PageHeader,
     Search,
-    FilterIcon,
+    TrendCharts,
     Right,
     Delete,
     VideoPlay
@@ -455,16 +279,15 @@ export default defineComponent({
       loading: false,
       selectedCountry: "" as string,
       selectedStrategyType: null as number | null,
-      minAnnualReturn: null as number | null,
-      maxAnnualReturn: null as number | null,
-      minDaysToTest: null as number | null,
-      maxDaysToTest: null as number | null,
+      minAnnualReturn: "",
+      maxAnnualReturn: "",
+      minDaysToTest: "",
+      maxDaysToTest: "",
       searchQuery: "",
-      showFilterDialog: false,
       currentPage: 1,
       pageSize: 25,
       selectedRows: [] as StrategyDto[],
-      sortColumn: "" as string,
+      sortColumn: null as keyof StrategyDto | null,
       sortOrder: "" as string // "ascending" or "descending"
     };
   },
@@ -495,23 +318,25 @@ export default defineComponent({
       }
 
       // Annual return range filter
-      if (this.minAnnualReturn !== null && this.minAnnualReturn !== undefined) {
-        const minRate = this.minAnnualReturn / 100;
-        filtered = filtered.filter(s => (s.ratePerYear ?? 0) >= minRate);
+      if (this.minAnnualReturn !== "" && Number.isFinite(Number(this.minAnnualReturn))) {
+        const minRate = Number(this.minAnnualReturn) / 100;
+        filtered = filtered.filter(s => s.ratePerYear != null && s.ratePerYear >= minRate);
       }
 
-      if (this.maxAnnualReturn !== null && this.maxAnnualReturn !== undefined) {
-        const maxRate = this.maxAnnualReturn / 100;
-        filtered = filtered.filter(s => (s.ratePerYear ?? 0) <= maxRate);
+      if (this.maxAnnualReturn !== "" && Number.isFinite(Number(this.maxAnnualReturn))) {
+        const maxRate = Number(this.maxAnnualReturn) / 100;
+        filtered = filtered.filter(s => s.ratePerYear != null && s.ratePerYear <= maxRate);
       }
 
       // Days to test range filter
-      if (this.minDaysToTest !== null && this.minDaysToTest !== undefined) {
-        filtered = filtered.filter(s => (s.daysToTest ?? 0) >= this.minDaysToTest!);
+      if (this.minDaysToTest !== "" && Number.isFinite(Number(this.minDaysToTest))) {
+        const minDays = Number(this.minDaysToTest);
+        filtered = filtered.filter(s => s.daysToTest != null && s.daysToTest >= minDays);
       }
 
-      if (this.maxDaysToTest !== null && this.maxDaysToTest !== undefined) {
-        filtered = filtered.filter(s => (s.daysToTest ?? 0) <= this.maxDaysToTest!);
+      if (this.maxDaysToTest !== "" && Number.isFinite(Number(this.maxDaysToTest))) {
+        const maxDays = Number(this.maxDaysToTest);
+        filtered = filtered.filter(s => s.daysToTest != null && s.daysToTest <= maxDays);
       }
 
       return filtered;
@@ -520,27 +345,20 @@ export default defineComponent({
     sortedStrategies(): StrategyDto[] {
       const sorted = [...this.filteredStrategies];
 
-      if (this.sortColumn && this.sortOrder) {
-        sorted.sort((a, b) => {
-          let aValue: any;
-          let bValue: any;
+      const column = this.sortColumn;
+      if (!column || !this.sortOrder) return sorted;
 
-          switch (this.sortColumn) {
-            case 'ratePerYear':
-              aValue = a.ratePerYear ?? 0;
-              bValue = b.ratePerYear ?? 0;
-              break;
-            default:
-              return 0;
-          }
-
-          if (this.sortOrder === 'ascending') {
-            return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-          } else {
-            return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-          }
-        });
-      }
+      const direction = this.sortOrder === "ascending" ? 1 : -1;
+      sorted.sort((a, b) => {
+        const first = this.strategySortValue(a, column);
+        const second = this.strategySortValue(b, column);
+        if (first == null) return second == null ? 0 : 1;
+        if (second == null) return -1;
+        const comparison = typeof first === "number" && typeof second === "number"
+          ? first - second
+          : String(first).localeCompare(String(second));
+        return comparison * direction;
+      });
 
       return sorted;
     },
@@ -576,30 +394,17 @@ export default defineComponent({
       }));
     },
 
-    headerCellStyle() {
-      return {
-        background: '#fafafa',
-        color: 'var(--color-text-secondary)',
-        fontWeight: '600',
-        fontSize: '0.8125rem',
-        textTransform: 'uppercase',
-        letterSpacing: '0.03em',
-        padding: '0.875rem 1rem',
-        borderBottom: '1px solid #f0f0f0'
-      };
-    },
+  },
 
-    cellStyle() {
-      return {
-        borderBottom: '1px solid #f5f5f5',
-        padding: '1rem',
-        fontSize: '0.9375rem'
-      };
-    }
+  watch: {
+    filteredStrategies() {
+      this.currentPage = 1;
+    },
   },
 
   methods: {
-    getStrategyTypeName(typeId: number): string {
+    getStrategyTypeName(typeId: number | null | undefined): string {
+      if (typeId == null) return "—";
       const type = this.refStrategyTypes.find(t => t.id === typeId);
       if (type?.name) return type.name;
       return typeId === 6 ? 'TimeSeriesMomentum' : `Type ${typeId}`;
@@ -617,46 +422,30 @@ export default defineComponent({
       }
     },
 
-    async reload() {
-      await this.getList();
-    },
-
-    async onFilterChanged() {
-      // Filter is reactive, reset to first page
-      this.currentPage = 1;
-    },
-
-    applyFilters() {
-      this.showFilterDialog = false;
-      this.currentPage = 1;
-    },
-
     clearFilters() {
       this.selectedCountry = "";
       this.selectedStrategyType = null;
-      this.minAnnualReturn = null;
-      this.maxAnnualReturn = null;
-      this.minDaysToTest = null;
-      this.maxDaysToTest = null;
+      this.minAnnualReturn = "";
+      this.maxAnnualReturn = "";
+      this.minDaysToTest = "";
+      this.maxDaysToTest = "";
       this.searchQuery = "";
       this.currentPage = 1;
-      this.showFilterDialog = false;
     },
 
     handleSelectionChange(selection: StrategyDto[]) {
       this.selectedRows = selection;
     },
 
-    handleSortChange(sortData: { column: any; prop: string; order: string | null }) {
-      if (!sortData.order) {
-        // Clear sort
-        this.sortColumn = "";
-        this.sortOrder = "";
-      } else {
-        this.sortColumn = sortData.prop;
-        this.sortOrder = sortData.order;
-      }
-      // Reset to first page when sorting changes
+    strategySortValue(strategy: StrategyDto, prop: keyof StrategyDto) {
+      if (prop === "strategyType") return this.getStrategyTypeName(strategy.strategyType);
+      if (prop === "analysisMethod") return this.getAnalysisMethodName(strategy.analysisMethod);
+      return strategy[prop];
+    },
+
+    handleSortChange({ prop, order }: { prop: keyof StrategyDto; order: string | null }) {
+      this.sortColumn = order ? prop : null;
+      this.sortOrder = order ?? "";
       this.currentPage = 1;
     },
 
@@ -685,14 +474,26 @@ export default defineComponent({
       }
     },
 
-    formatRate(rate: number | undefined): string {
-      if (rate === undefined || rate === null) return '0.00';
-      return (rate * 100).toFixed(2);
+    formatRate(rate: number | null | undefined, signed = false): string {
+      if (rate == null || !Number.isFinite(rate)) return "—";
+      return new Intl.NumberFormat("en", {
+        style: "percent",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+        signDisplay: signed ? "exceptZero" : "auto",
+      }).format(rate);
     },
 
-    getRateClass(rate: number | undefined): string {
-      if (!rate) return '';
-      return rate >= 0 ? 'rate-value positive' : 'rate-value negative';
+    getRateClass(rate: number | null | undefined): string {
+      if (!rate) return "";
+      return rate > 0 ? "positive" : "negative";
+    },
+
+    viewGraph(strategy: StrategyDto) {
+      this.router.push({
+        name: "simulateGraph",
+        query: { strategyId: strategy.id?.toString() },
+      });
     },
 
     viewBacktest(strategy: StrategyDto) {

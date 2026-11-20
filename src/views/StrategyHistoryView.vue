@@ -1,9 +1,6 @@
 <template>
-  <div class="analysis-container">
-    <PageHeader
-      title="Strategy History"
-      subtitle="Data from tblFundTradeHistory"
-    />
+  <div class="data-workspace history-workspace">
+    <PageHeader title="Strategy History" />
 
     <div class="filter-bar">
       <div class="filter-bar-left">
@@ -35,32 +32,49 @@
       </div>
     </div>
 
-    <div class="table-section">
-      <div class="table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="rows"
-          class="professional-table"
-          stripe
-          :default-sort="defaultSort"
-          :header-cell-style="{ background: 'var(--color-surface-variant)', color: 'var(--color-heading)', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '0.4375rem 0.875rem' }"
-          :row-key="getRowKey">
-          <el-table-column
-            v-for="col in columns"
-            :key="col"
-            :prop="getOriginalColumnName(col)"
-            :label="col"
-            :min-width="getMinWidth(col)"
-            :sortable="isDateColumn(col)">
-            <template #default="scope">
-              <span v-if="isDateColumn(col)">{{ formatDate(scope.row[getOriginalColumnName(col)]) }}</span>
-              <span v-else-if="isRateOfReturnColumn(col)">{{ formatPercentage(scope.row[getOriginalColumnName(col)]) }}</span>
-              <span v-else>{{ formatValue(scope.row[getOriginalColumnName(col)], col) }}</span>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-    </div>
+    <el-table
+      v-loading="loading"
+      :data="rows"
+      class="compact-table"
+      stripe
+      size="small"
+      :default-sort="defaultSort"
+      :row-key="getRowKey">
+      <el-table-column v-if="detailColumns.length" width="42" align="center">
+        <template #default="{ row, $index }">
+          <el-button
+            type="primary"
+            link
+            title="Trade details"
+            :aria-label="'Details for trade ' + ($index + 1)"
+            @click="openDetails(row)">…</el-button>
+        </template>
+      </el-table-column>
+      <el-table-column
+        v-for="col in primaryColumns"
+        :key="col"
+        :prop="getOriginalColumnName(col)"
+        :label="columnLabel(col)"
+        :min-width="getMinWidth(col)"
+        :align="isRateOfReturnColumn(col) ? 'right' : 'left'"
+        :sortable="isDateColumn(col)"
+        show-overflow-tooltip>
+        <template #default="{ row }">
+          <span :class="isRateOfReturnColumn(col) ? returnClass(row[col]) : undefined">
+            {{ formatCell(row, col, true) }}
+          </span>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <el-dialog v-model="detailsVisible" title="Fund trade details" width="min(580px, calc(100vw - 24px))">
+      <dl v-if="detailTrade" class="trade-details">
+        <div v-for="col in columns" :key="col">
+          <dt>{{ columnLabel(col) }}</dt>
+          <dd>{{ formatCell(detailTrade, col) }}</dd>
+        </div>
+      </dl>
+    </el-dialog>
   </div>
 </template>
 
@@ -79,10 +93,11 @@ export default defineComponent({
   data() {
     return {
       rows: [] as AnyRow[],
+      detailTrade: null as AnyRow | null,
+      detailsVisible: false,
       totalCount: 0,
       loading: false,
       selectedStrategyId: "" as number | "",
-      strategyIds: [] as string[],
       columns: [] as string[],
       strategyIdKey: "" as string,
       dateKey: "" as string,
@@ -94,6 +109,22 @@ export default defineComponent({
   },
 
   computed: {
+    primaryColumns(): string[] {
+      const instrument = ["Follow Stock", "stockCode", "symbol", "stockId", "Leader Stock"]
+        .map(key => this.columns.find(col => col.toLowerCase() === key.toLowerCase()))
+        .find(Boolean);
+      const exitReason = this.columns.find(col =>
+        ["sell type", "exitreason", "sellreason"].includes(col.toLowerCase())
+      );
+      const strategy = this.columns.find(col => col === "StrategyName");
+      const rate = this.columns.find(col => this.isRateOfReturnColumn(col));
+      return [this.dateKey, instrument, rate, strategy, exitReason].filter((col): col is string => !!col);
+    },
+
+    detailColumns(): string[] {
+      return this.columns.filter(col => !this.primaryColumns.includes(col));
+    },
+
     defaultSort(): any {
       if (!this.dateKey) return undefined;
       return { prop: this.dateKey, order: "descending" };
@@ -101,6 +132,11 @@ export default defineComponent({
   },
 
   methods: {
+    openDetails(row: AnyRow) {
+      this.detailTrade = row;
+      this.detailsVisible = true;
+    },
+
     async reload() {
       await this.getList();
     },
@@ -219,7 +255,6 @@ export default defineComponent({
         this.rows = [];
         this.totalCount = 0;
         this.columns = [];
-        this.strategyIds = [];
         this.strategyIdKey = "";
         this.dateKey = "";
       } finally {
@@ -238,19 +273,13 @@ export default defineComponent({
       const strategyIdKey = all.find((k) => k.toLowerCase() === "strategyid") || all.find((k) => k.toLowerCase().includes("strategyid")) || "";
       const dateKey = all.find((k) => k.toLowerCase() === "tradedate") || all.find((k) => k.toLowerCase().includes("date")) || "";
 
-      console.log("All column keys:", all);
-      console.log("Strategy ID key found:", strategyIdKey);
-      if (this.rows.length > 0) {
-        console.log("Sample row:", this.rows[0]);
-      }
-
       this.strategyIdKey = strategyIdKey;
       this.dateKey = dateKey;
 
       // Transform column names
       const transformColumnName = (col: string): string => {
         const lc = col.toLowerCase();
-        if (lc === "strategyid") return "StrategyName";
+        if (col === strategyIdKey) return "StrategyName";
         if (lc === "mainleader") return "Leader Stock";
         if (lc === "followstock") return "Follow Stock";
         if (lc === "selltype") return "Sell Type";
@@ -269,36 +298,48 @@ export default defineComponent({
       // Transform all column names
       this.columns = ordered.map(transformColumnName);
 
-      if (strategyIdKey) {
-        const set = new Set<string>();
-        for (const row of this.rows) {
-          const v = row?.[strategyIdKey];
-          if (v !== null && v !== undefined && v !== "") {
-            set.add(String(v).trim());
-          }
-        }
-        this.strategyIds = Array.from(set).sort();
-      } else {
-        this.strategyIds = [];
-      }
     },
 
     getOriginalColumnName(displayName: string): string {
-      const lc = displayName.toLowerCase();
-      if (lc === "strategyname") return this.strategyIdKey;
-      if (lc === "leader stock") {
-        const keys = Object.keys(this.rows[0] || {});
-        return keys.find((k) => k.toLowerCase() === "mainleader") || displayName;
-      }
-      if (lc === "follow stock") {
-        const keys = Object.keys(this.rows[0] || {});
-        return keys.find((k) => k.toLowerCase() === "followstock") || displayName;
-      }
-      if (lc === "sell type") {
-        const keys = Object.keys(this.rows[0] || {});
-        return keys.find((k) => k.toLowerCase() === "selltype") || displayName;
+      const originalNames: Record<string, string> = {
+        StrategyName: this.strategyIdKey,
+        "Leader Stock": "mainleader",
+        "Follow Stock": "followstock",
+        "Sell Type": "selltype",
+      };
+      const original = originalNames[displayName];
+      if (!original || displayName === "StrategyName") return original || displayName;
+      for (const row of this.rows) {
+        const key = Object.keys(row).find(key => key.toLowerCase() === original);
+        if (key) return key;
       }
       return displayName;
+    },
+
+    columnLabel(col: string): string {
+      if (this.isDateColumn(col) && col === this.dateKey) return "Trade date";
+      if (this.isRateOfReturnColumn(col)) return "Return";
+      if (col === "StrategyName") return "Strategy";
+      if (["follow stock", "stockcode", "stockid", "symbol"].includes(col.toLowerCase())) return "Instrument";
+      if (["sell type", "exitreason", "sellreason"].includes(col.toLowerCase())) return "Exit reason";
+      return col.replace(/([a-z])([A-Z])/g, "$1 $2");
+    },
+
+    formatCell(row: AnyRow, col: string, useLeaderFallback = false): string {
+      const value = row[this.getOriginalColumnName(col)];
+      if (useLeaderFallback && col === "Follow Stock" && !value) {
+        return this.formatValue(row[this.getOriginalColumnName("Leader Stock")], "Leader Stock");
+      }
+      if (this.isDateColumn(col)) return this.formatDate(value);
+      if (this.isRateOfReturnColumn(col)) return this.formatPercentage(value);
+      return this.formatValue(value, col);
+    },
+
+    returnClass(value: any): string {
+      const rate = Number(value);
+      if (rate > 0) return "positive";
+      if (rate < 0) return "negative";
+      return "";
     },
 
     isDateColumn(col: string): boolean {
@@ -313,6 +354,7 @@ export default defineComponent({
 
     formatDate(value: any): string {
       if (!value) return "—";
+      if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
       const d = value instanceof Date ? value : new Date(value);
       if (Number.isNaN(d.getTime())) return String(value);
       return d.toLocaleDateString();
@@ -320,9 +362,11 @@ export default defineComponent({
 
     formatPercentage(value: any): string {
       if (value === null || value === undefined || value === "") return "—";
-      if (typeof value !== "number") return String(value);
-      // Convert to percentage with 2 decimal points
-      return (value * 100).toFixed(2) + "%";
+      const rate = Number(value);
+      if (!Number.isFinite(rate)) return "—";
+      return new Intl.NumberFormat(undefined, {
+        style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero",
+      }).format(rate);
     },
 
     formatValue(value: any, col: string): string {
@@ -334,14 +378,14 @@ export default defineComponent({
       if (lc === "strategyname") {
         const strategyId = String(value).trim();
         const name = this.strategyMap.get(strategyId);
-        console.log(`Looking up strategy ID: "${strategyId}" (type: ${typeof value}), found: "${name}"`);
         return name || String(value);
       }
 
       // Transform stock codes to stock names
       if (lc === "leader stock" || lc === "follow stock") {
         const stockCode = String(value).trim();
-        return this.stockMap.get(stockCode) || stockCode;
+        const stockName = this.stockMap.get(stockCode);
+        return stockName ? stockCode + " · " + stockName : stockCode;
       }
 
       // Transform sellType ID to sellType name
@@ -357,11 +401,9 @@ export default defineComponent({
     },
 
     getMinWidth(col: string): number {
-      if (this.isDateColumn(col)) return 180;
-      const lc = col.toLowerCase();
-      if (lc.includes("id")) return 90;
-      if (lc.includes("price") || lc.includes("rate") || lc.includes("nav")) return 130;
-      return 140;
+      if (this.isDateColumn(col)) return 104;
+      if (this.isRateOfReturnColumn(col)) return 88;
+      return col === "StrategyName" ? 140 : 96;
     },
 
     getRowKey(row: AnyRow, index: number): string | number {
@@ -379,22 +421,25 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.analysis-container {
-  padding: var(--space-4xl) var(--space-xl);
-  max-width: 1400px;
-  margin: 0 auto;
+.history-workspace {
+  min-width: 0;
 }
 
-/* Filter Bar */
+.history-workspace .filter-bar {
+  padding: 0;
+  gap: 8px;
+  margin: 0 0 8px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  flex-wrap: wrap;
+}
+
 .filter-bar-left {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-}
-
-.filter-bar-right {
-  display: flex;
-  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .flex-1 {
@@ -402,29 +447,36 @@ export default defineComponent({
 }
 
 .strategy-select {
-  min-width: 220px;
+  width: min(220px, 56vw);
+  min-width: 0;
 }
 
-.results-count {
-  font-size: 0.875rem;
+.results-count,
+.trade-details dt {
+  font-size: 12px;
   color: var(--color-text-secondary);
 }
 
-.table-section {
-  background: var(--color-background-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 16px;
-  padding: var(--space-3xl);
-  box-shadow: var(--shadow-subtle);
-  margin-bottom: var(--space-xl);
+.trade-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 128px), 1fr));
+  gap: 8px 16px;
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--color-surface-variant);
 }
 
-.table-wrapper {
-  overflow-x: auto;
+.trade-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
 }
 
-.professional-table {
-  border-radius: 8px;
-  overflow: hidden;
+.positive {
+  color: var(--data-gain, var(--finance-green));
+}
+
+.negative {
+  color: var(--data-loss, var(--finance-red));
 }
 </style>

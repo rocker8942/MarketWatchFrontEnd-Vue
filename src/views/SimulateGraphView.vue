@@ -1,14 +1,14 @@
 <template>
-  <div class="simulate-graph-container">
+  <div class="data-workspace">
     <PageHeader
-      title="Simulate - Strategy Graph"
-      subtitle="Visualize backtest strategy performance with NAV over time"
+      title="Strategy Graph"
     />
 
     <div class="filter-bar">
       <div class="filter-bar-left">
         <el-select
           v-model="selectedStrategyId"
+          aria-label="Strategy"
           clearable
           filterable
           placeholder="Select a strategy"
@@ -46,25 +46,36 @@
     <div v-else class="chart-section">
       <div class="chart-card">
         <div class="chart-header">
-          <h3 class="chart-title">Net Asset Value (NAV) Over Time</h3>
+          <h2 class="chart-title">Net asset value</h2>
           <div class="chart-stats">
             <div class="stat-item">
-              <span class="stat-label">Total Trades:</span>
-              <span class="stat-value">{{ totalTrades }}</span>
+              <span class="stat-label">Annual return</span>
+              <span :class="['stat-value', annualReturnClass]">{{ formatPercentage(annualReturn) }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">Final NAV:</span>
+              <span class="stat-label">Total return</span>
+              <span :class="['stat-value', totalReturnClass]">{{ formatPercentage(totalReturn, true) }}</span>
+            </div>
+            <div v-if="benchmarkReturn !== null" class="stat-item">
+              <span class="stat-label">S&amp;P 500 price return</span>
+              <span class="stat-value">{{ formatPercentage(benchmarkReturn) }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Final NAV</span>
               <span class="stat-value">{{ formatNumber(finalNav) }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">Total Return:</span>
-              <span :class="['stat-value', totalReturnClass]">{{ formatPercentage(totalReturn) }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Annual Return:</span>
-              <span :class="['stat-value', annualReturnClass]">{{ formatPercentage(annualReturn) }}</span>
+              <span class="stat-label">Trades</span>
+              <span class="stat-value">{{ totalTrades }}</span>
             </div>
           </div>
+          <p class="chart-basis">
+            {{ chartData[1][0] }} to {{ chartData[chartData.length - 1][0] }}
+            <template v-if="benchmarkReturn !== null">
+              · Both series start at 1.0. S&amp;P 500 (^GSPC) price return excludes dividends and currency conversion. Fund NAV holds its last recorded value between exits.
+            </template>
+          </p>
+          <p v-if="benchmarkNotice" class="chart-basis" role="status">{{ benchmarkNotice }}</p>
         </div>
 
         <div class="chart-wrapper">
@@ -72,7 +83,7 @@
             :data="chartData"
             :height="500"
             :show-data-zoom="true"
-            :smooth="true"
+            :smooth="false"
             color="#1976d2"
           />
         </div>
@@ -84,10 +95,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import ApiService from "@/core/services/apiService";
-import { StrategyClient, RefStrategyTypeClient } from "@/core/services/marketWatchClient";
+import { StrategyClient, RefStrategyTypeClient, StockPriceClient } from "@/core/services/marketWatchClient";
 import PageHeader from "@/components/PageHeader.vue";
 import LineChart from "@/components/charts/LineChart.vue";
 import { TrendCharts, Loading, Warning } from '@element-plus/icons-vue';
+
+import { compareBenchmark, marketDate } from "@/core/services/benchmarkComparison";
 
 type AnyRow = Record<string, any>;
 
@@ -103,6 +116,9 @@ export default defineComponent({
     return {
       rows: [] as AnyRow[],
       loading: false,
+      loadVersion: 0,
+      benchmarkNotice: "",
+      benchmarkReturn: null as number | null,
       selectedStrategyId: "" as number | "",
       strategies: [] as Array<{ id: number; name: string; ratePerYear?: number | null }>,
       strategyTypeMap: new Map<string, string>(),
@@ -198,7 +214,11 @@ export default defineComponent({
     },
 
     async loadData() {
+      const version = ++this.loadVersion;
+      this.benchmarkNotice = "";
+      this.benchmarkReturn = null;
       if (!this.selectedStrategyId) {
+        this.loading = false;
         this.rows = [];
         this.chartData = [];
         this.totalTrades = 0;
@@ -250,9 +270,12 @@ export default defineComponent({
           }
         }
 
+        if (version !== this.loadVersion) return;
         this.rows = allItems;
         this.processChartData();
+        await this.loadBenchmark(version);
       } catch (e) {
+        if (version !== this.loadVersion) return;
         console.error("Failed to load backtest history", e);
         this.rows = [];
         this.chartData = [];
@@ -261,7 +284,35 @@ export default defineComponent({
         this.totalReturn = 0;
         this.annualReturn = 0;
       } finally {
-        this.loading = false;
+        if (version === this.loadVersion) this.loading = false;
+      }
+    },
+
+    async loadBenchmark(version: number) {
+      if (this.chartData.length <= 1) return;
+      const fund = this.chartData.slice(1) as [string, number][];
+      const start = new Date(fund[0][0]);
+      start.setDate(start.getDate() - 7);
+      const end = new Date(fund[fund.length - 1][0]);
+      try {
+        const client = new StockPriceClient(undefined, ApiService.vueInstance.axios);
+        const prices = [];
+        let skip = 0;
+        while (true) {
+          const page = await client.stockPriceGetStockPriceWithDetails('date asc', skip, 1000, '^GSPC', start, end);
+          if (version !== this.loadVersion) return;
+          const items = page.items ?? [];
+          prices.push(...items.map(p => ({ date: marketDate(p.date!), closePrice: p.closePrice! })));
+          skip += items.length;
+          if (!items.length || skip >= (page.totalCount ?? 0)) break;
+        }
+        const comparison = compareBenchmark(fund, prices);
+        this.chartData = [['Date', 'Fund NAV', 'S&P 500'], ...comparison.rows];
+        this.benchmarkReturn = comparison.totalReturn;
+      } catch (error) {
+        if (version !== this.loadVersion) return;
+        this.benchmarkNotice = error instanceof Error && error.message.startsWith('S&P 500 prices')
+          ? error.message : 'Unable to load S&P 500 prices. The fund chart is shown without the benchmark.';
       }
     },
 
@@ -321,29 +372,29 @@ export default defineComponent({
         const firstEntryDate = entryDates.length > 0
           ? new Date(Math.min(...entryDates))
           : new Date(dailyNav.keys().next().value);
-        navPoints.push([firstEntryDate.toLocaleDateString(), 1.0]);
+        navPoints.push([firstEntryDate.toISOString().slice(0, 10), 1.0]);
         for (const [timestamp, nav] of dailyNav) {
-          navPoints.push([new Date(timestamp).toLocaleDateString(), nav]);
+          navPoints.push([new Date(timestamp).toISOString().slice(0, 10), nav]);
         }
         const lastNav = Array.from(dailyNav.values()).pop();
         currentNav = lastNav ?? 1.0;
       } else {
         // Fallback for history responses without persisted portfolio NAV.
         const firstDate = new Date(sortedRows[0][dateKey] ?? sortedRows[0][tradeDateKey]);
-        navPoints.push([firstDate.toLocaleDateString(), 1.0]);
+        navPoints.push([firstDate.toISOString().slice(0, 10), 1.0]);
         for (const row of sortedRows) {
           const date = row[dateKey] ?? row[tradeDateKey];
           const rateOfReturn = Number(row[rateOfReturnKey]);
           if (date && Number.isFinite(rateOfReturn)) {
             currentNav *= 1 + rateOfReturn;
-            navPoints.push([new Date(date).toLocaleDateString(), currentNav]);
+            navPoints.push([new Date(date).toISOString().slice(0, 10), currentNav]);
           }
         }
       }
 
       // Prepare data for LineChart (first row is headers)
       this.chartData = [
-        ['Date', 'NAV'],
+        ['Date', 'Fund NAV'],
         ...navPoints
       ];
 
@@ -382,11 +433,15 @@ export default defineComponent({
     },
 
     formatNumber(value: number): string {
-      return value.toFixed(4);
+      return value.toFixed(3);
     },
 
-    formatPercentage(value: number): string {
-      const percentage = (value * 100).toFixed(2);
+    formatPercentage(value: number, useGrouping = false): string {
+      const percentage = (value * 100).toLocaleString('en-US', {
+        useGrouping,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
       return value >= 0 ? `+${percentage}%` : `${percentage}%`;
     },
   },
@@ -407,21 +462,8 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.simulate-graph-container {
-  padding: var(--space-4xl) var(--space-xl);
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
 .filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: var(--space-3xl);
-  padding: var(--space-2xl);
-  background: var(--color-background-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 12px;
+  margin-bottom: 0.75rem;
 }
 
 .filter-bar-left {
@@ -431,7 +473,8 @@ export default defineComponent({
 }
 
 .strategy-select {
-  min-width: 350px;
+  width: 20rem;
+  min-width: 0;
 }
 
 /* Empty State */
@@ -484,64 +527,63 @@ export default defineComponent({
 }
 
 /* Chart Section */
-.chart-section {
-  margin-top: var(--space-3xl);
-}
-
 .chart-card {
+  min-width: 0;
   background: var(--color-background-card);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 16px;
-  padding: var(--space-3xl);
-  box-shadow: var(--shadow-subtle);
+  border-radius: 8px;
+  padding: 0.75rem;
 }
 
 .chart-header {
-  margin-bottom: var(--space-2xl);
-  padding-bottom: var(--space-xl);
-  border-bottom: 1px solid var(--color-border-subtle);
+  margin-bottom: 0.5rem;
 }
 
 .chart-title {
-  font-size: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.4;
   font-weight: 600;
   color: var(--color-heading);
-  margin: 0 0 var(--space-xl) 0;
+  margin: 0 0 0.5rem;
 }
 
 .chart-stats {
   display: flex;
-  gap: var(--space-3xl);
+  gap: 0.5rem 1.25rem;
   flex-wrap: wrap;
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
 }
 
 .stat-label {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .stat-value {
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: var(--color-heading);
 }
 
-.rate-positive {
-  color: #e74c3c;
+.chart-basis {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  margin: 0.5rem 0 0;
 }
 
-.rate-negative {
-  color: #3498db;
-}
+@media (max-width: 600px) {
+  .strategy-select {
+    flex: 1;
+  }
 
-.chart-wrapper {
-  margin-top: var(--space-xl);
+  .filter-bar-left > .el-button {
+    flex: none;
+  }
 }
 </style>

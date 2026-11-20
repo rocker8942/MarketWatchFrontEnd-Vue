@@ -1,606 +1,465 @@
 <template>
-  <div class="movers-page">
-    <PageHeader title="Market Movers" subtitle="Top gainers and losers by price change" />
+  <div class="data-workspace">
+    <PageHeader title="Market Movers" />
 
-    <div class="content-wrapper">
-      <!-- Filters -->
-      <div class="filter-section">
-        <div class="filter-group">
-          <span class="filter-label">Period:</span>
-          <el-radio-group
-            v-model="selectedPeriod"
-            @change="handlePeriodChange"
-            size="large"
-          >
-            <el-radio-button value="7d">7 Days</el-radio-button>
-            <el-radio-button value="1m">1 Month</el-radio-button>
-            <el-radio-button value="6m">6 Months</el-radio-button>
-            <el-radio-button value="1y">1 Year</el-radio-button>
-          </el-radio-group>
-        </div>
-
-        <div class="filter-group">
-          <span class="filter-label">Country:</span>
-          <el-radio-group
-            v-model="selectedCountry"
-            @change="handleCountryChange"
-            size="large"
-          >
-            <el-radio-button value="All">All</el-radio-button>
-            <el-radio-button value="US">US</el-radio-button>
-            <el-radio-button value="AU">AU</el-radio-button>
-            <el-radio-button value="Korea">Korea</el-radio-button>
-          </el-radio-group>
-        </div>
+    <div class="movers-toolbar">
+      <label>
+        <span>Period</span>
+        <select v-model="selectedPeriod" @change="loadMovers">
+          <option v-for="period in periods" :key="period.code" :value="period.code">{{ period.label }}</option>
+        </select>
+      </label>
+      <label>
+        <span>Country</span>
+        <select v-model="selectedCountry" @change="loadMovers">
+          <option value="All">All markets</option>
+          <option value="US">US</option>
+          <option value="AU">Australia</option>
+          <option value="Korea">Korea</option>
+        </select>
+      </label>
+      <div class="ranking-switch" role="group" aria-label="Mover ranking">
+        <button
+          v-for="ranking in rankings"
+          :key="ranking.id"
+          type="button"
+          :aria-pressed="selectedRanking === ranking.id"
+          @click="selectedRanking = ranking.id">
+          {{ ranking.label }}
+        </button>
       </div>
+    </div>
 
-      <!-- Movers Grid -->
-      <div class="movers-grid">
-        <!-- Top Gainers -->
-        <div class="movers-card gainers-card">
-          <div class="card-header">
-            <div class="card-title-row">
-              <el-icon class="card-icon gainers-icon"><Top /></el-icon>
-              <h2 class="card-title">Top Gainers</h2>
-            </div>
-            <span class="card-badge gainers-badge">Top 10</span>
-          </div>
-          <el-table
-            :data="topGainers"
-            v-loading="loading"
-            class="clean-table"
-            :header-cell-style="headerCellStyle"
-            :cell-style="cellStyle"
-          >
-            <el-table-column type="index" label="#" width="50" />
-            <el-table-column prop="code" label="Code" width="150">
-              <template #default="{ row }">
-                <span class="stock-code-cell clickable" @click="navigateToChart(row.code)">{{ row.code }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="name" label="Name" min-width="180">
-              <template #default="{ row }">
-                <span class="stock-name-cell">{{ row.name }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="Current Price" width="160" align="right">
-              <template #default="{ row }">
-                {{ formatCurrency(row.currentPrice) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="Previous Price" width="160" align="right">
-              <template #default="{ row }">
-                {{ formatCurrency(row.previousPrice) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="Change %" width="150" align="right">
-              <template #default="{ row }">
-                <span class="price-change positive">
-                  <el-icon><Top /></el-icon>
+    <p v-if="loadError" class="movers-feedback" role="alert">
+      Could not load movers. <button type="button" @click="loadMovers">Retry</button>
+    </p>
+    <p v-else-if="loading" class="movers-feedback" role="status">Loading movers…</p>
+
+    <div class="movers-grid" :aria-busy="loading">
+      <section
+        v-for="ranking in rankings"
+        :key="ranking.id"
+        class="ranking"
+        :class="{ 'active-ranking': selectedRanking === ranking.id }"
+        :aria-labelledby="'movers-' + ranking.id">
+        <h2 :id="'movers-' + ranking.id">{{ ranking.label }}</h2>
+        <table class="compact-table movers-table">
+          <thead>
+            <tr>
+              <th scope="col" class="rank-number">#</th>
+              <th scope="col">Instrument</th>
+              <th scope="col" class="last-price number">Last</th>
+              <th scope="col" class="change-column number">Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-for="(row, index) in ranking.rows" :key="row.code">
+              <tr>
+                <td class="rank-number">{{ index + 1 }}</td>
+                <td>
+                  <div class="mover-instrument">
+                    <RouterLink
+                      :to="{ name: 'stockChart', query: { stockCode: row.code } }"
+                      class="mover-symbol">
+                      {{ row.code }}
+                    </RouterLink>
+                    <span class="mover-name" :title="row.name">{{ row.name || '—' }}</span>
+                    <button
+                      type="button"
+                      class="mover-detail-toggle"
+                      :aria-label="'Price details for ' + row.code"
+                      :aria-expanded="expandedDetails[ranking.id] === row.code"
+                      :aria-controls="ranking.id + '-detail-' + index"
+                      @click="toggleDetails(ranking.id, row.code)">
+                      <span aria-hidden="true">{{ expandedDetails[ranking.id] === row.code ? '−' : '+' }}</span>
+                    </button>
+                  </div>
+                </td>
+                <td class="number">{{ formatCurrency(row.currentPrice, row.currencyCode) }}</td>
+                <td class="number mover-change" :class="changeClass(row.changePercent)">
                   {{ formatPercent(row.changePercent) }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column label="Actions" width="100" align="center">
-              <template #default="{ row }">
-                <el-button
-                  class="search-action-btn question-btn"
-                  size="small"
-                  circle
-                  @click="searchWhyMoved(row, true)"
-                  title="Search on Google"
-                >
-                  ?
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-
-        <!-- Top Losers -->
-        <div class="movers-card losers-card">
-          <div class="card-header">
-            <div class="card-title-row">
-              <el-icon class="card-icon losers-icon"><Bottom /></el-icon>
-              <h2 class="card-title">Top Losers</h2>
-            </div>
-            <span class="card-badge losers-badge">Top 10</span>
-          </div>
-          <el-table
-            :data="topLosers"
-            v-loading="loading"
-            class="clean-table"
-            :header-cell-style="headerCellStyle"
-            :cell-style="cellStyle"
-          >
-            <el-table-column type="index" label="#" width="50" />
-            <el-table-column prop="code" label="Code" width="150">
-              <template #default="{ row }">
-                <span class="stock-code-cell clickable" @click="navigateToChart(row.code)">{{ row.code }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="name" label="Name" min-width="180">
-              <template #default="{ row }">
-                <span class="stock-name-cell">{{ row.name }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="Current Price" width="160" align="right">
-              <template #default="{ row }">
-                {{ formatCurrency(row.currentPrice) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="Previous Price" width="160" align="right">
-              <template #default="{ row }">
-                {{ formatCurrency(row.previousPrice) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="Change %" width="150" align="right">
-              <template #default="{ row }">
-                <span class="price-change negative">
-                  <el-icon><Bottom /></el-icon>
-                  {{ formatPercent(Math.abs(row.changePercent)) }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column label="Actions" width="100" align="center">
-              <template #default="{ row }">
-                <el-button
-                  class="search-action-btn question-btn"
-                  size="small"
-                  circle
-                  @click="searchWhyMoved(row, false)"
-                  title="Search on Google"
-                >
-                  ?
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div
-        v-if="!loading && topGainers.length === 0 && topLosers.length === 0"
-        class="empty-state"
-      >
-        <el-icon class="empty-icon"><Warning /></el-icon>
-        <p>No price data available for the selected period.</p>
-      </div>
+                </td>
+              </tr>
+              <tr
+                v-show="expandedDetails[ranking.id] === row.code"
+                :id="ranking.id + '-detail-' + index"
+                class="mover-detail-row">
+                <td colspan="4">
+                  <div class="mover-details">
+                    <span v-if="row.name">{{ row.name }}</span>
+                    <span>Previous price <strong>{{ formatCurrency(row.previousPrice, row.currencyCode) }}</strong></span>
+                    <a :href="whyMovedUrl(row, ranking.id)" target="_blank" rel="noopener noreferrer">
+                      Research this move
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+        <p v-if="!loading && !loadError && !ranking.rows.length" class="movers-feedback">
+          No {{ ranking.label.toLowerCase() }} for this period and market.
+        </p>
+      </section>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
-import { Top, Bottom, Warning } from "@element-plus/icons-vue";
-import ApiService from "@/core/services/apiService";
+import { defineComponent } from "vue";
+import { RouterLink } from "vue-router";
 import PageHeader from "@/components/PageHeader.vue";
+import ApiService from "@/core/services/apiService";
+import { formatStockPrice } from "@/core/services/stockCurrency";
+
+type RankingId = "gainers" | "losers";
 
 interface MoverEntry {
   code: string;
   name: string;
-  currentPrice: number;
-  previousPrice: number;
-  changePercent: number;
+  currencyCode?: string | null;
+  currentPrice?: number | null;
+  previousPrice?: number | null;
+  changePercent?: number | null;
 }
 
+interface MoversResponse {
+  topGainers?: MoverEntry[];
+  topLosers?: MoverEntry[];
+}
+
+const periods = [
+  { code: "7d", label: "7 days" },
+  { code: "1m", label: "1 month" },
+  { code: "6m", label: "6 months" },
+  { code: "1y", label: "1 year" },
+];
+
 export default defineComponent({
-  components: {
-    Top,
-    Bottom,
-    Warning,
-    PageHeader,
-  },
+  components: { PageHeader, RouterLink },
 
   data() {
     return {
-      selectedPeriod: "7d" as string,
-      selectedCountry: "All" as string,
+      periods,
+      selectedPeriod: "7d",
+      selectedCountry: "All",
+      selectedRanking: "gainers" as RankingId,
+      expandedDetails: { gainers: null, losers: null } as Record<RankingId, string | null>,
       loading: false,
+      loadError: false,
+      requestVersion: 0,
       topGainers: [] as MoverEntry[],
       topLosers: [] as MoverEntry[],
     };
   },
 
   computed: {
-    headerCellStyle() {
-      return {
-        background: '#fafafa',
-        color: 'var(--color-text-secondary)',
-        fontWeight: '600',
-        fontSize: '0.75rem',
-        textTransform: 'uppercase',
-        letterSpacing: '0.04em',
-        padding: '0.4375rem 0.875rem',
-        borderBottom: '1px solid #f0f0f0'
-      };
+    rankings(): { id: RankingId; label: string; rows: MoverEntry[] }[] {
+      return [
+        { id: "gainers", label: "Gainers", rows: this.topGainers },
+        { id: "losers", label: "Losers", rows: this.topLosers },
+      ];
     },
-
-    cellStyle() {
-      return {
-        borderBottom: '1px solid #f5f5f5',
-        padding: '0.4375rem 0.875rem',
-        fontSize: '0.8125rem'
-      };
-    }
   },
 
   methods: {
     async loadMovers() {
+      const version = ++this.requestVersion;
       this.loading = true;
+      this.loadError = false;
       this.topGainers = [];
       this.topLosers = [];
+      this.expandedDetails = { gainers: null, losers: null };
 
       try {
-        // Build query params
-        const params: any = { period: this.selectedPeriod };
-        if (this.selectedCountry !== "All") {
-          params.country = this.selectedCountry;
-        }
-
-        // Call API directly since auto-generated client doesn't have country param yet
-        const response = await ApiService.vueInstance.axios.get(
-          '/api/app/stock-price/movers',
-          { params }
-        );
-
-        this.topGainers = response.data.topGainers || [];
-        this.topLosers = response.data.topLosers || [];
-
-        console.log(`Loaded movers from backend cache (timestamp: ${response.data.timestamp})`);
+        const params = {
+          period: this.selectedPeriod,
+          country: this.selectedCountry === "All" ? undefined : this.selectedCountry,
+        };
+        const { data } = await ApiService.vueInstance.axios.get<MoversResponse>("/api/app/stock-price/movers", { params });
+        if (version !== this.requestVersion) return;
+        this.topGainers = data.topGainers ?? [];
+        this.topLosers = data.topLosers ?? [];
       } catch (error) {
-        console.error("Error loading movers:", error);
+        if (version !== this.requestVersion) return;
+        this.loadError = true;
+        console.error("Could not load movers", error);
       } finally {
-        this.loading = false;
+        if (version === this.requestVersion) this.loading = false;
       }
     },
 
-    handlePeriodChange() {
-      this.loadMovers();
+    formatCurrency: formatStockPrice,
+
+    formatPercent(value?: number | null) {
+      if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+      const sign = value > 0 ? "+" : value < 0 ? "−" : "";
+      return sign + Math.abs(value).toFixed(2) + "%";
     },
 
-    handleCountryChange() {
-      this.loadMovers();
+    changeClass(value?: number | null) {
+      if (typeof value !== "number" || !Number.isFinite(value) || value === 0) return "";
+      return value > 0 ? "positive" : "negative";
     },
 
-    formatCurrency(value: number): string {
-      if (value == null) return "-";
-      return value.toLocaleString("en-US", {
-        style: "currency",
-        currency: "USD",
-      });
+    toggleDetails(ranking: RankingId, code: string) {
+      this.expandedDetails[ranking] = this.expandedDetails[ranking] === code ? null : code;
     },
 
-    formatPercent(value: number): string {
-      if (value == null) return "-";
-      return value.toFixed(2) + "%";
-    },
-
-    navigateToChart(stockCode: string) {
-      this.$router.push({
-        name: 'stockChart',
-        query: { stockCode }
-      });
-    },
-
-    searchWhyMoved(row: MoverEntry, isGainer: boolean) {
-      const direction = isGainer ? "go up" : "drop";
-      const changePercent = Math.abs(row.changePercent).toFixed(2);
-
-      // Convert period to human-readable format
-      const periodMap: Record<string, string> = {
-        '7d': 'last 7 days',
-        '1m': 'last month',
-        '6m': 'last 6 months',
-        '1y': 'last year'
-      };
-      const periodText = periodMap[this.selectedPeriod] || this.selectedPeriod;
-
-      // Build query with company name, country, and period
-      let query = `why did ${row.name} stock price ${direction} ${changePercent}% in the ${periodText}`;
-
-      // Add country/market if not "All"
-      if (this.selectedCountry !== 'All') {
-        query += ` ${this.selectedCountry} market`;
-      }
-
-      const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-      window.open(googleUrl, '_blank');
+    whyMovedUrl(row: MoverEntry, ranking: RankingId) {
+      const direction = ranking === "gainers" ? "rise" : "fall";
+      const period = this.periods.find(({ code }) => code === this.selectedPeriod)?.label ?? this.selectedPeriod;
+      const market = this.selectedCountry === "All" ? "" : " " + this.selectedCountry + " market";
+      const magnitude = typeof row.changePercent === "number" && Number.isFinite(row.changePercent)
+        ? " " + Math.abs(row.changePercent).toFixed(2) + "%"
+        : "";
+      const query = "why did " + (row.name || row.code) + " (" + row.code + ") stock price " + direction + magnitude + " over the last " + period + market;
+      return "https://www.google.com/search?q=" + encodeURIComponent(query);
     },
   },
 
   mounted() {
-    this.loadMovers();
+    void this.loadMovers();
   },
 });
 </script>
 
 <style scoped>
-.movers-page {
-  padding: var(--space-4xl) var(--space-xl);
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.subtitle {
-  font-size: 1.0625rem;
-  color: var(--color-text-secondary);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.content-wrapper {
-  background: var(--color-background-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 8px;
-  padding: var(--space-2xl);
-  box-shadow: var(--shadow-subtle);
-}
-
-/* Filter Section */
-.filter-section {
+.movers-toolbar,
+.movers-toolbar label,
+.ranking-switch {
   display: flex;
-  flex-direction: row;
-  gap: 1.25rem;
-  margin-bottom: 1rem;
+  align-items: center;
+  gap: 8px;
+}
+
+.movers-toolbar {
   flex-wrap: wrap;
+  margin-bottom: 12px;
+  gap: 8px 16px;
 }
 
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.filter-label {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  min-width: 70px;
-}
-
-/* Movers Grid */
-.movers-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.movers-card {
-  background: var(--color-background);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.625rem 1rem;
-  border-bottom: 1px solid var(--color-border-subtle);
-}
-
-.card-title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-}
-
-.card-icon {
-  font-size: 1.25rem;
-}
-
-.gainers-icon {
-  color: var(--finance-green, #16a34a);
-}
-
-.losers-icon {
-  color: var(--finance-red, #dc2626);
-}
-
-.card-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--color-heading);
-  margin: 0;
-}
-
-.card-badge {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.gainers-badge {
-  background: rgba(22, 163, 74, 0.1);
-  color: var(--finance-green, #16a34a);
-}
-
-.losers-badge {
-  background: rgba(220, 38, 38, 0.1);
-  color: var(--finance-red, #dc2626);
-}
-
-/* Table */
-.clean-table {
-  width: 100%;
-}
-
-.clean-table :deep(.el-table__header-wrapper) {
-  background: #fafafa;
-}
-
-.clean-table :deep(.el-table__header th) {
-  background: #fafafa !important;
-  border-bottom: 1px solid #f0f0f0;
-  font-weight: 600;
+.movers-toolbar label {
   font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 0.875rem 1rem;
+  font-weight: 600;
 }
 
-.clean-table :deep(.el-table__body td) {
-  border-bottom: 1px solid #f5f5f5;
-  padding: 14px;
-  font-size: 0.9375rem;
-  white-space: nowrap;
+.movers-toolbar select,
+.ranking-switch button {
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-background-card);
+  color: var(--color-text);
+  min-height: 32px;
+  padding: 0 8px;
+  font: inherit;
 }
 
-.clean-table :deep(.el-table__row) {
-  transition: background-color 0.15s ease;
-}
-
-.clean-table :deep(.el-table__row:hover) {
-  background: #fafafa !important;
-}
-
-.clean-table :deep(.el-table__body .el-table__row:last-child td) {
-  border-bottom: none;
-}
-
-/* Remove table borders */
-.clean-table :deep(.el-table--border) {
-  border: none;
-}
-
-.clean-table :deep(.el-table--border::after),
-.clean-table :deep(.el-table--group::after),
-.clean-table :deep(.el-table::before) {
+.ranking-switch {
   display: none;
 }
 
-.clean-table :deep(th.el-table__cell),
-.clean-table :deep(td.el-table__cell) {
-  border-right: none;
+.movers-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.stock-code-cell {
-  font-weight: 600;
-  color: var(--color-primary, #1976d2);
-  white-space: nowrap;
+.ranking {
+  min-width: 0;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--color-background-card);
 }
 
-.stock-code-cell.clickable {
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.stock-code-cell.clickable:hover {
-  text-decoration: underline;
-  color: #1565c0;
-}
-
-.stock-name-cell {
-  font-weight: 500;
-  color: #1f2937; /* Dark gray for better readability */
-  white-space: nowrap;
-}
-
-/* Price Change */
-.price-change {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-weight: 600;
+.ranking h2 {
+  margin: 0;
+  padding: 7px 10px;
   font-size: 0.9375rem;
+  font-weight: 650;
+  line-height: 1.4;
 }
 
-.price-change.positive {
-  color: var(--finance-green, #16a34a);
+.movers-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
 }
 
-.price-change.negative {
-  color: var(--finance-red, #dc2626);
+.movers-table th,
+.movers-table td {
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  text-align: left;
+  overflow-wrap: anywhere;
 }
 
-/* Search Action Button */
-.search-action-btn {
-  border-color: #1976d2 !important;
-  color: #1976d2 !important;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.search-action-btn :deep(span) {
-  overflow: visible !important;
-  text-overflow: clip !important;
-}
-
-.search-action-btn:hover {
-  background: #1976d2 !important;
-  color: white !important;
-  border-color: #1976d2 !important;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
-}
-
-.search-action-btn:active {
-  transform: translateY(0);
-}
-
-/* Question Button */
-.question-btn {
-  width: 32px;
+.movers-table th {
   height: 32px;
+  background: var(--color-surface-variant);
+  color: var(--color-heading);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.movers-table td {
+  height: 34px;
+}
+
+.movers-table .rank-number {
+  width: 34px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.movers-table .number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.movers-table .last-price {
+  width: 24%;
+}
+
+.movers-table .change-column {
+  width: 15%;
+}
+
+.mover-instrument {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.mover-symbol,
+.mover-details a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.mover-symbol:hover,
+.mover-details a:hover {
+  text-decoration: underline;
+}
+
+.mover-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+
+.mover-detail-toggle,
+.movers-feedback button {
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.mover-detail-toggle {
+  flex: none;
+  width: 24px;
+  height: 24px;
   padding: 0;
   font-size: 1rem;
-  font-weight: 700;
-  border: 2px solid #1976d2 !important;
-  color: #1976d2 !important;
-  background: white !important;
 }
 
-.question-btn:hover {
-  background: #1976d2 !important;
-  color: white !important;
+.mover-detail-toggle:hover {
+  background: var(--color-surface-variant);
 }
 
-/* Empty State */
-.empty-state {
+.mover-details {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 3rem;
-  color: var(--color-text-secondary);
+  flex-wrap: wrap;
+  gap: 4px 12px;
 }
 
-.empty-icon {
-  font-size: 2.5rem;
-  color: var(--color-text-secondary);
+.mover-details strong {
+  margin-left: 5px;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .movers-page {
-    padding: 1.5rem 1rem;
-  }
-
-  .page-header h1 {
-    font-size: 1.75rem;
-  }
-
-  .content-wrapper {
-    padding: 1rem;
-  }
-
-  .filter-section {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.mover-detail-row td {
+  background: var(--color-surface-variant);
 }
 
-@media (min-width: 1024px) {
-  .movers-page {
-    padding: 3rem 2rem;
+.mover-change {
+  font-weight: 650;
+}
+
+.movers-feedback {
+  margin: 0;
+  padding: 10px;
+  font-size: 0.8125rem;
+}
+
+.movers-feedback button {
+  padding: 0;
+  text-decoration: underline;
+}
+
+@media (max-width: 760px) {
+  .movers-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ranking-switch {
+    display: flex;
+  }
+
+  .ranking-switch button {
+    min-height: 36px;
+    cursor: pointer;
+    font-size: 0.8125rem;
+  }
+
+  .ranking-switch button[aria-pressed="true"] {
+    background: var(--color-surface-variant);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    font-weight: 650;
+  }
+
+  .ranking:not(.active-ranking),
+  .ranking h2 {
+    display: none;
+  }
+
+  .movers-toolbar select {
+    min-height: 36px;
+  }
+
+  .movers-table .last-price {
+    width: 31%;
+  }
+
+  .movers-table .change-column {
+    width: 21%;
+  }
+
+  .mover-instrument {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 2px;
+    line-height: 1.2;
+  }
+
+  .mover-name {
+    grid-row: 2;
+  }
+
+  .mover-detail-toggle {
+    grid-area: 1 / 2 / span 2 / auto;
+    width: 28px;
+    height: 32px;
   }
 }
 </style>

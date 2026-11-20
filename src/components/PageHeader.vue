@@ -6,7 +6,7 @@
         <p v-if="subtitle" class="page-subtitle">{{ subtitle }}</p>
       </div>
 
-      <div class="page-header-right">
+      <div v-if="showSearch || showNewButton || $slots.actions" class="page-header-right">
         <el-input
           v-if="showSearch"
           v-model="searchQuery"
@@ -91,14 +91,15 @@ export default defineComponent({
 
 <style scoped>
 .page-header-wrapper {
-  margin-bottom: 1rem;
+  margin-bottom: 10px;
 }
 
 .page-header-content {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 2rem;
+  gap: 8px 16px;
 }
 
 .page-header-left {
@@ -106,17 +107,18 @@ export default defineComponent({
 }
 
 .page-header-left h1 {
-  font-size: 1.5rem;
+  font-size: clamp(20px, 2vw, 24px);
+  line-height: 1.25;
+  margin: 0;
   font-weight: 700;
   color: var(--color-heading);
-  margin-bottom: 0.25rem;
   letter-spacing: -0.02em;
 }
 
 .page-subtitle {
   font-size: 0.8125rem;
   color: var(--color-text-secondary);
-  margin: 0;
+  margin: 2px 0 0;
 }
 
 .page-header-right {
@@ -167,8 +169,5 @@ export default defineComponent({
     width: 100%;
   }
 
-  .page-header-left h1 {
-    font-size: 1.75rem;
-  }
 }
 </style>

@@ -1,65 +1,68 @@
 <template>
-  <div class="page-container">
-    <div class="content-wrapper">
-      <PageHeader
-        title="Optimization Monitor"
-        subtitle="Track and analyze running parameter optimization jobs"
-      />
+  <div class="data-workspace">
+    <PageHeader title="Optimization Monitor">
+      <template #actions>
+        <el-button type="primary" @click="$router.push({ name: 'optimizationConfig' })">
+          <el-icon><Plus /></el-icon>
+          New Optimization
+        </el-button>
+      </template>
+    </PageHeader>
+    <div class="monitor-grid" :class="{ 'show-details': selectedJob }">
 
       <!-- Active Jobs -->
       <el-card class="jobs-card">
-        <template #header>
-          <div class="card-header">
-            <span class="card-title">Optimization Jobs</span>
-            <el-button type="primary" size="small" @click="$router.push({ name: 'optimizationConfig' })">
-              <el-icon><Plus /></el-icon>
-              New Optimization
-            </el-button>
-          </div>
-        </template>
-
         <el-table
           v-loading="loading"
           :data="jobs"
-          class="jobs-table"
+          class="jobs-table compact-table"
+          row-key="id"
+          highlight-current-row
+          :current-row-key="selectedJob?.id"
           @row-click="selectJob">
-          <el-table-column label="ID" prop="id" width="80" />
-
-          <el-table-column label="Strategy" min-width="150">
+          <el-table-column label="Job" min-width="92">
             <template #default="scope">
-              {{ getStrategyName(scope.row.strategyType) }}
+              <button
+                type="button"
+                class="job-link"
+                :data-job-id="scope.row.id"
+                :title="getStrategyName(scope.row.strategyType)"
+                :aria-label="'View job ' + scope.row.id + ', ' + getStrategyName(scope.row.strategyType)"
+                :aria-expanded="selectedJob?.id === scope.row.id"
+                :aria-controls="selectedJob?.id === scope.row.id ? 'optimization-job-details' : undefined"
+                @click.stop="selectJob(scope.row)"
+              >
+                #{{ scope.row.id }} <span>{{ getStrategyName(scope.row.strategyType) }}</span>
+              </button>
             </template>
           </el-table-column>
 
-          <el-table-column label="Country" prop="country" width="100" />
-
-          <el-table-column label="Method" prop="optimizationMethod" width="120" />
-
-          <el-table-column label="Status" width="120">
+          <el-table-column label="Status" min-width="82">
             <template #default="scope">
-              <el-tag :type="getStatusType(scope.row.status)">
+              <el-tag size="small" :type="getStatusType(scope.row.status)">
                 {{ scope.row.status }}
               </el-tag>
             </template>
           </el-table-column>
 
-          <el-table-column label="Progress" width="180">
+          <el-table-column label="Progress" min-width="73" align="right">
             <template #default="scope">
               <div class="progress-container">
                 <el-progress
                   :percentage="scope.row.progressPercentage || 0"
+                  :show-text="false"
+                  :stroke-width="3"
                   :status="scope.row.status === 'Completed' ? 'success' : undefined" />
                 <span class="progress-text">
-                  {{ scope.row.completedSimulations + scope.row.failedSimulations }} / {{ scope.row.totalSimulations }}
+                  {{ (scope.row.completedSimulations ?? 0) + (scope.row.failedSimulations ?? 0) }}/{{ scope.row.totalSimulations }}
                 </span>
               </div>
             </template>
           </el-table-column>
 
-          <el-table-column label="Best Return" width="120" align="right">
+          <el-table-column label="Best return" min-width="87" align="right">
             <template #default="scope">
               <span
-                v-if="scope.row.bestAnnualizedReturn"
                 class="metric-value"
                 :class="{
                   'return-positive': scope.row.bestAnnualizedReturn > 0,
@@ -67,51 +70,17 @@
                 }">
                 {{ formatPercentage(scope.row.bestAnnualizedReturn) }}
               </span>
-              <span v-else class="empty-value">—</span>
             </template>
           </el-table-column>
 
-          <el-table-column label="Best Sharpe" width="120" align="right">
+          <el-table-column label="Sharpe" min-width="71" align="right">
             <template #default="scope">
-              <span v-if="scope.row.bestSharpeRatio" class="metric-value">
+              <span class="metric-value">
                 {{ formatNumber(scope.row.bestSharpeRatio) }}
               </span>
-              <span v-else class="empty-value">—</span>
             </template>
           </el-table-column>
 
-          <el-table-column label="Created" width="140">
-            <template #default="scope">
-              {{ formatDateTime(scope.row.creationTime) }}
-            </template>
-          </el-table-column>
-
-          <el-table-column label="Actions" width="120" fixed="right">
-            <template #default="scope">
-              <div class="action-buttons">
-                <el-button
-                  v-if="canStartJob(scope.row)"
-                  type="primary"
-                  size="small"
-                  @click.stop="startJob(scope.row.id)">
-                  Start
-                </el-button>
-                <el-button
-                  v-if="scope.row.status === 'Running'"
-                  type="warning"
-                  size="small"
-                  @click.stop="cancelJob(scope.row.id)">
-                  Cancel
-                </el-button>
-                <el-button
-                  type="danger"
-                  size="small"
-                  @click.stop="deleteJob(scope.row.id)">
-                  Delete
-                </el-button>
-              </div>
-            </template>
-          </el-table-column>
         </el-table>
 
         <div class="pagination-wrapper">
@@ -120,7 +89,9 @@
             v-model:page-size="pageSize"
             :page-sizes="[10, 25, 50]"
             :total="totalJobs"
-            layout="total, sizes, prev, pager, next"
+            layout="prev, pager, next, sizes, total"
+            :pager-count="5"
+            size="small"
             background
             @current-change="loadJobs"
             @size-change="loadJobs" />
@@ -128,13 +99,35 @@
       </el-card>
 
       <!-- Job Details -->
-      <el-card v-if="selectedJob" class="details-card">
+      <el-card v-if="selectedJob" id="optimization-job-details" class="details-card">
         <template #header>
           <div class="card-header">
-            <span class="card-title">Job Details - ID: {{ selectedJob.id }}</span>
-            <el-button size="small" @click="selectedJob = null">Close</el-button>
+            <h2 ref="detailsHeading" class="card-title" tabindex="-1">Job #{{ selectedJob.id }}</h2>
+            <el-button size="small" @click="closeJob">Back to jobs</el-button>
           </div>
         </template>
+
+        <div class="job-context">
+          <span>{{ getStrategyName(selectedJob.strategyType) }}</span>
+          <span>{{ selectedJob.country }}</span>
+          <span>{{ selectedJob.optimizationMethod }}</span>
+          <span>{{ formatDateTime(selectedJob.creationTime) }}</span>
+        </div>
+        <div class="action-buttons">
+          <el-button
+            v-if="canStartJob(selectedJob)"
+            type="primary"
+            size="small"
+            @click="startJob(selectedJob.id)"
+          >Start</el-button>
+          <el-button
+            v-if="selectedJob.status === 'Running'"
+            type="warning"
+            size="small"
+            @click="cancelJob(selectedJob.id)"
+          >Cancel</el-button>
+          <el-button type="danger" plain size="small" @click="deleteJob(selectedJob.id)">Delete</el-button>
+        </div>
 
         <!-- Summary Stats -->
         <div class="stats-grid">
@@ -166,20 +159,20 @@
           <div class="stat-card">
             <div class="stat-label">Status</div>
             <div class="stat-value">
-              <el-tag :type="getStatusType(selectedJob.status)">{{ selectedJob.status }}</el-tag>
+              <el-tag size="small" :type="getStatusType(selectedJob.status)">{{ selectedJob.status }}</el-tag>
             </div>
           </div>
         </div>
 
         <!-- Top Performers -->
-        <div class="section-title" style="margin-top: 2rem;">Top 10 Performers</div>
+        <h3 class="section-title">Top Performers</h3>
         <el-table
           v-loading="loadingTopPerformers"
           :data="topPerformers"
-          class="performers-table"
+          class="performers-table compact-table"
           :default-sort="{ prop: 'sharpeRatio', order: 'descending' }">
 
-          <el-table-column type="expand">
+          <el-table-column type="expand" width="32">
             <template #default="props">
               <div class="expanded-content">
                 <pre>{{ formatJson(props.row.parameters) }}</pre>
@@ -187,27 +180,38 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="Rank" type="index" width="60" :index="(index) => index + 1" />
+          <el-table-column label="#" type="index" width="32" :index="(index) => index + 1" />
 
-          <el-table-column label="Sharpe Ratio" prop="sharpeRatio" width="130" sortable>
+          <el-table-column label="Sharpe" prop="sharpeRatio" min-width="76" align="right" sortable>
             <template #default="scope">
               {{ formatNumber(scope.row.sharpeRatio) }}
             </template>
           </el-table-column>
 
-          <el-table-column label="Annual Return" prop="annualizedReturn" width="140" sortable>
+          <el-table-column label="Annual return" prop="annualizedReturn" min-width="114" align="right" sortable>
             <template #default="scope">
               {{ formatPercentage(scope.row.annualizedReturn) }}
             </template>
           </el-table-column>
 
-          <el-table-column label="Total Return" prop="totalReturn" width="130" sortable>
+          <el-table-column label="Actions" min-width="92">
+            <template #default="scope">
+              <el-button
+                type="primary"
+                size="small"
+                @click="useParameters(scope.row.parameters)">
+                Use settings
+              </el-button>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="Total return" prop="totalReturn" min-width="100" align="right" sortable>
             <template #default="scope">
               {{ formatPercentage(scope.row.totalReturn) }}
             </template>
           </el-table-column>
 
-          <el-table-column label="Status" prop="status" width="100">
+          <el-table-column label="Status" prop="status" min-width="90">
             <template #default="scope">
               <el-tag :type="getStatusType(scope.row.status)" size="small">
                 {{ scope.row.status }}
@@ -215,37 +219,19 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="Completed" width="140">
+          <el-table-column label="Completed" min-width="166" show-overflow-tooltip>
             <template #default="scope">
               {{ formatDateTime(scope.row.completedAt) }}
             </template>
           </el-table-column>
 
-          <el-table-column label="Actions" width="120">
-            <template #default="scope">
-              <el-button
-                type="primary"
-                size="small"
-                @click="useParameters(scope.row.parameters)">
-                Use These
-              </el-button>
-            </template>
-          </el-table-column>
         </el-table>
 
         <!-- Best Parameters Display -->
-        <div v-if="selectedJob.bestParameters" class="section-title" style="margin-top: 2rem;">
-          Best Parameters Found
-        </div>
-        <el-alert
-          v-if="selectedJob.bestParameters"
-          type="success"
-          :closable="false"
-          style="margin-top: 1rem;">
-          <template #default>
-            <pre class="parameters-display">{{ formatJson(selectedJob.bestParameters) }}</pre>
-          </template>
-        </el-alert>
+        <details v-if="selectedJob.bestParameters" class="best-parameters">
+          <summary>Best parameters</summary>
+          <pre class="parameters-display">{{ formatJson(selectedJob.bestParameters) }}</pre>
+        </details>
       </el-card>
     </div>
   </div>
@@ -257,6 +243,13 @@ import { useRouter } from "vue-router";
 import PageHeader from "@/components/PageHeader.vue";
 import { Plus } from '@element-plus/icons-vue';
 import ApiService from "@/core/services/apiService";
+
+const signedPercentage = new Intl.NumberFormat(undefined, {
+  style: "percent",
+  signDisplay: "exceptZero",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
 
 interface OptimizationJob {
   id: number;
@@ -303,6 +296,7 @@ export default defineComponent({
       jobs: [] as OptimizationJob[],
       selectedJob: null as OptimizationJob | null,
       topPerformers: [] as TopPerformer[],
+      performerRequest: 0,
       currentPage: 1,
       pageSize: 10,
       totalJobs: 0,
@@ -339,6 +333,9 @@ export default defineComponent({
         if (data.items && Array.isArray(data.items)) {
           this.jobs = data.items;
           this.totalJobs = data.totalCount || data.items.length;
+          if (this.selectedJob) {
+            this.selectedJob = this.jobs.find(job => job.id === this.selectedJob?.id) ?? this.selectedJob;
+          }
         } else {
           this.jobs = [];
           this.totalJobs = 0;
@@ -353,17 +350,29 @@ export default defineComponent({
     },
 
     async selectJob(job: OptimizationJob) {
+      if (this.selectedJob?.id !== job.id) this.topPerformers = [];
       this.selectedJob = job;
+      await this.$nextTick();
+      (this.$refs.detailsHeading as HTMLElement | undefined)?.focus();
       await this.loadTopPerformers(job.id);
     },
 
+    async closeJob() {
+      const selectedId = this.selectedJob?.id;
+      this.selectedJob = null;
+      await this.$nextTick();
+      (this.$el as HTMLElement).querySelector<HTMLElement>(`[data-job-id="${selectedId}"]`)?.focus();
+    },
+
     async loadTopPerformers(jobId: number) {
+      const request = ++this.performerRequest;
       this.loadingTopPerformers = true;
       try {
         const res = await ApiService.vueInstance.axios.get(
           `/api/app/optimization-job/${jobId}/top-performers?count=10`
         );
 
+        if (request !== this.performerRequest || this.selectedJob?.id !== jobId) return;
         const data = res.data;
         if (Array.isArray(data)) {
           this.topPerformers = data;
@@ -374,7 +383,7 @@ export default defineComponent({
       } catch (error) {
         console.error("Failed to load top performers", error);
       } finally {
-        this.loadingTopPerformers = false;
+        if (request === this.performerRequest) this.loadingTopPerformers = false;
       }
     },
 
@@ -490,13 +499,13 @@ export default defineComponent({
     },
 
     formatNumber(value: number | null | undefined): string {
-      if (value === null || value === undefined) return "—";
+      if (value == null || !Number.isFinite(value)) return "—";
       return value.toFixed(2);
     },
 
     formatPercentage(value: number | null | undefined): string {
-      if (value === null || value === undefined) return "—";
-      return `${(value * 100).toFixed(2)}%`;
+      if (value == null || !Number.isFinite(value)) return "—";
+      return signedPercentage.format(value);
     },
 
     formatDateTime(dateStr: string | null | undefined): string {
@@ -517,21 +526,21 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.page-container {
-  padding: var(--space-4xl) var(--space-xl);
-  max-width: 1400px;
-  margin: 0 auto;
-  background: var(--color-background);
+.monitor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
 }
 
-.content-wrapper {
-  max-width: 1600px;
-  margin: 0 auto;
+.monitor-grid.show-details {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
 }
 
 .jobs-card,
 .details-card {
-  margin-bottom: 2rem;
+  min-width: 0;
+  --el-card-padding: 10px;
 }
 
 .card-header {
@@ -541,13 +550,51 @@ export default defineComponent({
 }
 
 .card-title {
-  font-size: 1.125rem;
+  margin: 0;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--color-heading);
 }
 
 .jobs-table {
-  margin-bottom: 1rem;
+  margin-bottom: 8px;
+}
+
+.jobs-table :deep(.cell),
+.performers-table :deep(.el-table__cell .cell) {
+  padding-inline: 5px;
+}
+
+.jobs-table :deep(th .cell),
+.performers-table :deep(.el-table__cell .cell) {
+  white-space: nowrap;
+}
+
+.job-link {
+  display: block;
+  max-width: 100%;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.job-link span {
+  margin-left: 3px;
+  color: var(--color-text);
+  font-weight: 400;
+}
+
+.job-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .jobs-table :deep(.el-table__row) {
@@ -555,14 +602,16 @@ export default defineComponent({
 }
 
 .progress-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  display: grid;
+  grid-template-columns: minmax(12px, 1fr) auto;
+  align-items: center;
+  gap: 4px;
 }
 
 .progress-text {
   font-size: 0.75rem;
   color: var(--color-text-secondary);
+  white-space: nowrap;
 }
 
 .metric-value {
@@ -570,101 +619,117 @@ export default defineComponent({
 }
 
 .metric-value.return-positive {
-  color: #e74c3c;
+  color: var(--market-gain);
 }
 
 .metric-value.return-negative {
-  color: #3498db;
-}
-
-.empty-value {
-  color: var(--color-text-secondary);
+  color: var(--market-loss);
 }
 
 .action-buttons {
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.action-buttons :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
+.job-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 8px;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
 }
 
 .pagination-wrapper {
   display: flex;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 4px;
+}
+
+.pagination-wrapper :deep(.el-pagination) {
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 4px;
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(94px, 1fr));
+  gap: 1px;
+  margin-bottom: 12px;
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
 }
 
 .stat-card {
   background: var(--color-surface-variant);
-  padding: 1.25rem;
-  border-radius: 8px;
-  border: 1px solid var(--color-border-subtle);
+  padding: 5px 8px;
 }
 
 .stat-label {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
 }
 
 .stat-value {
-  font-size: 1.5rem;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
   color: var(--color-heading);
 }
 
 .stat-value.success {
-  color: #27ae60;
+  color: var(--market-gain);
 }
 
 .stat-value.danger {
-  color: #e74c3c;
+  color: var(--market-loss);
 }
 
 .section-title {
   font-size: 1rem;
   font-weight: 600;
   color: var(--color-heading);
-  margin-bottom: 1rem;
-}
-
-.performers-table {
-  margin-top: 1rem;
+  margin: 0 0 4px;
 }
 
 .expanded-content {
-  padding: 1rem;
+  padding: 8px;
   background: var(--color-surface-variant);
 }
 
-.expanded-content pre {
-  margin: 0;
+.best-parameters {
+  margin-top: 8px;
   font-size: 0.875rem;
-  color: var(--color-text);
 }
 
+.best-parameters summary {
+  cursor: pointer;
+}
+
+.expanded-content pre,
 .parameters-display {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--color-text);
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
-@media (max-width: 768px) {
-  .page-container {
-    padding: 1.5rem 1rem;
+@media (max-width: 960px) {
+  .monitor-grid.show-details {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  .show-details .jobs-card {
+    display: none;
   }
 }
 </style>
