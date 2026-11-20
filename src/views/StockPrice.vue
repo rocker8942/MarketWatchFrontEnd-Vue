@@ -1,337 +1,476 @@
 <template>
-    <div class="stock-price-page">
-        <PageHeader title="Stock Prices" subtitle="Browse and search stock prices with real-time data" />
+  <div class="data-workspace">
+    <PageHeader title="Stock Prices" />
 
-        <div class="content-wrapper">
-            <!-- Search Bar -->
-            <div class="search-section">
-                <el-autocomplete
-                    v-model="searchQuery"
-                    :fetch-suggestions="querySearch"
-                    placeholder="Search by stock code or name"
-                    clearable
-                    @select="handleStockSelect"
-                    @keyup.enter="handleSearch"
-                    @clear="handleSearch"
-                    class="search-input"
-                    size="large"
-                    :trigger-on-focus="true"
-                    value-key="code">
-                    <template #prefix>
-                        <el-icon><Search /></el-icon>
-                    </template>
-                    <template #default="{ item }">
-                        <div class="stock-option">
-                            <span class="stock-code">{{ item.code }}</span>
-                            <span class="stock-name">{{ item.name }}</span>
-                        </div>
-                    </template>
-                </el-autocomplete>
-                <el-button type="primary" @click="handleSearch" size="large" class="search-btn">Search</el-button>
-            </div>
-
-            <!-- Data Table -->
-            <div class="table-container">
-                <el-table
-                    :data="formattedProducts"
-                    style="width: 100%"
-                    @sort-change="handleSortChange"
-                    class="professional-table"
-                    stripe
-                    :header-cell-style="{ background: 'var(--color-surface-variant)', color: 'var(--color-heading)', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '0.4375rem 0.875rem' }">
-                    <el-table-column prop="code" label="Code" width="120" fixed></el-table-column>
-                    <el-table-column prop="name" label="Name" min-width="300" sortable="custom"></el-table-column>
-                    <el-table-column prop="currentPrice" label="Price" width="140" align="right"></el-table-column>
-                    <el-table-column prop="date" label="Date" width="140" sortable="custom"></el-table-column>
-                    <el-table-column prop="volume" label="Volume" width="140" align="right"></el-table-column>
-                </el-table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="pagination-wrapper">
-                <el-pagination
-                    background
-                    layout="total, prev, pager, next, jumper"
-                    :total="totalCount"
-                    :page-size="pageSize"
-                    v-model:current-page="currentPage"
-                    @current-change="handlePageChange" />
-            </div>
-        </div>
+    <div class="quote-toolbar">
+      <el-autocomplete
+        v-model="searchQuery"
+        :fetch-suggestions="querySearch"
+        placeholder="Search by symbol or company"
+        aria-label="Search by symbol or company"
+        class="quote-search"
+        clearable
+        fit-input-width
+        value-key="code"
+        @select="handleStockSelect"
+        @keyup.enter="handleSearch"
+        @clear="handleSearch">
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+        <template #default="{ item }">
+          <span class="suggestion"><strong>{{ item.code }}</strong> {{ item.name }}</span>
+        </template>
+      </el-autocomplete>
+      <el-button type="primary" class="quote-search-button" @click="handleSearch">Search</el-button>
+      <button class="quote-mobile-only sort-button" type="button" @click="sortBy('date')">
+        Date {{ sortIndicator('date') }}
+      </button>
     </div>
+
+    <p v-if="loadError" role="alert" class="quote-feedback">{{ loadError }}</p>
+    <div class="quote-grid" :aria-busy="loading">
+      <table class="quote-table compact-table">
+        <thead>
+          <tr>
+            <th scope="col" :aria-sort="sortState('name')">
+              <button class="sort-button" type="button" @click="sortBy('name')">
+                Instrument {{ sortIndicator('name') }}
+              </button>
+            </th>
+            <th scope="col" class="number">Price</th>
+            <th scope="col" class="quote-desktop-only quote-date" :aria-sort="sortState('date')">
+              <button class="sort-button" type="button" @click="sortBy('date')">
+                As of {{ sortIndicator('date') }}
+              </button>
+            </th>
+            <th scope="col" class="quote-desktop-only quote-volume number">Volume</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="(row, index) in formattedProducts" :key="row.id ?? index">
+            <tr>
+              <td>
+                <div class="quote-instrument">
+                  <RouterLink
+                    v-if="row.code"
+                    :to="{ name: 'stockChart', query: { stockCode: row.code } }"
+                    class="quote-symbol">
+                    {{ row.code }}
+                  </RouterLink>
+                  <span class="quote-name" :title="row.name">{{ row.name || '—' }}</span>
+                  <button
+                    type="button"
+                    class="quote-mobile-only details-button"
+                    :aria-label="'Quote details for ' + (row.code || row.name || 'instrument')"
+                    :aria-expanded="expandedIndex === index"
+                    :aria-controls="'quote-detail-' + index"
+                    @click="expandedIndex = expandedIndex === index ? null : index">
+                    <span aria-hidden="true">{{ expandedIndex === index ? '−' : '+' }}</span>
+                  </button>
+                </div>
+              </td>
+              <td class="number">{{ formatCurrency(row.currentPrice, row.currencyCode) }}</td>
+              <td class="quote-desktop-only quote-date">{{ row.date }}</td>
+              <td class="quote-desktop-only quote-volume number">{{ row.volume }}</td>
+            </tr>
+            <tr v-show="expandedIndex === index" :id="'quote-detail-' + index" class="quote-mobile-only detail-row">
+              <td colspan="2">
+                <dl class="quote-details">
+                  <div v-if="row.name"><dt>Company</dt><dd>{{ row.name }}</dd></div>
+                  <div><dt>As of</dt><dd>{{ row.date }}</dd></div>
+                  <div><dt>Volume</dt><dd>{{ row.volume }}</dd></div>
+                </dl>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+      <p v-if="loading && !formattedProducts.length" class="quote-feedback" role="status">Loading quotes…</p>
+      <p v-else-if="!formattedProducts.length && !loadError" class="quote-feedback" role="status">
+        {{ appliedSearch ? 'No quotes match this search.' : 'No quotes available.' }}
+      </p>
+    </div>
+
+    <div v-if="totalCount" class="quote-pagination">
+      <span>{{ totalCount.toLocaleString() }} {{ totalCount === 1 ? 'quote' : 'quotes' }}</span>
+      <el-pagination
+        v-if="totalCount > pageSize"
+        layout="prev, pager, next, jumper"
+        :pager-count="5"
+        :total="totalCount"
+        :page-size="pageSize"
+        :current-page="currentPage"
+        @update:current-page="handlePageChange" />
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { Search } from '@element-plus/icons-vue';
+import { RouterLink } from "vue-router";
+import { Search } from "@element-plus/icons-vue";
+import moment from "moment";
 import PageHeader from "@/components/PageHeader.vue";
-// import DataTable from 'datatables.net-vue3';
-// import DataTablesLib from 'datatables.net';
 import ApiService from "@/core/services/apiService";
-import { StockPriceClient, PagedResultDtoOfStockPriceDto, StockInfoClient } from "@/core/services/marketWatchClient";
-import moment from 'moment';
+import { StockInfoClient, StockPriceClient } from "@/core/services/marketWatchClient";
+import type { StockPriceDto } from "@/core/services/marketWatchClient";
+import { formatStockPrice } from "@/core/services/stockCurrency";
 
-const stockClient = new StockPriceClient(ApiService.baseUrl, ApiService.vueInstance.axios);
-const stockInfoClient = new StockInfoClient(ApiService.baseUrl, ApiService.vueInstance.axios);
-
-//DataTable.use(DataTablesLib);
+type QuoteSort = "name" | "date";
+type StockSuggestion = { code: string; name: string };
+const quoteSortColumns: Record<QuoteSort, string> = { name: "StockInfo.Name", date: "Date" };
 
 export default defineComponent({
-    components: {
-        Search,
-        PageHeader,
-    },
+  components: { PageHeader, RouterLink, Search },
 
-    data() {
+  data() {
+    return {
+      products: [] as StockPriceDto[],
+      pageSize: 25,
+      currentPage: 1,
+      totalCount: 0,
+      sortField: null as QuoteSort | null,
+      sortOrder: "asc" as "asc" | "desc",
+      searchQuery: "",
+      appliedSearch: "",
+      recentStocks: [] as StockSuggestion[],
+      expandedIndex: null as number | null,
+      loadError: "",
+      loading: false,
+      requestVersion: 0,
+    };
+  },
+
+  computed: {
+    formattedProducts() {
+      return this.products.map((product) => {
+        const date = moment.utc(product.date);
         return {
-            pagedResultDtoOfstockPriceDto: new PagedResultDtoOfStockPriceDto(),
-            products: null,
-            pageSize: 10, // Items per page
-            currentPage: 1,
-            totalCount: 0,
-            sortField: '',
-            sortOrder: '',
-            searchQuery: '',
-            recentStocks: [] as Array<{ code: string, name: string }>,
+          ...product,
+          date: product.date && date.isValid() ? date.format("YYYY-MM-DD") : "—",
+          volume: typeof product.volume === "number" && Number.isFinite(product.volume)
+            ? product.volume.toLocaleString("en-US")
+            : "—",
         };
+      });
+    },
+  },
+
+  methods: {
+    async getList() {
+      const version = ++this.requestVersion;
+      this.loading = true;
+      this.loadError = "";
+      this.expandedIndex = null;
+
+      try {
+        const stockClient = new StockPriceClient(ApiService.baseUrl, ApiService.vueInstance.axios);
+        const sorting = this.sortField
+          ? quoteSortColumns[this.sortField] + " " + this.sortOrder + ", Id " + this.sortOrder
+          : undefined;
+        const response = await stockClient.stockPriceGetStockPriceWithDetails(
+          sorting,
+          (this.currentPage - 1) * this.pageSize,
+          this.pageSize,
+          this.appliedSearch || undefined,
+          undefined,
+          undefined
+        );
+        if (version !== this.requestVersion) return;
+        this.products = response.items ?? [];
+        this.totalCount = response.totalCount ?? 0;
+      } catch (error) {
+        if (version !== this.requestVersion) return;
+        this.products = [];
+        this.totalCount = 0;
+        this.loadError = "Could not load quotes. Search again to retry.";
+        console.error("Could not load quotes", error);
+      } finally {
+        if (version === this.requestVersion) this.loading = false;
+      }
     },
 
-    methods: {
-        async getList() {
-            try {
+    formatCurrency: formatStockPrice,
 
-                // get stockPrice list
-                const response = await stockClient.stockPriceGetStockPriceWithDetails(
-                    `${this.sortField} ${this.sortOrder}`,
-                    (this.currentPage - 1) * this.pageSize,
-                    this.pageSize,
-                    this.searchQuery || undefined,
-                    undefined,
-                    undefined
-                );
-                this.pagedResultDtoOfstockPriceDto = response as PagedResultDtoOfStockPriceDto;
-                this.products = this.pagedResultDtoOfstockPriceDto.items;
-                this.totalCount = this.pagedResultDtoOfstockPriceDto.totalCount;
-
-            } catch (error) {
-                console.error(error);
-            }
-        },
-        onPageChange(event) {
-            this.currentPage = event.page;
-            this.rowsPerPage = event.rows;
-            this.getList();
-        },
-        formatCurrency(value) {
-            return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-        },
-        formatNumber(value) {
-            return value ? value.toLocaleString('en-US') : '0';
-        },
-        handlePageChange(page) {
-            this.currentPage = page;
-            this.getList();
-        },
-
-        handleSortChange({ prop, order }) {
-            this.sortField = prop;
-            this.sortOrder = order === 'ascending' ? 'asc' : 'desc';
-            this.getList();
-        },
-
-        handleSearch() {
-            this.currentPage = 1; // Reset to first page when searching
-            this.getList();
-        },
-
-        async loadRecentStocks() {
-            try {
-                console.log('Loading all stocks...');
-                // Get all available stock codes from StockInfo
-                const response = await stockInfoClient.stockInfoGetList(
-                    'name asc',
-                    0,
-                    1000 // Get all stocks
-                );
-
-                console.log('Stock response:', response);
-
-                // Map to autocomplete format with id as code and name
-                this.recentStocks = response.items?.map(item => ({
-                    code: item.id || '',
-                    name: item.name || ''
-                })) || [];
-
-                console.log('All stocks loaded:', this.recentStocks.length, this.recentStocks);
-            } catch (error) {
-                console.error('Error loading stocks:', error);
-            }
-        },
-
-        querySearch(queryString: string, cb: any) {
-            const results = queryString
-                ? this.recentStocks.filter(stock =>
-                    stock.code.toLowerCase().includes(queryString.toLowerCase()) ||
-                    stock.name.toLowerCase().includes(queryString.toLowerCase())
-                )
-                : this.recentStocks;
-            cb(results);
-        },
-
-        handleStockSelect(item: any) {
-            console.log('Stock selected:', item);
-            this.searchQuery = item.code;
-            this.handleSearch();
-        },
-
+    handlePageChange(page: number) {
+      this.currentPage = page;
+      void this.getList();
     },
 
-    computed: {
-        formattedProducts() {
-            return this.products ? this.products.map(product => ({
-                ...product,
-                date: moment(product.date).format('YYYY-MM-DD'),
-                currentPrice: this.formatCurrency(product.currentPrice),
-                volume: this.formatNumber(product.volume),
-            })) : [];
-        }
+    sortState(field: QuoteSort) {
+      if (this.sortField !== field) return undefined;
+      return this.sortOrder === "asc" ? "ascending" as const : "descending" as const;
     },
 
-    mounted() {
-        this.loadRecentStocks();
-        this.getList();
+    sortIndicator(field: QuoteSort) {
+      if (this.sortField !== field) return "";
+      return this.sortOrder === "asc" ? "↑" : "↓";
     },
+
+    sortBy(field: QuoteSort) {
+      this.sortOrder = this.sortField === field
+        ? (this.sortOrder === "asc" ? "desc" : "asc")
+        : (field === "date" ? "desc" : "asc");
+      this.sortField = field;
+      this.currentPage = 1;
+      void this.getList();
+    },
+
+    handleSearch() {
+      const query = this.searchQuery.trim();
+      const normalized = query.toLowerCase();
+      const exactCode = this.recentStocks.find((stock) => stock.code.toLowerCase() === normalized);
+      const companyMatches = query ? this.recentStocks.filter((stock) => stock.name.toLowerCase() === normalized) : [];
+      const filter = exactCode?.code ?? (companyMatches.length === 1 ? companyMatches[0].code : query);
+      if (this.loading && this.currentPage === 1 && this.appliedSearch === filter) return;
+      this.appliedSearch = filter;
+      this.currentPage = 1;
+      void this.getList();
+    },
+
+    async loadRecentStocks() {
+      try {
+        const stockInfoClient = new StockInfoClient(ApiService.baseUrl, ApiService.vueInstance.axios);
+        const response = await stockInfoClient.stockInfoGetList("name asc", 0, 1000);
+        this.recentStocks = response.items?.map((item) => ({
+          code: item.id ?? "",
+          name: item.name ?? "",
+        })) ?? [];
+      } catch (error) {
+        console.error("Could not load quote search suggestions", error);
+      }
+    },
+
+    querySearch(queryString: string, callback: (suggestions: StockSuggestion[]) => void) {
+      const query = queryString.toLowerCase();
+      callback(this.recentStocks.filter((stock) =>
+        stock.code.toLowerCase().includes(query) || stock.name.toLowerCase().includes(query)
+      ));
+    },
+
+    handleStockSelect(item: StockSuggestion) {
+      this.searchQuery = item.code;
+      this.handleSearch();
+    },
+  },
+
+  mounted() {
+    void this.loadRecentStocks();
+    void this.getList();
+  },
 });
 </script>
 
 <style scoped>
-.stock-price-page {
-    padding: var(--space-4xl) var(--space-xl);
-    max-width: 1400px;
-    margin: 0 auto;
+.quote-toolbar,
+.quote-pagination {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-
-.content-wrapper {
-    background: var(--color-background-card);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: 8px;
-    padding: var(--space-2xl);
-    box-shadow: var(--shadow-subtle);
-    transition: box-shadow 0.2s ease;
+.quote-pagination :deep(.el-pagination) {
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 
-/* Search Section */
-.search-section {
-    display: flex;
-    gap: var(--space-md);
-    margin-bottom: var(--space-lg);
+.quote-toolbar {
+  flex-wrap: nowrap;
+  margin-bottom: 12px;
 }
 
-.search-input {
-    max-width: 500px;
-    flex: 1;
+.quote-search {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 360px;
 }
 
-.search-btn {
-    min-width: 120px;
+.quote-search-button {
+  --el-button-bg-color: var(--finance-blue-dark);
+  --el-button-border-color: var(--finance-blue-dark);
+  --el-button-hover-bg-color: var(--finance-blue);
+  --el-button-hover-border-color: var(--finance-blue);
 }
 
-/* Stock Autocomplete Option Styling */
-.stock-option {
-    display: flex;
-    gap: 0.75rem;
+.suggestion strong {
+  margin-right: 6px;
+  color: var(--color-heading);
+}
+
+.quote-grid {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  background: var(--color-background-card);
+  overflow: hidden;
+}
+
+.quote-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.quote-table th,
+.quote-table td {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.quote-table th {
+  height: 32px;
+  background: var(--color-surface-variant);
+  color: var(--color-heading);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.quote-table td {
+  height: 34px;
+}
+
+.quote-table tbody tr:last-child > td {
+  border-bottom: 0;
+}
+
+.quote-table tbody tr:hover {
+  background: var(--color-surface-variant);
+}
+
+.quote-table .number {
+  width: 20%;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.quote-table .quote-date,
+.quote-table .quote-volume {
+  width: 17%;
+  font-variant-numeric: tabular-nums;
+}
+
+.sort-button,
+.details-button {
+  color: var(--color-primary);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.sort-button {
+  padding: 0;
+  font-weight: 600;
+  text-align: left;
+}
+
+.sort-button:hover,
+.quote-symbol:hover {
+  text-decoration: underline;
+}
+
+.quote-instrument {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.quote-symbol {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.quote-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-pagination {
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.quote-feedback {
+  margin: 0;
+  padding: 12px;
+}
+
+.quote-mobile-only {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .quote-desktop-only {
+    display: none;
+  }
+
+  button.quote-mobile-only {
+    display: inline-flex;
     align-items: center;
-}
-
-.stock-code {
-    font-weight: 500;
-    color: #202124;
-    min-width: 60px;
-}
-
-.stock-name {
-    color: #5f6368;
-    font-size: 0.875rem;
-}
-
-/* Table Container */
-.table-container {
-    background: var(--color-background);
-    border-radius: 8px;
-    overflow: hidden;
-    margin-bottom: 1.5rem;
-}
-
-/* Professional Table Styling */
-.professional-table {
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.professional-table :deep(.el-table__header) {
-    font-weight: 600;
-}
-
-.professional-table :deep(.el-table__row) {
-    transition: all 0.2s ease;
-}
-
-.professional-table :deep(.el-table__row:hover) {
-    background: var(--color-surface-variant) !important;
-}
-
-.professional-table :deep(.el-table__cell) {
-    padding: 1rem 0.75rem;
-    font-size: 0.9375rem;
-    line-height: 1.5;
-}
-
-/* Pagination */
-.pagination-wrapper {
-    display: flex;
     justify-content: center;
-    padding-top: 0.5rem;
-}
+    min-height: 32px;
+    min-width: 28px;
+  }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .stock-price-page {
-        padding: 1.5rem 1rem;
-    }
+  .detail-row {
+    display: table-row;
+  }
 
-    .page-header h1 {
-        font-size: 1.75rem;
-    }
+  .quote-table th,
+  .quote-table td {
+    padding: 4px 8px;
+  }
 
-    .content-wrapper {
-        padding: 1rem;
-    }
+  .quote-table .number {
+    width: 36%;
+  }
 
-    .search-section {
-        flex-direction: column;
-    }
+  .quote-instrument {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 4px;
+    line-height: 1.2;
+  }
 
-    .search-input {
-        max-width: 100%;
-    }
+  .quote-name {
+    grid-row: 2;
+    color: var(--color-text-secondary);
+  }
 
-    .search-btn {
-        width: 100%;
-    }
-}
+  .details-button {
+    grid-area: 1 / 2 / span 2 / auto;
+    font-size: 1rem;
+  }
 
-@media (min-width: 1024px) {
-    .stock-price-page {
-        padding: 3rem 2rem;
-    }
-}
+  .quote-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin: 4px 0;
+  }
 
-/* Element Plus pagination customization */
-:deep(.el-pagination) {
-    --el-pagination-bg-color: var(--color-background);
-    --el-pagination-text-color: var(--color-text);
-    --el-pagination-button-bg-color: var(--color-background);
-    --el-pagination-hover-color: var(--color-primary);
+  .quote-details div {
+    display: flex;
+    gap: 6px;
+  }
+
+  .quote-details dt {
+    color: var(--color-text-secondary);
+  }
+
+  .quote-details dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
 }
 </style>

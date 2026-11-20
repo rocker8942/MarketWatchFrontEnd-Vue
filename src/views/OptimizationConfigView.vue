@@ -1,23 +1,14 @@
 <template>
-  <div class="page-container">
+  <div class="data-workspace">
     <div class="content-wrapper">
-      <PageHeader
-        title="Parameter Optimization"
-        subtitle="Automatically find the best strategy parameters through systematic testing"
-      />
+      <PageHeader title="Parameter Optimization" />
 
       <!-- Configuration Form -->
       <el-card class="config-card">
-        <template #header>
-          <div class="card-header">
-            <span class="card-title">Optimization Configuration</span>
-          </div>
-        </template>
-
-        <el-form :model="formData" label-position="top">
-          <el-row :gutter="24">
+        <el-form :model="formData" label-position="top" @submit.prevent>
+          <el-row :gutter="12">
             <!-- Strategy Type -->
-            <el-col :span="12">
+            <el-col :span="12" :md="6">
               <el-form-item label="Strategy Type" required>
                 <el-select
                   v-model="formData.strategyType"
@@ -43,7 +34,7 @@
             </el-col>
 
             <!-- Country -->
-            <el-col :span="12">
+            <el-col :span="12" :md="6">
               <el-form-item label="Country" required>
                 <el-select
                   v-model="formData.country"
@@ -61,7 +52,7 @@
             </el-col>
 
             <!-- Date Range -->
-            <el-col :span="12">
+            <el-col :span="12" :md="6">
               <el-form-item label="Start Date" required>
                 <el-date-picker
                   v-model="formData.startDate"
@@ -73,7 +64,7 @@
               </el-form-item>
             </el-col>
 
-            <el-col :span="12">
+            <el-col :span="12" :md="6">
               <el-form-item label="End Date" required>
                 <el-date-picker
                   v-model="formData.endDate"
@@ -89,35 +80,57 @@
             <el-col :span="24">
               <el-form-item label="Optimization Method" required>
                 <el-radio-group v-model="formData.optimizationMethod">
-                  <el-radio value="SmartGrid">
-                    <strong>Smart Grid Search</strong> - Seeds from historical
-                    winners, then coarse grid (Recommended)
-                  </el-radio>
-                  <el-radio value="GridSearch">
-                    <strong>Grid Search</strong> - Exhaustive search of all
-                    parameter combinations
-                  </el-radio>
-                  <el-radio value="WalkForward">
-                    <strong>Walk-Forward Analysis</strong> - Rolling time
-                    windows to prevent overfitting
-                  </el-radio>
+                  <el-radio value="SmartGrid">Smart Grid Search</el-radio>
+                  <el-radio value="GridSearch">Grid Search</el-radio>
+                  <el-radio value="WalkForward">Walk-Forward Analysis</el-radio>
                 </el-radio-group>
+                <span v-if="formData.optimizationMethod === 'SmartGrid'" class="form-hint">Start from historical winners, then search a coarse grid.</span>
+                <span v-else-if="formData.optimizationMethod === 'GridSearch'" class="form-hint">Test every combination of candidate values.</span>
+                <span v-else class="form-hint">Train and test across rolling time windows.</span>
               </el-form-item>
             </el-col>
           </el-row>
 
+          <div class="run-toolbar">
+            <div class="run-summary" aria-live="polite">
+              <strong>{{ estimatedSimulations.toLocaleString() }}</strong> estimated simulations
+              <span v-if="estimatedTime"> · {{ estimatedTime }}</span>
+            </div>
+            <div class="action-buttons">
+              <el-button @click="resetForm">Reset</el-button>
+              <el-button
+                type="primary"
+                :loading="creating"
+                :disabled="creating"
+                @click="createOptimization"
+              >
+                <el-icon v-if="!creating"><VideoPlay /></el-icon>
+                {{ creating ? "Creating..." : "Start Optimization" }}
+              </el-button>
+            </div>
+          </div>
+          <el-alert
+            v-if="formData.optimizationMethod === 'WalkForward' && dateRangeTooShort"
+            class="validation-alert"
+            type="warning"
+            :closable="false"
+            show-icon
+          >
+            Walk-forward needs at least
+            {{ walkForwardConfig.trainingWindowMonths + walkForwardConfig.testingWindowMonths }}
+            months. The selected range is
+            {{ monthsDiff(formData.startDate, formData.endDate) }} months.
+          </el-alert>
+
           <!-- Parameter Ranges -->
           <div class="section-divider">
             <h3 class="section-title">Parameter Ranges</h3>
-            <p class="section-hint">
-              Define the ranges for each parameter to test. Enter
-              comma-separated values.
-            </p>
+            <p class="section-hint">Enter comma-separated candidate values.</p>
           </div>
 
           <!-- Indicator-Based Parameters -->
           <template v-if="isIndicatorMode">
-            <el-row :gutter="24">
+            <el-row :gutter="12" class="parameter-grid">
               <el-col :span="8">
                 <el-form-item label="Primary Indicator" required>
                   <el-select
@@ -223,7 +236,7 @@
 
           <!-- Pair-Trading Parameters -->
           <template v-else>
-            <el-row :gutter="24">
+            <el-row :gutter="12" class="parameter-grid">
               <el-col :span="8">
                 <el-form-item label="Analysis Period (days)">
                   <el-input
@@ -320,26 +333,12 @@
             class="section-divider"
           >
             <h3 class="section-title">Walk-Forward Configuration</h3>
-            <el-alert
-              v-if="dateRangeTooShort"
-              type="warning"
-              :closable="false"
-              show-icon
-              style="margin-top: 1rem"
-            >
-              Date range is too short. Need at least
-              {{
-                walkForwardConfig.trainingWindowMonths +
-                walkForwardConfig.testingWindowMonths
-              }}
-              months, but selected range is only
-              {{ monthsDiff(formData.startDate, formData.endDate) }} months.
-            </el-alert>
           </div>
 
           <el-row
             v-if="formData.optimizationMethod === 'WalkForward'"
-            :gutter="24"
+            :gutter="12"
+            class="option-grid"
           >
             <el-col :span="8">
               <el-form-item label="Training Window (months)">
@@ -380,7 +379,7 @@
             <h3 class="section-title">Advanced Options</h3>
           </div>
 
-          <el-row :gutter="24">
+          <el-row :gutter="12" class="option-grid">
             <el-col :span="8">
               <el-form-item label="Max Combinations">
                 <el-input-number
@@ -424,34 +423,6 @@
             </el-col>
           </el-row>
 
-          <!-- Estimated Simulations -->
-          <el-alert
-            :title="`Estimated Simulations: ${estimatedSimulations}`"
-            type="info"
-            :closable="false"
-            style="margin-top: 1rem"
-          >
-            <template #default>
-              Based on your configuration, approximately
-              {{ estimatedSimulations }} simulations will be run.
-              <span v-if="estimatedTime">
-                Estimated time: {{ estimatedTime }}
-              </span>
-            </template>
-          </el-alert>
-
-          <!-- Action Buttons -->
-          <div class="action-buttons">
-            <el-button @click="resetForm">Reset</el-button>
-            <el-button
-              type="primary"
-              :loading="creating"
-              @click="createOptimization"
-            >
-              <el-icon v-if="!creating"><VideoPlay /></el-icon>
-              {{ creating ? "Creating..." : "Start Optimization" }}
-            </el-button>
-          </div>
         </el-form>
       </el-card>
     </div>
@@ -751,6 +722,8 @@ export default defineComponent({
     },
 
     async createOptimization() {
+      if (this.creating) return;
+
       // Validation
       if (!this.formData.startDate || !this.formData.endDate) {
         this.$message.warning("Please select both start and end dates");
@@ -983,57 +956,64 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.page-container {
-  padding: var(--space-4xl) var(--space-xl);
-  max-width: 1400px;
-  margin: 0 auto;
-  background: var(--color-background);
-}
-
 .content-wrapper {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.config-card {
-  margin-bottom: 2rem;
+.config-card :deep(.el-card__body) {
+  padding: 12px;
 }
 
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.config-card :deep(.el-form-item) {
+  margin-bottom: 8px;
 }
 
-.card-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--color-heading);
+.config-card :deep(.el-form-item__label) {
+  line-height: 1.3;
+  margin-bottom: 4px;
 }
 
 .section-divider {
-  margin: 2rem 0 1.5rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--color-border-subtle);
+  margin: 12px 0 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
 }
 
 .section-title {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--color-heading);
-  margin-bottom: 0.5rem;
+  margin: 0;
 }
 
 .section-hint {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--color-text-secondary);
-  margin-bottom: 1rem;
+  margin: 2px 0 0;
 }
 
 .form-hint {
+  width: 100%;
   font-size: 0.75rem;
   color: var(--color-text-secondary);
-  margin-top: 0.25rem;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.parameter-grid :deep(.el-form-item) {
+  display: grid;
+  grid-template-columns: minmax(105px, 0.9fr) minmax(0, 1.1fr);
+  align-items: start;
+  column-gap: 8px;
+}
+
+.parameter-grid :deep(.el-form-item__label) {
+  margin: 0;
+  padding: 7px 0;
+}
+
+.parameter-grid :deep(.el-form-item__content) {
+  min-width: 0;
 }
 
 .strategy-option {
@@ -1051,18 +1031,54 @@ export default defineComponent({
   margin-top: 0.25rem;
 }
 
-.action-buttons {
+.run-toolbar {
   display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding-top: 2rem;
-  margin-top: 2rem;
-  border-top: 1px solid var(--color-border-subtle);
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 10px;
+  background: var(--color-surface-variant);
+  border: 1px solid var(--color-border);
 }
 
-@media (max-width: 768px) {
-  .page-container {
-    padding: 1.5rem 1rem;
+.run-summary {
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.validation-alert {
+  margin-top: 8px;
+}
+
+.action-buttons {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.action-buttons :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
+@media (max-width: 1000px) {
+  .parameter-grid > :deep(.el-col) {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+@media (max-width: 650px) {
+  .parameter-grid > :deep(.el-col),
+  .option-grid > :deep(.el-col) {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .config-card :deep(.el-radio) {
+    height: auto;
+    min-height: 32px;
+    margin-right: 12px;
   }
 }
 </style>

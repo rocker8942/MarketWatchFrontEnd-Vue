@@ -46,7 +46,7 @@ const chartOption = computed(() => {
   const dataPoints = props.data.slice(1);
 
   const dates = dataPoints.map(row => row[0]);
-  const values = dataPoints.map(row => row[1]);
+
   const showYearLabels = isMultiYearSeries(dates);
 
   return {
@@ -60,6 +60,14 @@ const chartOption = computed(() => {
         fontWeight: 500,
       },
     } : undefined,
+    tooltip: {
+      ...baseOptions.value.tooltip,
+      // ECharts' axis tooltip lists every named series in comparison charts.
+      formatter: headers.length > 2 ? undefined : baseOptions.value.tooltip.formatter,
+      valueFormatter: (value: unknown) => typeof value === 'number' && Number.isFinite(value)
+        ? value.toFixed(2) : '—',
+    },
+    legend: headers.length > 2 ? { top: 0, textStyle: { color: colors.text } } : undefined,
     xAxis: {
       ...baseOptions.value.xAxis,
       type: 'category',
@@ -84,23 +92,19 @@ const chartOption = computed(() => {
         return value.max + range * 0.05;
       },
     },
-    series: [
-      {
+    series: headers.slice(1).map((name: string, index: number) => {
+      const color = index === 0 ? props.color : ['#e69f00', '#009e73', '#cc79a7'][(index - 1) % 3];
+      return {
         ...lineSeriesDefaults,
-        data: values,
+        name,
+        data: dataPoints.map(row => row[index + 1]),
         smooth: props.smooth,
-        color: props.color,
-        lineStyle: {
-          width: 2,
-          color: props.color,
-        },
-        itemStyle: {
-          color: props.color,
-          borderColor: props.color,
-        },
+        color,
+        lineStyle: { width: 2, color, type: index === 0 ? 'solid' : 'dashed' },
+        itemStyle: { color, borderColor: color },
         areaStyle: undefined,
-      },
-    ],
+      };
+    }),
     dataZoom: props.showDataZoom ? [
       {
         type: 'inside',

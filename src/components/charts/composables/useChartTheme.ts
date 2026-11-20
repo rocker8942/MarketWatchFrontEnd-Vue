@@ -6,8 +6,20 @@ const chartTooltipNumberFormatter = new Intl.NumberFormat('en-US', {
 
 function parseChartDate(value: unknown): Date | null {
   // ECharts category axis can provide Date objects (from our API DTOs) or strings.
-  const date = value instanceof Date ? value : new Date(value as any);
+  // Keep a date-only trading session on the same calendar day in every time zone.
+  const category = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? `${value}T00:00:00`
+    : value;
+  const date = category instanceof Date ? category : new Date(category as any);
   return Number.isFinite(date.getTime()) ? date : null;
+}
+
+export function formatChartCalendarDate(value: unknown): string {
+  const date = parseChartDate(value);
+  if (!date) return String(value ?? '');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
 }
 
 export function isMultiYearSeries(values: unknown[]): boolean {

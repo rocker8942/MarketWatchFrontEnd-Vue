@@ -1,446 +1,304 @@
 <template>
-  <div class="dashboard">
-    <div class="dashboard-header">
-      <h1>Market Dashboard</h1>
-      <p class="subtitle">Real-time market data and performance metrics</p>
-    </div>
+  <div class="data-workspace market-dashboard">
+    <PageHeader title="Market Dashboard" />
+    <div class="market-dashboard-grid">
+      <section class="market-watchlist" aria-label="Market snapshot">
+        <table class="market-snapshot">
+          <thead>
+            <tr>
+              <th scope="col">Instrument</th>
+              <th scope="col" class="market-number">Latest</th>
+              <th scope="col" class="market-number" aria-label="One-session change">1-session Δ</th>
+              <th scope="col" class="market-date">As of</th>
+              <th scope="col" class="market-trend">20 sessions</th>
+            </tr>
+          </thead>
+          <tbody v-for="group in marketGroups" :key="group.label">
+            <tr class="market-group">
+              <th scope="rowgroup" colspan="5">{{ group.label }}</th>
+            </tr>
+            <tr v-for="instrument in group.instruments" :key="instrument.code"
+              :class="{ 'market-selected': instrument.code === selectedCode }">
+              <th scope="row">
+                <button type="button" class="market-instrument"
+                  :aria-pressed="instrument.code === selectedCode"
+                  aria-controls="market-detail"
+                  @click="selectedCode = instrument.code">
+                  <strong>{{ instrument.code }}</strong>
+                  <span>{{ instrument.name }}</span>
+                </button>
+              </th>
+              <td class="market-number">
+                {{ formatValue(instrument.latest?.value, instrument.unit) }}
+                <time v-if="instrument.latest" class="market-mobile-date"
+                  :datetime="instrument.latest.date">{{ instrument.latest.date }}</time>
+              </td>
+              <td class="market-number" :class="changeClass(instrument.change)">
+                {{ formatChange(instrument.change, instrument.unit) }}
+              </td>
+              <td class="market-date">
+                <time v-if="instrument.latest" :datetime="instrument.latest.date">{{ instrument.latest.date }}</time>
+                <span v-else>—</span>
+              </td>
+              <td class="market-trend">
+                <SparklineChart v-if="instrument.sparkline.length > 2" aria-hidden="true"
+                  :data="instrument.sparkline" :height="22" />
+                <span v-else>—</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="market-note">Change compares the latest two recorded sessions. Funds and ETFs use USD adjusted closes.</p>
+      </section>
 
-    <!-- Key Metrics Summary -->
-    <div class="metrics-grid">
-      <div class="metric-card card-spx">
-        <div class="metric-label">S&P 500</div>
-        <div class="metric-value">{{ formatValue(getSPXLatest()) }}</div>
-        <div class="metric-change positive">
-          <span class="change-icon">↑</span>
-          <span>+0.85%</span>
-        </div>
-      </div>
-
-      <div class="metric-card card-ftse">
-        <div class="metric-label">FTSE 100</div>
-        <div class="metric-value">{{ formatValue(getFTSELatest()) }}</div>
-        <div class="metric-change positive">
-          <span class="change-icon">↑</span>
-          <span>+0.42%</span>
-        </div>
-      </div>
-
-      <div class="metric-card card-gold">
-        <div class="metric-label">Gold (GLD)</div>
-        <div class="metric-value">{{ formatValue(getGoldLatest()) }}</div>
-        <div class="metric-change negative">
-          <span class="change-icon">↓</span>
-          <span>-0.23%</span>
-        </div>
-      </div>
-
-      <div class="metric-card card-dollar">
-        <div class="metric-label">US Dollar (UUP)</div>
-        <div class="metric-value">{{ formatValue(getDollarLatest()) }}</div>
-        <div class="metric-change positive">
-          <span class="change-icon">↑</span>
-          <span>+0.15%</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Market Indices -->
-    <div class="section">
-      <h2 class="section-title">
-        Global Indices
-      </h2>
-      <div class="chart-grid">
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3 class="chart-title">S&P 500</h3>
-            <span class="chart-code">^GSPC</span>
+      <section id="market-detail" class="market-chart-panel" aria-labelledby="market-detail-title">
+        <header class="market-chart-heading">
+          <div>
+            <h2 id="market-detail-title">{{ selectedInstrument.name }}</h2>
+            <p>{{ selectedInstrument.code }} · {{ unitLabels[selectedInstrument.unit] }}</p>
           </div>
-          <LineChart v-if="data" :data="data" :height="220" />
-          <div v-else class="chart-loading">Loading...</div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3 class="chart-title">FTSE 100</h3>
-            <span class="chart-code">^FTSE</span>
+          <div v-if="selectedInstrument.latest" class="market-chart-quote">
+            <strong>{{ formatValue(selectedInstrument.latest.value, selectedInstrument.unit) }}</strong>
+            <span :class="changeClass(selectedInstrument.change)">{{ formatChange(selectedInstrument.change, selectedInstrument.unit) }}</span>
           </div>
-          <LineChart v-if="ftse" :data="ftse" :height="220" />
-          <div v-else class="chart-loading">Loading...</div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3 class="chart-title">China</h3>
-            <span class="chart-code">FXI</span>
-          </div>
-          <LineChart v-if="china" :data="china" :height="220" />
-          <div v-else class="chart-loading">Loading...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Regional Markets -->
-    <div class="section">
-      <h2 class="section-title">
-        Regional Markets
-      </h2>
-      <div class="chart-grid">
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3 class="chart-title">Korea</h3>
-            <span class="chart-code">EWY</span>
-          </div>
-          <LineChart v-if="korea" :data="korea" :height="220" />
-          <div v-else class="chart-loading">Loading...</div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3 class="chart-title">Australia</h3>
-            <span class="chart-code">EWA</span>
-          </div>
-          <LineChart v-if="australia" :data="australia" :height="220" />
-          <div v-else class="chart-loading">Loading...</div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3 class="chart-title">US Dollar</h3>
-            <span class="chart-code">UUP</span>
-          </div>
-          <LineChart v-if="dollar" :data="dollar" :height="220" />
-          <div v-else class="chart-loading">Loading...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Commodities & Bonds -->
-    <div class="section">
-      <h2 class="section-title">
-        Commodities & Fixed Income
-      </h2>
-      <div class="chart-grid">
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3 class="chart-title">Gold</h3>
-            <span class="chart-code">GLD</span>
-          </div>
-          <LineChart v-if="gold" :data="gold" :height="220" />
-          <div v-else class="chart-loading">Loading...</div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3 class="chart-title">30-Year Treasury</h3>
-            <span class="chart-code">^TYX</span>
-          </div>
-          <LineChart v-if="tbond" :data="tbond" :height="220" />
-          <div v-else class="chart-loading">Loading...</div>
-        </div>
-      </div>
+        </header>
+        <LineChart v-if="selectedInstrument.chart.length > 2" :key="selectedCode"
+          :data="selectedInstrument.chart" :height="320" :smooth="false" show-data-zoom />
+        <p v-else class="market-chart-state" role="status">{{ chartStatus }}</p>
+      </section>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import LineChart from "../components/charts/LineChart.vue";
+<script setup lang="ts">
+import { computed, onMounted, ref } from "vue";
+import PageHeader from "@/components/PageHeader.vue";
+import LineChart from "@/components/charts/LineChart.vue";
+import SparklineChart from "@/components/charts/SparklineChart.vue";
 import ApiService from "@/core/services/apiService";
-import { StockPriceClient, StockChartDto } from "@/core/services/marketWatchClient";
+import { StockPriceClient, type StockChartDto } from "@/core/services/marketWatchClient";
 
-export default {
-  name: "App",
-  components: {
-    LineChart,
-  },
-  data() {
-    return {
-      data: '',
-      ftse: null,
-      china: null,
-      korea: null,
-      australia: null,
-      dollar: null,
-      gold: null,
-      tbond: null,
-    };
-  },
+type Unit = "index" | "usd" | "yield";
+type Instrument = { code: string; name: string; unit: Unit };
+type Observation = { date: string; value: number };
 
-  async mounted() {
-    this.data = await this.getData("^GSPC");
-    this.ftse = await this.getData("^FTSE");
-    this.china = await this.getData("FXI");
-    this.korea = await this.getData("EWY");
-    this.australia = await this.getData("EWA");
-    this.dollar = await this.getData("UUP");
-    this.gold = await this.getData("GLD");
-    this.tbond = await this.getData("^TYX");
-  },
-
-  methods: {
-    async getData(code: string) {
-      // get stockPrice list
-      const stockClient = new StockPriceClient(ApiService.baseUrl, ApiService.vueInstance.axios);
-      const response = await stockClient.stockPriceGetStockPriceByCode(`date asc`, 1, 1000, code);
-      const prices = (response as StockChartDto[]).slice().reverse();
-
-      if (!prices || prices.length === 0) {
-        return;
-      }
-
-      return [
-        ...[["Date", "Price"]],
-        ...prices.map((item) => [item.date, item.adjClosePrice])
-      ];
-    },
-    formatValue(value: any) {
-      if (!value) return '—';
-      return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(value);
-    },
-    getSPXLatest() {
-      return this.data && this.data.length > 1 ? this.data[this.data.length - 1][1] : null;
-    },
-    getFTSELatest() {
-      return this.ftse && this.ftse.length > 1 ? this.ftse[this.ftse.length - 1][1] : null;
-    },
-    getGoldLatest() {
-      return this.gold && this.gold.length > 1 ? this.gold[this.gold.length - 1][1] : null;
-    },
-    getDollarLatest() {
-      return this.dollar && this.dollar.length > 1 ? this.dollar[this.dollar.length - 1][1] : null;
-    }
-  },
+const unitLabels: Record<Unit, string> = {
+  yield: "Yield (%)",
+  usd: "Adjusted close (USD)",
+  index: "Index level (pts)",
 };
 
+const groups: { label: string; instruments: Instrument[] }[] = [
+  {
+    label: "Equity indexes",
+    instruments: [
+      { code: "^GSPC", name: "S&P 500", unit: "index" },
+      { code: "^FTSE", name: "FTSE 100", unit: "index" },
+    ],
+  },
+  {
+    label: "Regional ETFs",
+    instruments: [
+      { code: "FXI", name: "China Large-Cap ETF", unit: "usd" },
+      { code: "EWY", name: "South Korea ETF", unit: "usd" },
+      { code: "EWA", name: "Australia ETF", unit: "usd" },
+    ],
+  },
+  {
+    label: "Currency, gold and rates",
+    instruments: [
+      { code: "UUP", name: "US Dollar Bullish Fund", unit: "usd" },
+      { code: "GLD", name: "SPDR Gold Shares", unit: "usd" },
+      { code: "^TYX", name: "30-Year Treasury Yield", unit: "yield" },
+    ],
+  },
+];
+
+const selectedCode = ref(groups[0].instruments[0].code);
+const observations = ref<Record<string, Observation[]>>({});
+const failedSymbols = ref(new Set<string>());
+const decimal = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function normalizeHistory(history: StockChartDto[]): Observation[] {
+  const byDate = new Map<string, number>();
+  for (const row of history) {
+    if (!row.date || !Number.isFinite(row.date.getTime()) || typeof row.adjClosePrice !== "number" || !Number.isFinite(row.adjClosePrice)) continue;
+    const date = row.date.toISOString().slice(0, 10);
+    if (!byDate.has(date)) byDate.set(date, row.adjClosePrice);
+  }
+  return [...byDate]
+    .sort(([first], [second]) => first.localeCompare(second))
+    .map(([date, value]) => ({ date, value }));
+}
+
+function chartRows(series: Observation[], label: string) {
+  return [["Date", label], ...series.map(({ date, value }) => [date, value])];
+}
+
+const marketGroups = computed(() => groups.map(group => ({
+  label: group.label,
+  instruments: group.instruments.map(instrument => {
+    const series = observations.value[instrument.code] ?? [];
+    const latest = series[series.length - 1];
+    const previous = series[series.length - 2];
+    let change: number | null = null;
+    if (latest && previous) {
+      if (instrument.unit === "yield") change = (latest.value - previous.value) * 100;
+      else if (previous.value > 0) change = (latest.value / previous.value - 1) * 100;
+    }
+    const label = unitLabels[instrument.unit];
+    return {
+      ...instrument, latest, change,
+      chart: chartRows(series, label),
+      sparkline: chartRows(series.slice(-20), label),
+    };
+  }),
+})));
+
+const selectedInstrument = computed(() =>
+  marketGroups.value.flatMap(group => group.instruments).find(instrument => instrument.code === selectedCode.value)
+    ?? marketGroups.value[0].instruments[0]
+);
+
+const chartStatus = computed(() => {
+  if (failedSymbols.value.has(selectedCode.value)) return "Market data could not be loaded.";
+  if (!observations.value[selectedCode.value]) return "Loading market data…";
+  return "At least two observations are needed to plot this instrument.";
+});
+
+function formatValue(value: number | undefined, unit: Unit): string {
+  if (value === undefined) return "—";
+  if (unit === "yield") return `${decimal.format(value)}%`;
+  return unit === "usd" ? `USD ${decimal.format(value)}` : `${decimal.format(value)} pts`;
+}
+
+function formatChange(value: number | null, unit: Unit): string {
+  if (value === null || !Number.isFinite(value)) return "—";
+  const magnitude = Math.abs(value);
+  const sign = magnitude >= 0.005 ? (value > 0 ? "+" : "−") : "";
+  return `${sign}${decimal.format(magnitude)}${unit === "yield" ? " bp" : "%"}`;
+}
+
+function changeClass(value: number | null) {
+  return {
+    "market-gain": value !== null && value >= 0.005,
+    "market-loss": value !== null && value <= -0.005,
+  };
+}
+
+onMounted(async () => {
+  const client = new StockPriceClient(ApiService.baseUrl, ApiService.vueInstance.axios);
+  await Promise.all(groups.flatMap(group => group.instruments).map(async ({ code }) => {
+    try {
+      observations.value[code] = normalizeHistory(await client.stockPriceGetStockPriceByCode("date desc", 0, 1000, code));
+    } catch {
+      failedSymbols.value.add(code);
+    }
+  }));
+});
 </script>
 
 <style scoped>
-.dashboard {
-  padding: var(--space-4xl) var(--space-xl);
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.dashboard-header {
-  margin-bottom: 2rem;
-}
-
-.dashboard-header h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-heading);
-  margin-bottom: 0.25rem;
-  letter-spacing: -0.02em;
-}
-
-.subtitle {
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-/* Metrics Grid - Minimalist */
-.metrics-grid {
+.market-dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-lg);
-  margin-bottom: var(--space-3xl);
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
 }
 
-.metric-card {
-  background: var(--color-background-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 8px;
-  border-top-width: 3px;
-  padding: 0.875rem 1rem;
-  box-shadow: var(--shadow-subtle);
-  transition: all 0.2s ease;
+.market-watchlist, .market-chart-panel {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
 }
 
-.metric-card:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-border);
-  transform: translateY(-2px);
-}
-
-.card-spx  { border-top-color: #1976d2; }
-.card-ftse { border-top-color: #10b981; }
-.card-gold { border-top-color: #f59e0b; }
-.card-dollar { border-top-color: #64748b; }
-
-.metric-label {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.375rem;
-}
-
-.metric-value {
-  font-size: 1.375rem;
-  font-weight: 700;
-  color: var(--color-heading);
-  margin-bottom: 0.25rem;
+.market-snapshot {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
 }
 
-.metric-change {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
+.market-snapshot th, .market-snapshot td {
+  padding: 4px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
-.metric-change.positive {
-  color: var(--finance-green-light);
-}
+.market-snapshot th { text-transform: none; letter-spacing: normal; }
 
-.metric-change.negative {
-  color: var(--finance-red-light);
-}
-
-.change-icon {
-  font-size: 1.125rem;
-}
-
-/* Sections - Minimalist */
-.section {
-  margin-bottom: var(--space-5xl);
-}
-
-.section-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-heading);
-  margin-bottom: var(--space-lg);
-  padding-bottom: var(--space-xs);
-  padding-left: 0.625rem;
-  border-bottom: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-primary);
-  display: flex;
-  align-items: center;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.chart-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--space-lg);
-}
-
-.chart-card {
-  background: var(--color-background-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 8px;
-  padding: 0.875rem;
-  box-shadow: var(--shadow-subtle);
-  transition: all 0.2s ease;
-  overflow: hidden;
-}
-
-.chart-card:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-border);
-  transform: translateY(-2px);
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.chart-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-heading);
-  margin: 0;
-}
-
-.chart-code {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
+.market-snapshot thead th {
+  height: 32px;
   background: var(--color-surface-variant);
-  padding: 0.125rem 0.5rem;
-  border-radius: 4px;
-  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--color-heading);
 }
 
-.chart-loading {
-  height: 300px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.market-group th {
   color: var(--color-text-secondary);
-  font-size: 1rem;
-  animation: pulse 1.5s ease-in-out infinite;
+  font-weight: 600;
+  background: var(--color-surface-variant);
 }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
+.market-snapshot .market-number,
+.market-snapshot .market-date { text-align: right; white-space: nowrap; }
+
+.market-date { color: var(--color-text-secondary); }
+.market-trend { width: 90px; white-space: nowrap; }
+.market-mobile-date { display: none; }
+
+.market-instrument {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 7px;
+  min-width: 0;
+  min-height: 26px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  text-align: left;
+  color: var(--color-primary);
+  font: inherit;
+  cursor: pointer;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .dashboard {
-    padding: 1.5rem 1rem;
-  }
+.market-instrument strong { font-weight: 650; }
+.market-instrument span { color: var(--color-text); }
+.market-instrument:hover strong { text-decoration: underline; }
+.market-selected { background: var(--color-surface-variant); }
+.market-selected th[scope="row"] { box-shadow: inset 2px 0 var(--color-primary); }
 
-  .dashboard-header h1 {
-    font-size: 2rem;
-  }
-
-  .subtitle {
-    font-size: 0.9375rem;
-  }
-
-  .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-
-  .metric-card {
-    padding: 1.25rem;
-  }
-
-  .metric-value {
-    font-size: 1.5rem;
-  }
-
-  .section-title {
-    font-size: 1.25rem;
-  }
-
-  .chart-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .chart-card {
-    padding: 1rem;
-  }
+.market-note, .market-chart-heading p {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
 }
 
-@media (min-width: 1024px) {
-  .dashboard {
-    padding: 3rem 2rem;
-  }
+.market-note { padding: 6px 8px; }
+.market-chart-panel { padding: 10px; }
+.market-chart-heading { display: flex; justify-content: space-between; align-items: start; gap: 8px; }
+.market-chart-heading h2 { font-size: 1rem; line-height: 1.25; font-weight: 650; }
+.market-chart-quote { display: flex; flex-wrap: wrap; justify-content: end; gap: 4px 8px; font-variant-numeric: tabular-nums; }
+.market-chart-quote strong { font-weight: 650; }
+.market-chart-state { display: grid; place-items: center; min-height: 240px; color: var(--color-text-secondary); }
 
-  .metrics-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
+.market-gain { color: var(--finance-green); }
+.market-loss { color: var(--finance-red); }
+@media (prefers-color-scheme: dark) {
+  .market-gain { color: #81c784; }
+  .market-loss { color: #ff8a80; }
+}
 
-  .chart-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+@media (max-width: 1040px) {
+  .market-dashboard-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .market-snapshot .market-trend, .market-snapshot .market-date { display: none; }
+  .market-mobile-date { display: block; font-size: 0.6875rem; color: var(--color-text-secondary); }
+  .market-instrument { flex-direction: column; justify-content: center; align-items: start; min-height: 38px; line-height: 1.25; }
+  .market-instrument span { font-size: 0.75rem; }
+  .market-chart-heading { flex-wrap: wrap; }
 }
 </style>

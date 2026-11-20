@@ -19,7 +19,7 @@ defineProps<{
       </svg>
     </div>
     <div class="brand-text">
-      <h1 class="brand-name">{{ msg }}</h1>
+      <span class="brand-name">{{ msg }}</span>
     </div>
   </div>
 </template>
@@ -51,7 +51,7 @@ defineProps<{
 
 @media (max-width: 768px) {
   .brand-name {
-    font-size: 1.25rem;
+    font-size: 1rem;
   }
 }
 </style>
